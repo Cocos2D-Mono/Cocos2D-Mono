@@ -12,6 +12,8 @@
 [![Linux](https://github.com/Cocos2D-Mono/cocos2d-mono/actions/workflows/status-linux.yml/badge.svg)](https://github.com/Cocos2D-Mono/cocos2d-mono/actions/workflows/status-linux.yml)
 [![Android](https://github.com/Cocos2D-Mono/cocos2d-mono/actions/workflows/status-android.yml/badge.svg)](https://github.com/Cocos2D-Mono/cocos2d-mono/actions/workflows/status-android.yml)
 [![iOS](https://github.com/Cocos2D-Mono/cocos2d-mono/actions/workflows/status-ios.yml/badge.svg)](https://github.com/Cocos2D-Mono/cocos2d-mono/actions/workflows/status-ios.yml)
+
+<sub>Built from source only — not in the NuGet packages (see <a href="#platform-support">Platform support</a>):</sub><br>
 [![Mac Catalyst](https://github.com/Cocos2D-Mono/cocos2d-mono/actions/workflows/status-maccatalyst.yml/badge.svg)](https://github.com/Cocos2D-Mono/cocos2d-mono/actions/workflows/status-maccatalyst.yml)
 [![tvOS](https://github.com/Cocos2D-Mono/cocos2d-mono/actions/workflows/status-tvos.yml/badge.svg)](https://github.com/Cocos2D-Mono/cocos2d-mono/actions/workflows/status-tvos.yml)
 
@@ -39,6 +41,16 @@ legacy counterparts were. If you are coming from the dedicated `Linux`/`macOS`
 packages, note that the unified DesktopGL build uses the same compile-time flavor the
 flagship `Cocos2D-Mono.DesktopGL` package always shipped on those platforms (this can
 relocate `CCUserDefault` storage written by the old dedicated packages).
+
+# Platform support
+
+| Tier | Platforms | How to get it |
+|---|---|---|
+| **Packaged** | Desktop via DesktopGL (Windows, macOS, Linux), WindowsDX, Android, iOS | The NuGet packages above. |
+| **Source only** | Mac Catalyst, tvOS | Build the engine from source against our [MonoGame fork](https://github.com/Cocos2D-Mono/MonoGame), checked out beside this repository at the commit pinned by `MONOGAME_FORK_REF` in [`build.yml`](.github/workflows/build.yml). MonoGame publishes no package for either platform, so neither is in the NuGet packages. |
+| **Registered console developers** | PlayStation 5 | On the 2.5.x line — see the [roadmap](ROADMAP.md#platforms). |
+
+A NuGet package only carries a platform when that platform's MonoGame dependency can also be restored from nuget.org — which is what separates the first two tiers.
 
 # Getting Started
 

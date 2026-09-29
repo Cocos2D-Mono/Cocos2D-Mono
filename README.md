@@ -47,10 +47,36 @@ relocate `CCUserDefault` storage written by the old dedicated packages).
 | Tier | Platforms | How to get it |
 |---|---|---|
 | **Packaged** | Desktop via DesktopGL (Windows, macOS, Linux), WindowsDX, Android, iOS | The NuGet packages above. |
-| **Source only** | Mac Catalyst, tvOS | Build the engine from source against our [MonoGame fork](https://github.com/Cocos2D-Mono/MonoGame), checked out beside this repository at the commit pinned by `MONOGAME_FORK_REF` in [`build.yml`](.github/workflows/build.yml). MonoGame publishes no package for either platform, so neither is in the NuGet packages. |
+| **Source only** | Mac Catalyst, tvOS | Build the engine from source against our [MonoGame fork](https://github.com/Cocos2D-Mono/MonoGame), checked out beside this repository at the commit pinned by `MONOGAME_FORK_REF` in [`build.yml`](.github/workflows/build.yml). MonoGame publishes no package for either platform, so neither is in the published NuGet packages. |
 | **Registered console developers** | PlayStation 5 | On the 2.5.x line — see the [roadmap](ROADMAP.md#platforms). |
 
-A NuGet package only carries a platform when that platform's MonoGame dependency can also be restored from nuget.org — which is what separates the first two tiers.
+A published NuGet package only carries a platform when that platform's MonoGame dependency can also be restored from nuget.org — which is what separates the first two tiers. The build enforces it: `dotnet pack` leaves the source-only targets out even on a Mac with the fork present.
+
+## Building Mac Catalyst or tvOS from source
+
+On macOS, with the .NET 10 SDK:
+
+```bash
+# 1. The workload for the platform you want
+dotnet workload install maccatalyst        # or: tvos
+
+# 2. Our MonoGame fork, checked out beside this repository at the commit CI pins
+#    (MONOGAME_FORK_REF in .github/workflows/build.yml)
+git clone https://github.com/Cocos2D-Mono/MonoGame.git ../MonoGame
+git -C ../MonoGame checkout <MONOGAME_FORK_REF>
+git -C ../MonoGame submodule update --init ThirdParty/StbImageSharp ThirdParty/StbImageWriteSharp
+
+# 3. The fork's MonoGame.Framework for that platform
+dotnet build ../MonoGame/MonoGame.Framework/MonoGame.Framework.MacCatalyst.csproj -c Release
+#    tvOS: MonoGame.Framework.tvOS.csproj
+
+# 4. The engine for that platform (Box2D first, as CI does)
+TFM=net10.0-maccatalyst26.0                  # tvOS: net10.0-tvos26.0
+dotnet build src/Box2D/Box2D.csproj -c Release -f $TFM -p:TargetFrameworks=$TFM
+dotnet build src/Cocos2DMono/Cocos2DMono.csproj -c Release -f $TFM -p:TargetFrameworks=$TFM
+```
+
+A game can instead reference `src/Cocos2DMono/Cocos2DMono.csproj` from its own `net10.0-maccatalyst` or `net10.0-tvos` project: once step 3 has run, the engine finds the fork's assembly and adds the target on its own. `Directory.Build.props` documents the overrides for a fork checked out somewhere else.
 
 # Getting Started
 

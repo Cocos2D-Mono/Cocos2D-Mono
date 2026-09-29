@@ -98,6 +98,26 @@ jobs:
           esac
           dotnet build "MonoGame.Framework/$FORK_PROJECT" -c ${{ matrix.configuration }}
 
+      # C2D-259: a published package must never carry a fork-dependent TFM (C2D-246).
+      # With the fork built beside the repo, an ordinary build auto-includes this
+      # cell's TFM; under `dotnet pack` (_IsPacking=true) it must not. This is the one
+      # host where the rule can actually be broken, so check it here on every run.
+      - name: Packing excludes fork TFMs (Mac Catalyst and tvOS only)
+        if: matrix.target.workloads == 'maccatalyst' || matrix.target.workloads == 'tvos'
+        run: |
+          tfms() { dotnet msbuild src/Cocos2DMono/Cocos2DMono.csproj -nologo -getProperty:Cocos2DTargetFrameworks -p:Configuration=${{ matrix.configuration }} "$@"; }
+          building=$(tfms)
+          packing=$(tfms -p:_IsPacking=true)
+          echo "building: $building"
+          echo "packing:  $packing"
+          case "$building" in
+            *"${{ matrix.target.tfm }}"*) ;;
+            *) echo "::error::${{ matrix.target.tfm }} was not auto-included with the fork built, so this check proves nothing"; exit 1 ;;
+          esac
+          case "$packing" in
+            *maccatalyst*|*tvos*) echo "::error::a fork-dependent TFM would be packed: $packing"; exit 1 ;;
+          esac
+
       # Build per-TFM: -p:TargetFrameworks=<tfm> narrows each project to the single
       # TFM the cell validates, so a cell never needs the other cells' workloads
       # (and never spends time on their targets). Box2D builds first so

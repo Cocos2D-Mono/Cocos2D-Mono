@@ -120,6 +120,13 @@ with **docs** able to go in parallel, and the **Tests** showcase app trailing si
 consumes published packages. Publishing steps that live outside git — NuGet pushes and
 the Visual Studio Marketplace upload — are part of the release, not an afterthought.
 
+**What a package may contain.** A published package only carries a target framework whose
+MonoGame dependency can be restored from nuget.org. Mac Catalyst and tvOS build against
+our MonoGame fork, which publishes no package, so they are built from source and never
+packed. The build enforces this — `dotnet pack` leaves those targets out even on a Mac
+with the fork present — and CI checks it on every run. Release packages are produced by
+`pack.yml`; don't publish a package packed by hand.
+
 ## Console platforms
 
 Console support (PlayStation, and any future console target) is developed in a **private

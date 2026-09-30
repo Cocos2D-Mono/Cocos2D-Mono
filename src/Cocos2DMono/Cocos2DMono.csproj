@@ -181,8 +181,6 @@ Migration: retarget your game to .NET 10 (net10.0 desktop, net10.0-windows7.0 Wi
   <ItemGroup Condition="'$(TargetFramework)' != '$(Cocos2DBaseTfm)'">
     <Compile Remove="$(Cocos2DSourceRoot)label_nodes\CCLabel-Gdi.cs" />
     <Compile Remove="$(Cocos2DSourceRoot)label_nodes\CCLabel-Skia.cs" />
-    <Compile Remove="$(Cocos2DSourceRoot)label_nodes\CCLabelUtilities-Gdi.cs" />
-    <Compile Remove="$(Cocos2DSourceRoot)label_nodes\CCLabelUtilities-Skia.cs" />
   </ItemGroup>
 
   <!-- Mobile vs Desktop EmbeddableView split. Each file is empty when its `#if`

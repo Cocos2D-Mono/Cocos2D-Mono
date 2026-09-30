@@ -33,7 +33,7 @@ A platform moves into the packages once its MonoGame dependency can be restored 
 
 UWP / Xbox-UWP support is maintained separately in the [Cocos2D-Mono.UWP](https://github.com/Cocos2D-Mono/Cocos2D-Mono.UWP) repository.
 
-**Graphics backends.** Cocos2D-Mono renders through MonoGame and follows MonoGame's backends rather than maintaining a graphics layer of its own. Today the packages use OpenGL through DesktopGL, DirectX through WindowsDX, and MonoGame's mobile backends on Android and iOS. MonoGame 3.8.5 introduced Vulkan and Direct3D 12 in preview; once MonoGame publishes them as stable packages, we'll evaluate offering them under the same packaging rule.
+**Graphics backends.** Cocos2D-Mono renders through MonoGame and follows MonoGame's backends rather than maintaining a graphics layer of its own. Today the packages use OpenGL through DesktopGL, DirectX through WindowsDX, and MonoGame's mobile backends on Android and iOS. MonoGame 3.8.5 introduced Vulkan and Direct3D 12 in preview; once MonoGame declares them stable, we'll evaluate offering them in the packages.
 
 **Hosting.** The engine runs as a MonoGame game, and `CCGameView` embeds it in native Android and iOS views. Embedding in app frameworks such as .NET MAUI or Avalonia is being explored, starting with a sample before anything is promised.
 

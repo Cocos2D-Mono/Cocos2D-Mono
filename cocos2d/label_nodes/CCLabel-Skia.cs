@@ -112,18 +112,13 @@ public partial class CCLabel
     {
         _kerningInfo.Clear();
 
-        using var paint = new SKPaint
-        {
-            Typeface = _currentTypeface,
-            TextSize = _currentFontSize
-        };
+        using var font = new SKFont(_currentTypeface, _currentFontSize);
 
         foreach (var ch in charset)
         {
             if (!_kerningInfo.ContainsKey(ch))
             {
-                var width = paint.MeasureText(ch.ToString());
-                var with2 = paint.GetGlyphWidths(new[] { ch });
+                var width = font.MeasureText(ch.ToString());
                 if (width > 0)
                 {
                     _kerningInfo[ch] = new KerningInfo
@@ -139,24 +134,15 @@ public partial class CCLabel
 
     private float GetFontHeightSkia()
     {
-        using var paint = new SKPaint
-        {
-            Typeface = _currentTypeface,
-            TextSize = _currentFontSize
-        };
-        return paint.FontMetrics.CapHeight;
+        using var font = new SKFont(_currentTypeface, _currentFontSize);
+        return font.Metrics.CapHeight;
     }
 
     private CCSize GetMeasureStringSkia(string text)
     {
-        using var paint = new SKPaint
-        {
-            Typeface = _currentTypeface,
-            TextSize = _currentFontSize
-        };
+        using var font = new SKFont(_currentTypeface, _currentFontSize);
 
-        var bounds = new SKRect();
-        paint.MeasureText(text, ref bounds);
+        font.MeasureText(text, out var bounds);
         return new CCSize(bounds.Width, bounds.Height);
     }
 
@@ -164,6 +150,7 @@ public partial class CCLabel
     {
         if (_bitmapSkia == null || (_bitmapSkia.Width < width || _bitmapSkia.Height < height))
         {
+            _canvas?.Dispose();
             _bitmapSkia?.Dispose();
 
             _bitmapSkia = new SKBitmap(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
@@ -182,16 +169,16 @@ public partial class CCLabel
 
         _canvas.Clear(SKColors.Transparent);
 
+        // Glyph state (typeface + size) lives on the SKFont below; the paint only
+        // carries color and antialiasing on the modern DrawText overload.
         using var paint = new SKPaint
         {
-            Typeface = _currentTypeface,
-            TextSize = _currentFontSize,
             IsAntialias = true,
             Color = SKColors.White
         };
 
 
-        var font = new SKFont(_currentTypeface, _currentFontSize *.68f);
+        using var font = new SKFont(_currentTypeface, _currentFontSize *.68f);
 
         _canvas.DrawText(s, 0, _currentFontSize/2, SKTextAlign.Left, font, paint);
 

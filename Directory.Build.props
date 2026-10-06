@@ -2,7 +2,7 @@
   <PropertyGroup>
     <!-- Single source of truth for the package version (and assembly version only for projects
          that generate assembly info). Bump here for a release; all packages inherit it. -->
-    <Version>2.6.0</Version>
+    <Version>2.6.1</Version>
 
     <!-- Centralized MonoGame version for all projects -->
     <MonoGameVersion>3.8.5</MonoGameVersion>

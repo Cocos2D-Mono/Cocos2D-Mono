@@ -4,6 +4,31 @@ All notable changes to Cocos2D-Mono are recorded here. This file was introduced 
 2.5.10; earlier releases are described in their GitHub release notes / git history.
 The project follows [Semantic Versioning](https://semver.org/) where practical.
 
+## 2.6.1 - 2026-10-09
+
+A small patch release: two changes to how `CCLabel` draws text on Linux and macOS. No API
+changes and nothing to migrate — bump the package reference to 2.6.1.
+
+### Fixed
+
+- **`CCLabel` on Linux and macOS** now disposes the native Skia canvas and font it creates
+  each time a label redraws its text, instead of leaving them for the garbage collector.
+
+### Changed
+
+- The Linux/macOS label backend moved off SkiaSharp's deprecated `SKPaint` text APIs onto
+  `SKFont`. Rendering is unchanged, and the engine now builds with no obsolete-API
+  warnings, ahead of the old APIs' eventual removal upstream.
+
+Other platforms are unaffected: Windows draws labels with GDI, and Android and iOS use
+their platform text renderers.
+
+### Documentation
+
+- Added `CONTRIBUTING.md` with the working conventions shared across the Cocos2D-Mono
+  repositories: branching and pull requests, how changes are verified, API stability, and
+  how releases are cut.
+
 ## 2.6.0 - 2026-07-28
 
 The platform-line release: **.NET 10 + MonoGame 3.8.5**. No engine API changes — scenes,

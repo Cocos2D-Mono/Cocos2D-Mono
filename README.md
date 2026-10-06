@@ -65,3 +65,5 @@ The test app's scenes live in `Tests/cocos2d-mono.Tests/`; the multi-targeted
 # Contributing
 
 Thanks so much for your interest in cocos2d-mono and wanting to contribute to the project! Here's a [guide](https://cocos2d-mono.dev/docs/category/contributing) to help you get started.
+
+[`CONTRIBUTING.md`](CONTRIBUTING.md) covers the working conventions that apply across all Cocos2D-Mono repositories — branching and PR flow, how changes are verified, API stability, and how releases are cut.

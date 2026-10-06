@@ -35,9 +35,9 @@
     <Product>Cocos2D-Mono</Product>
     <Description>Cocos2D-Mono is a managed C# port of cocos2d-x built on MonoGame. This single package multi-targets DesktopGL (Windows-GL, Linux, macOS), WindowsDX, Android, and iOS.</Description>
     <PackageReleaseNotes>
+2.6.1 - Linux/macOS label fixes: CCLabel now disposes the native Skia canvas and font it creates on each redraw, and its SkiaSharp backend moved off deprecated text APIs (no rendering change). No API changes.
 2.6.0 - The platform release: .NET 10 + MonoGame 3.8.5. No engine API changes.
 Migration: retarget your game to .NET 10 (net10.0 desktop, net10.0-windows7.0 WindowsDX, net10.0-android36.0 Android, net10.0-ios26.0 iOS) and bump the package reference. Requires the .NET 10 SDK. Also migrated off MonoGame-obsoleted APIs; validated end-to-end on the new MonoGame native core.
-2.5.12 - Final bug-fix release of the 2.5 line (action copies, CCMenuItemSprite null-clear, CCTextFieldTTF auto-edit, CCRawList RemoveRange corruption + buffer leak).
 - See https://github.com/Cocos2D-Mono/cocos2d-mono for the full changelog.
     </PackageReleaseNotes>
     <PackageTags>mono monogame cocos2d game gamedev 2d mgcb content-pipeline</PackageTags>

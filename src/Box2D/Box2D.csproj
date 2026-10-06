@@ -20,8 +20,8 @@
     <Product>Cocos2D-Mono.Box2D</Product>
     <Description>Box2D physics engine (managed C# port) used by Cocos2D-Mono. Multi-targets net10.0 (DesktopGL/Linux/macOS), net10.0-windows7.0 (WindowsDX), net10.0-android36.0, and net10.0-ios26.0.</Description>
     <PackageReleaseNotes>
+2.6.1 - No Box2D changes; version aligned with the Cocos2D-Mono 2.6.1 release line.
 2.6.0 - Retargeted to .NET 10 + MonoGame 3.8.5; no Box2D code changes. Version aligned with the Cocos2D-Mono 2.6.0 release line.
-2.5.12 - No Box2D changes; version aligned with the Cocos2D-Mono 2.5.12 release line.
 - See https://github.com/Cocos2D-Mono/cocos2d-mono for the full changelog.
     </PackageReleaseNotes>
     <PackageIcon>logo-small.png</PackageIcon>

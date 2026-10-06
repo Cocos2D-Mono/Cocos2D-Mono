@@ -70,8 +70,8 @@
     <Product>Cocos2D-Mono.Core</Product>
     <Description>Cocos2D-Mono.Core is a metapackage variant of Cocos2D-Mono that excludes the MonoGame.Content.Builder.Task MSBuild target. Reference this package instead of Cocos2D-Mono if you do not use the MonoGame content pipeline. The runtime DLL (Cocos2DMono.dll) is identical - only the build-time content-pipeline flow differs.</Description>
     <PackageReleaseNotes>
+2.6.1 - Same engine as Cocos2D-Mono 2.6.1: Linux/macOS label fixes (the native Skia canvas and font are disposed on each redraw; deprecated SkiaSharp text APIs retired). No API changes.
 2.6.0 - The platform release: .NET 10 + MonoGame 3.8.5; same engine as Cocos2D-Mono 2.6.0, without the content-pipeline build target. Migration: retarget your game to .NET 10 and bump the package reference.
-2.5.12 - Final bug-fix release of the 2.5 line; same engine fixes as Cocos2D-Mono 2.5.12.
 - See https://github.com/Cocos2D-Mono/cocos2d-mono for the full changelog.
     </PackageReleaseNotes>
     <PackageTags>mono monogame cocos2d game gamedev 2d no-content-pipeline</PackageTags>

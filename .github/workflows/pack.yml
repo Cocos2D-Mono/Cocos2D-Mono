@@ -1,14 +1,19 @@
 name: pack (consolidated packages)
 
-# Packs the NEW consolidated packages (Cocos2D-Mono, Cocos2D-Mono.Box2D,
-# Cocos2D-Mono.Core) introduced in Stage C3/C5 and uploads the .nupkg/.snupkg set
-# as a downloadable artifact. Uploading to nuget.org stays a manual, human step.
+# Packs the consolidated packages (Cocos2D-Mono, Cocos2D-Mono.Box2D,
+# Cocos2D-Mono.Core) and uploads the .nupkg/.snupkg set as a downloadable artifact.
 #
 # Runs automatically on every push to a release/** branch (release staging), so the
-# packages are always freshly built and ready to download for publish - and still
-# available on demand via workflow_dispatch. Because push events use the workflow
-# definition from the pushed ref, this triggers on release branches even before it
-# reaches the default branch.
+# packages are always freshly built and ready to inspect - and still available on
+# demand via workflow_dispatch. Because push events use the workflow definition from
+# the pushed ref, this triggers on release branches even before it reaches the
+# default branch.
+#
+# A version tag (v2.6.2 onward) packs the tagged commit and publishes it to nuget.org
+# through the `publish` job below (C2D-264). That job runs in the protected `nuget`
+# environment, which holds the only copy of the API key and waits for a maintainer's
+# approval before anything is pushed. To re-run a publish, dispatch this workflow on
+# the tag. Releases up to 2.6.1 used unprefixed tags and were pushed by hand.
 #
 # The legacy 12-package line (Cocos2D-Mono.{Platform} / .Core.{Platform})
 # ended with 2.5.10; these consolidated packages replace it (Stage C4).
@@ -16,7 +21,11 @@ name: pack (consolidated packages)
 on:
   push:
     branches: ["release/**"]
+    tags: ["v[0-9]*"]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   pack:
@@ -61,9 +70,62 @@ jobs:
       - name: Pack Cocos2D-Mono.Core (metapackage)
         run: dotnet pack src/Cocos2DMono.Core/Cocos2DMono.Core.csproj -c Release --no-restore --no-build -o artifacts
 
+      # On a version tag the packages must carry the tag's version, so a tag on the
+      # wrong commit (or a missed version bump) fails here instead of publishing.
+      - name: Check the packages match the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          for id in Cocos2D-Mono.Box2D Cocos2D-Mono Cocos2D-Mono.Core; do
+            if [ ! -f "artifacts/$id.$version.nupkg" ]; then
+              echo "::error::Tag $GITHUB_REF_NAME needs artifacts/$id.$version.nupkg, but packing produced:"
+              ls artifacts
+              exit 1
+            fi
+          done
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: nuget-packages
           path: |
             artifacts/*.nupkg
             artifacts/*.snupkg
+
+  publish:
+    name: Publish to nuget.org
+    needs: pack
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    # The API key is a secret of this environment only, and the environment requires
+    # a maintainer's approval before the job starts (C2D-264).
+    environment: nuget
+    concurrency:
+      group: nuget-publish
+      cancel-in-progress: false
+    steps:
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: "10.0.x"
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: nuget-packages
+          path: artifacts
+
+      # Dependency order: Cocos2D-Mono depends on Box2D, and the Core metapackage
+      # pins Cocos2D-Mono at exactly this version. Each push also sends the matching
+      # .snupkg. --skip-duplicate lets a re-run finish a partial publish.
+      - name: Push to nuget.org
+        shell: bash
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          for id in Cocos2D-Mono.Box2D Cocos2D-Mono Cocos2D-Mono.Core; do
+            dotnet nuget push "artifacts/$id.$version.nupkg" \
+              --api-key "$NUGET_API_KEY" \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          done

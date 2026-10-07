@@ -111,14 +111,34 @@ Tutorial pages show code that readers copy into their own projects, so:
 Releases flow through a dedicated branch, not directly to the default branch:
 
 1. Cut `release/<version>` from `dev`.
-2. PR that branch to the default branch, merge, and tag.
+2. PR that branch to the default branch, merge, and tag the merge commit `v<version>`
+   (tags were unprefixed up to `2.6.1`).
 3. Back-merge the default branch into `dev` so the branches stay aligned.
 
 When a change spans repositories, release them in dependency order: the **engine package
 first**, then **samples and project templates** (which consume the published packages),
 with **docs** able to go in parallel, and the **Tests** showcase app trailing since it
-consumes published packages. Publishing steps that live outside git — NuGet pushes and
-the Visual Studio Marketplace upload — are part of the release, not an afterthought.
+consumes published packages. Publishing steps that still live outside git — the project
+templates package and the Visual Studio Marketplace upload — are part of the release, not
+an afterthought.
+
+**What a package may contain.** A published package only carries a target framework whose
+MonoGame dependency can be restored from nuget.org. Mac Catalyst and tvOS build against
+our MonoGame fork, which publishes no package, so they are built from source and never
+packed. The build enforces this — `dotnet pack` leaves those targets out even on a Mac
+with the fork present — and CI checks it on every run.
+
+**How the engine packages publish.** `pack.yml` produces the release packages. Pushing the
+`v<version>` tag packs the tagged commit, checks that the packages carry the tag's version,
+and then waits for a maintainer to approve the protected `nuget` environment. No API key is
+stored: the job uses nuget.org Trusted Publishing to trade a GitHub OIDC token for a
+one-hour key, and the nuget.org policy only accepts this workflow running in that
+environment. The environment must exist before the first `v` tag, with a required reviewer
+and a `NUGET_USER` secret holding the nuget.org profile name of whoever created the Trusted
+Publishing policy (not the organization that owns it). The workflow refuses to publish if
+the environment has no required reviewer. Once approved, it pushes `Cocos2D-Mono.Box2D`,
+`Cocos2D-Mono` and `Cocos2D-Mono.Core`, in that order. To retry a publish, run the workflow
+on the tag again. Don't publish a package packed by hand.
 
 ## Console platforms
 

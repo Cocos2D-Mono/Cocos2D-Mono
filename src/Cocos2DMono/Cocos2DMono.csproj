@@ -7,11 +7,19 @@
       (cocos2d.{DesktopGL,Linux,macOS,Windows,Android,iOS} plus the .Core.* duplicates).
 
         net10.0             DesktopGL host (Windows-GL, Linux, macOS via DesktopGL).
-                            macOS is served by net10.0 + DesktopGL today; Mac Catalyst is
-                            NOT shipped because MonoGame has no maccatalyst asset (still true at 3.8.5).
+                            macOS *desktop* is served by net10.0 + DesktopGL.
         net10.0-windows7.0  WindowsDX (UseWindowsForms; replaces cocos2d.Windows).
         net10.0-android36.0 Android  (replaces cocos2d.Android).
         net10.0-ios26.0     iOS      (replaces cocos2d.iOS).
+        net10.0-maccatalyst26.0
+                            Mac Catalyst (C2D-238). MonoGame publishes no maccatalyst
+                            package (still true at 3.8.5), so this TFM references the
+                            Catalyst MonoGame.Framework built from our fork, and only
+                            joins the TFM list on a macOS host that has it - see the
+                            repo-root Directory.Build.props.
+        net10.0-tvos26.0    tvOS (C2D-239). Same arrangement as Mac Catalyst: the fork's
+                            tvOS MonoGame.Framework, joining the list only on a macOS
+                            host that has it built.
 
       Source physically remains under ../../cocos2d/ during the side-by-side
       transition; the new csproj globs it and applies platform-specific
@@ -87,9 +95,38 @@ Migration: retarget your game to .NET 10 (net10.0 desktop, net10.0-windows7.0 Wi
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(TargetFramework)' == '$(Cocos2DMacCatalystTfm)'">
+    <!-- Catalyst is iOS-plus-extras at source level: the fork's Catalyst
+         MonoGame.Framework is the iOS platform code (UIKit host, GLES, touch) compiled
+         for net10.0-maccatalyst, so the engine takes the same source paths as iOS and
+         adds MACCATALYST for the seams that differ (desktop input, window sizing). -->
+    <DefineConstants>$(DefineConstants);__IOS__;__MOBILE__;__UNIFIED__;IPHONE;IOS;MACCATALYST;GLES;OPENGL;MONOGAME</DefineConstants>
+    <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
+    <CheckEolWorkloads>false</CheckEolWorkloads>
+    <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
+    <!-- MonoGame.Content.Builder.Task infers MonoGamePlatform from the TFM and has no
+         mapping for -maccatalyst (it errors out at build). Catalyst runs iOS-built
+         content unchanged, so it is the iOS content platform. -->
+    <MonoGamePlatform>iOS</MonoGamePlatform>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == '$(Cocos2DTvosTfm)'">
+    <!-- tvOS is the same UIKit + GLES platform code in the fork as iOS, minus the touch
+         screen: the Siri Remote arrives as a gamepad plus indirect touches. TVOS gates
+         the seams (no accelerometer, no status bar, no screen-space touches). -->
+    <DefineConstants>$(DefineConstants);__IOS__;__MOBILE__;__UNIFIED__;IPHONE;IOS;TVOS;GLES;OPENGL;MONOGAME</DefineConstants>
+    <SupportedOSPlatformVersion>16.0</SupportedOSPlatformVersion>
+    <CheckEolWorkloads>false</CheckEolWorkloads>
+    <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
+    <!-- MGCB 3.8.5 has no tvOS content platform (mgcb rejects the value), and the fork's
+         tvOS MonoGame is the iOS platform code, so tvOS is the iOS content platform too:
+         games build content once for iOS and ship it to iOS, Catalyst, and tvOS. -->
+    <MonoGamePlatform>iOS</MonoGamePlatform>
+  </PropertyGroup>
+
   <!-- Mobile TFMs: drop .snupkg generation. Apple/Android workloads emit
        platform-specific symbol formats and would trip NU5119 on pack. -->
-  <PropertyGroup Condition="'$(TargetFramework)' == '$(Cocos2DIosTfm)' or '$(TargetFramework)' == '$(Cocos2DAndroidTfm)'">
+  <PropertyGroup Condition="'$(TargetFramework)' == '$(Cocos2DIosTfm)' or '$(TargetFramework)' == '$(Cocos2DMacCatalystTfm)' or '$(TargetFramework)' == '$(Cocos2DTvosTfm)' or '$(TargetFramework)' == '$(Cocos2DAndroidTfm)'">
     <IncludeSymbols>false</IncludeSymbols>
     <NoWarn>$(NoWarn);NU5119</NoWarn>
   </PropertyGroup>
@@ -122,8 +159,14 @@ Migration: retarget your game to .NET 10 (net10.0 desktop, net10.0-windows7.0 Wi
     <Compile Remove="$(Cocos2DSourceRoot)label_nodes\CCLabel-Android.cs" />
   </ItemGroup>
 
-  <!-- iOS-only files. -->
-  <ItemGroup Condition="!$(TargetFramework.Contains('-ios'))">
+  <!-- UIKit hosts: iOS, Mac Catalyst and tvOS compile the same iOS-only files. -->
+  <PropertyGroup>
+    <_Cocos2DUIKitTfm>false</_Cocos2DUIKitTfm>
+    <_Cocos2DUIKitTfm Condition="$(TargetFramework.Contains('-ios')) or $(TargetFramework.Contains('-maccatalyst')) or $(TargetFramework.Contains('-tvos'))">true</_Cocos2DUIKitTfm>
+  </PropertyGroup>
+
+  <!-- iOS-only files (shared with Mac Catalyst). -->
+  <ItemGroup Condition="'$(_Cocos2DUIKitTfm)' != 'true'">
     <Compile Remove="$(Cocos2DSourceRoot)EmbeddableView\CCGameView.iOS.cs" />
     <Compile Remove="$(Cocos2DSourceRoot)label_nodes\CCLabel-CoreGraphics.cs" />
     <Compile Remove="$(Cocos2DSourceRoot)label_nodes\CCLabelUtilities-CoreGraphics.cs" />
@@ -138,17 +181,15 @@ Migration: retarget your game to .NET 10 (net10.0 desktop, net10.0-windows7.0 Wi
   <ItemGroup Condition="'$(TargetFramework)' != '$(Cocos2DBaseTfm)'">
     <Compile Remove="$(Cocos2DSourceRoot)label_nodes\CCLabel-Gdi.cs" />
     <Compile Remove="$(Cocos2DSourceRoot)label_nodes\CCLabel-Skia.cs" />
-    <Compile Remove="$(Cocos2DSourceRoot)label_nodes\CCLabelUtilities-Gdi.cs" />
-    <Compile Remove="$(Cocos2DSourceRoot)label_nodes\CCLabelUtilities-Skia.cs" />
   </ItemGroup>
 
   <!-- Mobile vs Desktop EmbeddableView split. Each file is empty when its `#if`
        doesn't match, but excluding outright keeps build output clean. -->
-  <ItemGroup Condition="$(TargetFramework.Contains('-android')) or $(TargetFramework.Contains('-ios'))">
+  <ItemGroup Condition="$(TargetFramework.Contains('-android')) or '$(_Cocos2DUIKitTfm)' == 'true'">
     <Compile Remove="$(Cocos2DSourceRoot)EmbeddableView\CCGameView.Desktop.cs"
              Condition="Exists('$(Cocos2DSourceRoot)EmbeddableView\CCGameView.Desktop.cs')" />
   </ItemGroup>
-  <ItemGroup Condition="!$(TargetFramework.Contains('-android')) and !$(TargetFramework.Contains('-ios'))">
+  <ItemGroup Condition="!$(TargetFramework.Contains('-android')) and '$(_Cocos2DUIKitTfm)' != 'true'">
     <Compile Remove="$(Cocos2DSourceRoot)EmbeddableView\CCGameView.Mobile.cs"
              Condition="Exists('$(Cocos2DSourceRoot)EmbeddableView\CCGameView.Mobile.cs')" />
   </ItemGroup>
@@ -196,6 +237,23 @@ Migration: retarget your game to .NET 10 (net10.0 desktop, net10.0-windows7.0 Wi
   <!-- iOS -->
   <ItemGroup Condition="'$(TargetFramework)' == '$(Cocos2DIosTfm)'">
     <PackageReference Include="MonoGame.Framework.iOS" />
+  </ItemGroup>
+
+  <!-- Mac Catalyst: no MonoGame NuGet package exists for this platform, so the
+       assembly built from our fork is referenced directly. The repo-root
+       Directory.Build.props resolves the path, including the fallback to the fork's
+       Release or Debug artifact for configurations it has not been built for. -->
+  <ItemGroup Condition="'$(TargetFramework)' == '$(Cocos2DMacCatalystTfm)'">
+    <Reference Include="MonoGame.Framework">
+      <HintPath>$(MonoGameMacCatalystAssembly)</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <!-- tvOS: the fork's tvOS assembly, resolved the same way. -->
+  <ItemGroup Condition="'$(TargetFramework)' == '$(Cocos2DTvosTfm)'">
+    <Reference Include="MonoGame.Framework">
+      <HintPath>$(MonoGameTvosAssembly)</HintPath>
+    </Reference>
   </ItemGroup>
 
   <!-- Source Link (all TFMs) -->

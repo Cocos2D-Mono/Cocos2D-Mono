@@ -167,7 +167,12 @@ public abstract class CCApplication : DrawableGameComponent
             CCInputState.Instance.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 #if WINDOWS || WINDOWSGL || MACOS || LINUX || ENABLE_MOUSE
             ProcessMouse(CCInputState.Instance.Mouse);
-#else
+#elif !TVOS
+            // tvOS: the Siri Remote's touch surface reaches MonoGame as touches that
+            // UIKit synthesizes at the view's centre, not at any screen position, so
+            // dispatching them would let every tap on the remote hit whatever is drawn
+            // in the middle of the scene. Selection arrives as a gamepad button from
+            // the same remote; games navigate with the gamepad path instead.
             ProcessTouch(CCInputState.Instance.TouchState);
 #endif
             ProcessGestures(CCInputState.Instance.Gestures);
@@ -182,10 +187,11 @@ public abstract class CCApplication : DrawableGameComponent
         }
         else
         {
-            // Process touch events 
+            // Process touch events
 #if WINDOWS || WINDOWSGL || MACOS || LINUX || ENABLE_MOUSE
             ProcessMouse();
-#else
+#elif !TVOS
+            // tvOS: no screen-space touches (see the note above).
             ProcessTouch();
 #endif
             ProcessGestures();

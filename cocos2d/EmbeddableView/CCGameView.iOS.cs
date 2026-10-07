@@ -95,7 +95,10 @@ public partial class CCGameView : UIView
     void BeginInitialise()
     {
         ContentScaleFactor = UIScreen.MainScreen.Scale;
+#if !TVOS
+        // No touch screen on tvOS; UIView has no MultipleTouchEnabled there.
         MultipleTouchEnabled = true;
+#endif
         UserInteractionEnabled = true;
     }
 

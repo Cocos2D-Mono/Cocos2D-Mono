@@ -1,3 +1,4 @@
+#nullable disable
 #if IOS
 using System;
 using System.Collections.Generic;

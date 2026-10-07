@@ -1,4 +1,5 @@
-﻿#if DESKTOPGL 
+﻿#nullable disable
+#if DESKTOPGL 
 using System;
 using System.Collections.Generic;
 using System.IO;

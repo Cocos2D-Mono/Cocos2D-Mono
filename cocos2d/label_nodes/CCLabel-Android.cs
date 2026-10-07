@@ -1,4 +1,5 @@
-﻿#if ANDROID
+﻿#nullable disable
+#if ANDROID
 using System;
 using System.Runtime.InteropServices;
 using Android.App;

@@ -1,3 +1,4 @@
+#nullable disable
 //
 // Taken from PodSleuth (http://git.gnome.org/cgit/podsleuth)
 //  

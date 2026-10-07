@@ -1,3 +1,4 @@
+#nullable disable
 #if DESKTOPGL || WINDOWS || WINDOWSGL || MACOS || LINUX
 using System;
 using Microsoft.Xna.Framework;

@@ -1,3 +1,4 @@
+#nullable disable
 
 using System.IO;
 using Microsoft.Xna.Framework.Graphics;

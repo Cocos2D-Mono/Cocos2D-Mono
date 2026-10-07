@@ -1,3 +1,4 @@
+#nullable disable
 namespace Cocos2D;
 
 public class CCScaleBy : CCScaleTo

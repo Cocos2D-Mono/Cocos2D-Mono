@@ -130,8 +130,10 @@ with the fork present — and CI checks it on every run.
 
 **How the engine packages publish.** `pack.yml` produces the release packages. Pushing the
 `v<version>` tag packs the tagged commit, checks that the packages carry the tag's version,
-and then waits for a maintainer to approve the protected `nuget` environment, which holds
-the only copy of the nuget.org API key. Once approved, it pushes `Cocos2D-Mono.Box2D`,
+and then waits for a maintainer to approve the protected `nuget` environment. No API key is
+stored: the job uses nuget.org Trusted Publishing to trade a GitHub OIDC token for a
+one-hour key, and the nuget.org policy only accepts this workflow running in that
+environment. Once approved, it pushes `Cocos2D-Mono.Box2D`,
 `Cocos2D-Mono` and `Cocos2D-Mono.Core`, in that order. To retry a publish, run the workflow
 on the tag again. Don't publish a package packed by hand.
 

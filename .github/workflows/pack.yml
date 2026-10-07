@@ -11,9 +11,10 @@ name: pack (consolidated packages)
 #
 # A version tag (v2.6.2 onward) packs the tagged commit and publishes it to nuget.org
 # through the `publish` job below (C2D-264). That job runs in the protected `nuget`
-# environment, which holds the only copy of the API key and waits for a maintainer's
-# approval before anything is pushed. To re-run a publish, dispatch this workflow on
-# the tag. Releases up to 2.6.1 used unprefixed tags and were pushed by hand.
+# environment, which waits for a maintainer's approval before anything is pushed,
+# and authenticates with nuget.org Trusted Publishing instead of a stored API key.
+# To re-run a publish, dispatch this workflow on the tag. Releases up to 2.6.1 used
+# unprefixed tags and were pushed by hand.
 #
 # The legacy 12-package line (Cocos2D-Mono.{Platform} / .Core.{Platform})
 # ended with 2.5.10; these consolidated packages replace it (Stage C4).
@@ -97,9 +98,13 @@ jobs:
     needs: pack
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    # The API key is a secret of this environment only, and the environment requires
-    # a maintainer's approval before the job starts (C2D-264).
+    # nuget.org Trusted Publishing: no API key is stored anywhere. The job exchanges a
+    # GitHub OIDC token for a one-hour key, and the nuget.org policy only accepts
+    # tokens from this workflow running in the protected `nuget` environment, which
+    # also waits for a maintainer's approval before the job starts (C2D-264).
     environment: nuget
+    permissions:
+      id-token: write
     concurrency:
       group: nuget-publish
       cancel-in-progress: false
@@ -114,13 +119,22 @@ jobs:
           name: nuget-packages
           path: artifacts
 
+      # Requested right before the push: the key it returns lives for one hour.
+      # NUGET_USER is the nuget.org profile name the Trusted Publishing policy
+      # belongs to (not an email address), stored in the `nuget` environment.
+      - name: Get a short-lived nuget.org API key
+        id: login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       # Dependency order: Cocos2D-Mono depends on Box2D, and the Core metapackage
       # pins Cocos2D-Mono at exactly this version. Each push also sends the matching
       # .snupkg. --skip-duplicate lets a re-run finish a partial publish.
       - name: Push to nuget.org
         shell: bash
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: |
           version="${GITHUB_REF_NAME#v}"
           for id in Cocos2D-Mono.Box2D Cocos2D-Mono Cocos2D-Mono.Core; do

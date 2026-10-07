@@ -1,3 +1,4 @@
+#nullable disable
 // Copyright (c) 2006, ComponentAce
 // http://www.componentace.com
 // All rights reserved.

@@ -1,3 +1,4 @@
+#nullable disable
 using System;
 
 namespace Cocos2D;

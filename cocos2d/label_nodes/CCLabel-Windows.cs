@@ -1,4 +1,5 @@
-﻿#if WINDOWS
+﻿#nullable disable
+#if WINDOWS
 using System;
 using System.Collections.Generic;
 using System.IO;

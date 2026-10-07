@@ -1,3 +1,4 @@
+#nullable disable
 using Microsoft.Xna.Framework;
 #if ANDROID
 using Android.App;

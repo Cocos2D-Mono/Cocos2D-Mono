@@ -1,3 +1,4 @@
+#nullable disable
 using System;
 #if !NETFRAMEWORK
 using System.Buffers;

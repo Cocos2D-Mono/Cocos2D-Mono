@@ -1,3 +1,4 @@
+#nullable disable
 /*
 * Copyright (c) 2007-2011 Erin Catto http://www.box2d.org
 *

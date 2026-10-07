@@ -84,6 +84,20 @@ Consumers depend on this library, so public API is changed deliberately:
 
 See [ROADMAP.md](ROADMAP.md) for the longer-term direction of the API.
 
+## Nullable reference types
+
+Nullable reference types are enabled for the engine and Box2D, and are being turned on one
+directory at a time. A file that starts with `#nullable disable` hasn't been converted yet.
+
+- New files are nullable-aware by default. Don't add `#nullable disable` to them.
+- To convert a file, remove that line, fix its warnings, and mark what can really be null
+  (`?`, `[NotNullWhen]`, `[MemberNotNull]`) rather than silencing warnings with `!`.
+  Convert a directory at a time, in small PRs.
+- Converting a file changes the nullability its public API reports to consumers, so note
+  the converted area in the CHANGELOG.
+- If a warning turns out to be a real null bug, fix it in its own PR, as with any other
+  bug found along the way.
+
 ## When you find an unrelated bug
 
 Finding a real bug in the middle of another change is common. **Don't fold it into the

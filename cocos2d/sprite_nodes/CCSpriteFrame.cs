@@ -1,3 +1,4 @@
+#nullable disable
 // GEN OK
 
 using System;

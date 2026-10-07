@@ -1,4 +1,5 @@
-﻿#if DESKTOPGL && WINDOWSGL
+﻿#nullable disable
+#if DESKTOPGL && WINDOWSGL
 using System;
 using System.Collections.Generic;
 using System.Drawing;

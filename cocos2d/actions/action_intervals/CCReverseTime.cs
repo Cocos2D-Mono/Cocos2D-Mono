@@ -1,3 +1,4 @@
+#nullable disable
 using System.Diagnostics;
 
 namespace Cocos2D;

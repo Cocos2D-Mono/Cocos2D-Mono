@@ -95,8 +95,9 @@ directory at a time. A file that starts with `#nullable disable` hasn't been con
   Convert a directory at a time, in small PRs.
 - Converting a file changes the nullability its public API reports to consumers, so note
   the converted area in the CHANGELOG.
-- If a warning turns out to be a real null bug, fix it in its own PR, as with any other
-  bug found along the way.
+- If a warning turns out to be a real null bug, the [unrelated-bug rule](#when-you-find-an-unrelated-bug)
+  applies. A small fix on the lines you're converting can go in the same PR, with a
+  regression test and a note in the description. Anything bigger gets its own issue and PR.
 
 ## When you find an unrelated bug
 

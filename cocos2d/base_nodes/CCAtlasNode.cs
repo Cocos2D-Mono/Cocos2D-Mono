@@ -1,6 +1,6 @@
-#nullable disable
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -141,6 +141,9 @@ public class CCAtlasNode : CCNode, ICCTextureProtocol
 
     internal CCAtlasNode()
     {
+        // Subclasses using this constructor (CCLabelAtlas, CCTileMapAtlas) call
+        // InitWithTileFile or InitWithTexture straight after construction, which set it.
+        m_pTextureAtlas = null!;
     }
 
     public CCAtlasNode(string tile, int tileWidth, int tileHeight, int itemsToRender)
@@ -153,6 +156,7 @@ public class CCAtlasNode : CCNode, ICCTextureProtocol
         InitWithTexture(texture, tileWidth, tileHeight, itemsToRender);
     }
 
+    [MemberNotNull(nameof(m_pTextureAtlas))]
     public bool InitWithTileFile(string tile, int tileWidth, int tileHeight, int itemsToRender)
     {
         Debug.Assert(tile != null, "title should not be null");
@@ -160,6 +164,7 @@ public class CCAtlasNode : CCNode, ICCTextureProtocol
         return InitWithTexture(texture, tileWidth, tileHeight, itemsToRender);
     }
 
+    [MemberNotNull(nameof(m_pTextureAtlas))]
     public bool InitWithTexture(CCTexture2D texture, int tileWidth, int tileHeight, int itemsToRender)
     {
         m_uItemWidth = tileWidth;

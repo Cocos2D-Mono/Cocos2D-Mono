@@ -1,5 +1,5 @@
-#nullable disable
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework.Audio;
 
 namespace CocosDenshion;
@@ -13,7 +13,8 @@ namespace CocosDenshion;
 /// </summary>
 public class CCSoundHandle : IDisposable
 {
-    private SoundEffectInstance _instance;
+    // Released (set to null) by Dispose.
+    private SoundEffectInstance? _instance;
     private readonly int _soundId;
     private bool _disposed;
 
@@ -50,6 +51,7 @@ public class CCSoundHandle : IDisposable
     /// <summary>
     /// Whether this handle has been disposed or its instance is no longer valid.
     /// </summary>
+    [MemberNotNullWhen(false, nameof(_instance))]
     public bool IsDisposed
     {
         get { return _disposed || _instance == null || _instance.IsDisposed; }

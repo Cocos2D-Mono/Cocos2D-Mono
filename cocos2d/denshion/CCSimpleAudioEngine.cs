@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using Cocos2D;
@@ -15,7 +14,7 @@ public class CCSimpleAudioEngine
 
     private static Dictionary<int, CCEffectPlayer> s_List = new Dictionary<int, CCEffectPlayer>();
     private static CCMusicPlayer s_Music = new CCMusicPlayer();
-    private static CCSimpleAudioEngine _Instance;
+    private static CCSimpleAudioEngine? _Instance;
     private static bool _NoAudioHardware = false;
 
     // Throttling: tracks last play time per effect for minInterval support
@@ -479,19 +478,19 @@ public class CCSimpleAudioEngine
     /// <param name="pszFilePath">Path to the sound effect file.</param>
     /// <param name="volume">Volume from 0.0 to 1.0.</param>
     /// <param name="bLoop">Whether to loop the sound.</param>
-    public CCSoundHandle PlayEffectHandled(string pszFilePath, float volume = 1f, bool bLoop = false)
+    public CCSoundHandle? PlayEffectHandled(string pszFilePath, float volume = 1f, bool bLoop = false)
     {
         if (_NoAudioHardware || string.IsNullOrEmpty(pszFilePath)) return null;
 
         int nId = pszFilePath.GetHashCode();
         PreloadEffect(pszFilePath);
 
-        SoundEffectInstance instance = null;
+        SoundEffectInstance? instance = null;
         lock (SharedList)
         {
             try
             {
-                CCEffectPlayer player;
+                CCEffectPlayer? player;
                 if (SharedList.TryGetValue(nId, out player))
                 {
                     instance = player.CreateInstance();

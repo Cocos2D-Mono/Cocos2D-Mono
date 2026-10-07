@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using Cocos2D;
 using Microsoft.Xna.Framework.Audio;
@@ -8,8 +7,9 @@ namespace CocosDenshion;
 public class CCEffectPlayer
 {
     public static ulong s_mciError;
-    private SoundEffect _effect;
-    private SoundEffectInstance _sfxInstance;
+    // Null until an effect is opened, and again after Close.
+    private SoundEffect? _effect;
+    private SoundEffectInstance? _sfxInstance;
     private int _soundId;
 
     public CCEffectPlayer()
@@ -125,7 +125,7 @@ public class CCEffectPlayer
     /// Creates a new SoundEffectInstance for this effect.
     /// Returns null if no effect is loaded.
     /// </summary>
-    internal SoundEffectInstance CreateInstance()
+    internal SoundEffectInstance? CreateInstance()
     {
         if (_effect == null) return null;
         return _effect.CreateInstance();

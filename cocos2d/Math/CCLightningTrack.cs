@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +13,7 @@ public class CCLightningTrack
     private CCPoint _End;
     private List<CCPoint> _Track;
     private float _TrackLength = 0f;
-    private Dictionary<float, CCLightningTrack> _Branches;
+    private Dictionary<float, CCLightningTrack>? _Branches;
 
     public CCLightningTrack(CCPoint start, CCPoint end)
     {
@@ -126,7 +125,9 @@ public class CCLightningTrack
 
     private float _Length;
     private CCPoint _uDir;
-    private float[] _SegmentLengths;
+    // Filled by CreateBolt. An override that skips base leaves it empty, and GetPoint
+    // then falls back to its older algorithm.
+    private float[] _SegmentLengths = Array.Empty<float>();
 
     // Returns the point where the bolt is at a given fraction of the way through the bolt. Passing
     // zero will return the start of the bolt, and passing 1 will return the end.

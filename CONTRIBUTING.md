@@ -133,7 +133,10 @@ with the fork present — and CI checks it on every run.
 and then waits for a maintainer to approve the protected `nuget` environment. No API key is
 stored: the job uses nuget.org Trusted Publishing to trade a GitHub OIDC token for a
 one-hour key, and the nuget.org policy only accepts this workflow running in that
-environment. Once approved, it pushes `Cocos2D-Mono.Box2D`,
+environment. The environment must exist before the first `v` tag, with a required reviewer
+and a `NUGET_USER` secret holding the nuget.org profile name of whoever created the Trusted
+Publishing policy (not the organization that owns it). The workflow refuses to publish if
+the environment has no required reviewer. Once approved, it pushes `Cocos2D-Mono.Box2D`,
 `Cocos2D-Mono` and `Cocos2D-Mono.Core`, in that order. To retry a publish, run the workflow
 on the tag again. Don't publish a package packed by hand.
 

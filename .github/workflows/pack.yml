@@ -93,9 +93,38 @@ jobs:
             artifacts/*.nupkg
             artifacts/*.snupkg
 
+  # GitHub creates a missing environment, with no protection rules, the first time a
+  # job uses it. So before anything references `nuget`, check it exists and requires a
+  # reviewer. A version tag fails here if not; any other run only warns, which keeps
+  # this check exercised on every release-branch run.
+  environment-guard:
+    name: Check the nuget environment is protected
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    steps:
+      - name: Require a reviewer on the nuget environment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ENFORCE: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        run: |
+          if rules=$(gh api "repos/$GITHUB_REPOSITORY/environments/nuget" --jq '[.protection_rules[].type] | join(",")' 2>err.txt); then
+            case ",$rules," in
+              *,required_reviewers,*) echo "nuget environment protection rules: $rules"; exit 0 ;;
+              *) problem="The nuget environment has no required reviewer (rules: ${rules:-none})." ;;
+            esac
+          else
+            problem="Could not read the nuget environment: $(cat err.txt)"
+          fi
+          if [ "$ENFORCE" = "true" ]; then
+            echo "::error::$problem Publishing needs it, with a required reviewer; see CONTRIBUTING.md."
+            exit 1
+          fi
+          echo "::warning::$problem A version tag would stop here until it is set up; see CONTRIBUTING.md."
+
   publish:
     name: Publish to nuget.org
-    needs: pack
+    needs: [pack, environment-guard]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     # nuget.org Trusted Publishing: no API key is stored anywhere. The job exchanges a
@@ -119,9 +148,19 @@ jobs:
           name: nuget-packages
           path: artifacts
 
+      # NUGET_USER, a secret of the `nuget` environment, is the nuget.org profile name
+      # of whoever created the Trusted Publishing policy: not the organization that
+      # owns it, and not an email address. NuGet/login rejects anything else.
+      - name: Check NUGET_USER is set
+        env:
+          NUGET_USER: ${{ secrets.NUGET_USER }}
+        run: |
+          if [ -z "$NUGET_USER" ]; then
+            echo "::error::The nuget environment needs a NUGET_USER secret: the nuget.org profile name of whoever created the Trusted Publishing policy."
+            exit 1
+          fi
+
       # Requested right before the push: the key it returns lives for one hour.
-      # NUGET_USER is the nuget.org profile name the Trusted Publishing policy
-      # belongs to (not an email address), stored in the `nuget` environment.
       - name: Get a short-lived nuget.org API key
         id: login
         uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0

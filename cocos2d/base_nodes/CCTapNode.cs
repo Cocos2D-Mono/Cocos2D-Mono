@@ -1,15 +1,14 @@
-﻿#nullable disable
-using System;
+﻿using System;
 using Cocos2D;
 
 namespace cocos2d.base_nodes;
 
 public class CCTapNode<T> : CCNode, IDisposable
 {
-    public delegate void TapHandler(T data, CCNode node, CCPoint tapLocation);
-    public event TapHandler OnTapped;
-    public delegate void TouchBeginHandler(T data, CCNode node, CCPoint touchLocation);
-    public event TouchBeginHandler OnTouchBegin;
+    public delegate void TapHandler(T? data, CCNode node, CCPoint tapLocation);
+    public event TapHandler? OnTapped;
+    public delegate void TouchBeginHandler(T? data, CCNode node, CCPoint touchLocation);
+    public event TouchBeginHandler? OnTouchBegin;
     private bool _active;
     protected bool _disposed { get; private set; }
 
@@ -24,7 +23,10 @@ public class CCTapNode<T> : CCNode, IDisposable
 
     public bool IsSwallowTouches { get; set; }
 
-    public virtual T Data { get; set; }
+    /// <summary>
+    /// Data passed to the tap handlers. Defaults to <c>default(T)</c> until set.
+    /// </summary>
+    public virtual T? Data { get; set; }
 
     public bool Active
     {
@@ -101,10 +103,14 @@ public class CCTapNode<T> : CCNode, IDisposable
     protected void RefreshContentSize()
     {
         CCSize newContentSize = new CCSize();
-        foreach (var child in Children)
+        // Children is null until the first child is added; no children means zero size.
+        if (Children != null)
         {
-            newContentSize.Height = Math.Max(newContentSize.Height, child.ContentSize.Height);
-            newContentSize.Width = Math.Max(newContentSize.Width, child.ContentSize.Width);
+            foreach (var child in Children)
+            {
+                newContentSize.Height = Math.Max(newContentSize.Height, child.ContentSize.Height);
+                newContentSize.Width = Math.Max(newContentSize.Width, child.ContentSize.Width);
+            }
         }
         ContentSize = newContentSize;
     }

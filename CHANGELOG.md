@@ -4,6 +4,32 @@ All notable changes to Cocos2D-Mono are recorded here. This file was introduced 
 2.5.10; earlier releases are described in their GitHub release notes / git history.
 The project follows [Semantic Versioning](https://semver.org/) where practical.
 
+## Unreleased
+
+### Changed
+
+- **Nullable annotations for `CCNode`, `CCAtlasNode` and `CCTapNode`.** These are the first
+  types converted to nullable reference types; more follow directory by directory through
+  2.x. Projects with nullable enabled now see which members can be null:
+  - `CCNode.Parent`, `Grid`, `Name`, `UserData`, `UserObject`
+  - `CCNode.Children`, which is null until the first child is added
+  - `CCNode.GetChildByTag`, which returns null for an unknown tag
+  - `CCNode.RunActions`, which returns null when given no actions
+  - `CCTapNode<T>.Data` and its handlers' `data` argument, which are `T?`
+
+  This only adds warnings, and only in projects that enable nullable; nothing stops
+  compiling.
+
+### Fixed
+
+- `CCNode.Compare` accepts null arguments, ordering them first as `IComparer<T>` allows,
+  instead of throwing.
+- `CCNode.SortAllChildren` and `UpdateZOrderRange` no longer throw on a node with no
+  children.
+- `CCTapNode.RefreshContentSize` sizes a node with no children to zero instead of throwing.
+- Deserializing malformed node data throws an `InvalidDataException` that names the problem,
+  instead of a null reference error.
+
 ## 2.6.1 - 2026-10-09
 
 A small patch release: two changes to how `CCLabel` draws text on Linux and macOS. No API

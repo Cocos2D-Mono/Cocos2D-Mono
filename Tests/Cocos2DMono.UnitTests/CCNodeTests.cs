@@ -1,4 +1,5 @@
 using Cocos2D;
+using cocos2d.base_nodes;
 using Xunit;
 
 namespace Cocos2DMono.UnitTests;
@@ -109,5 +110,73 @@ public class CCNodeTests
 
         Assert.Null(parent.GetChildByTag(10));         // old tag no longer resolves
         Assert.Same(child, parent.GetChildByTag(20));  // new tag resolves
+    }
+
+    [Fact]
+    public void Compare_OrdersByZOrderThenArrival()
+    {
+        var parent = new CCNode();
+        var first = new CCNode();
+        var second = new CCNode();
+        var back = new CCNode();
+        parent.AddChild(first, 1);
+        parent.AddChild(second, 1);
+        parent.AddChild(back, 0);
+
+        Assert.True(parent.Compare(back, first) < 0);    // lower z sorts first
+        Assert.True(parent.Compare(first, second) < 0); // same z: earlier arrival first
+        Assert.Equal(0, parent.Compare(first, first));
+    }
+
+    [Fact]
+    public void Compare_NullArguments_SortFirstInsteadOfThrowing()
+    {
+        // IComparer<T> allows nulls (C2D-267); they used to throw NullReferenceException.
+        var node = new CCNode();
+
+        Assert.Equal(0, node.Compare(null, null));
+        Assert.True(node.Compare(null, node) < 0);
+        Assert.True(node.Compare(node, null) > 0);
+    }
+
+    [Fact]
+    public void SortAllChildren_ReorderFlagWithNoChildren_DoesNotThrow()
+    {
+        // The reorder flag can be set on a node with no children (it is deserialized).
+        var node = new ProbeNode();
+        node.MarkReorderDirty();
+
+        Assert.Null(Record.Exception(() => node.SortAllChildren()));
+    }
+
+    [Fact]
+    public void UpdateZOrderRange_WithNoChildren_DoesNotThrow()
+    {
+        var node = new ProbeNode();
+
+        Assert.Null(Record.Exception(() => node.RecomputeZOrderRange()));
+    }
+
+    [Fact]
+    public void TapNode_RefreshContentSize_WithNoChildren_IsZero()
+    {
+        var node = new ProbeTapNode { ContentSize = new CCSize(10, 10) };
+
+        node.Refresh();
+
+        Assert.Equal(0, node.ContentSize.Width);
+        Assert.Equal(0, node.ContentSize.Height);
+    }
+
+    private sealed class ProbeNode : CCNode
+    {
+        public void MarkReorderDirty() => m_bReorderChildDirty = true;
+
+        public void RecomputeZOrderRange() => UpdateZOrderRange();
+    }
+
+    private sealed class ProbeTapNode : CCTapNode<string>
+    {
+        public void Refresh() => RefreshContentSize();
     }
 }

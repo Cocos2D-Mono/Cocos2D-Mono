@@ -20,6 +20,7 @@ public class CCTimerAction : CCFiniteTimeAction
 
     protected internal override void StartWithTarget(CCNode target)
     {
+        base.StartWithTarget(target);
         _castedActionTarget = target as ITimerActionListener;
     }
 

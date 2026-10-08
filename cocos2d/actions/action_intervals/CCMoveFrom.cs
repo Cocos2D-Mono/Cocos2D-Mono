@@ -21,6 +21,7 @@ public class CCMoveFrom : CCFiniteTimeAction
 
     protected internal override void StartWithTarget(CCNode target)
     {
+        base.StartWithTarget(target);
         _targetTo = target.Position;
     }
 

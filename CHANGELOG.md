@@ -100,6 +100,11 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - `CCLayerMultiplex.SwitchToAndReleaseMe` releases a tagged layer's tag as well as its
   index. Releasing the active layer itself now removes it and shows nothing, instead of
   leaving it on screen and still marked active.
+- `CCMoveFrom`, `CCColorBlendAnimation`, `CCRotateAnimation` and `CCTimerAction` now set
+  their target when they start. Before, the first two never changed their node,
+  `CCRotateAnimation` threw `NullReferenceException` as soon as it ran, and the action
+  manager couldn't remove any of them. `CCRotateAnimation` starts from `Rotation` when the
+  node doesn't implement `ICCRotationAnimationGetter`.
 
 ## 2.6.1 - 2026-10-09
 

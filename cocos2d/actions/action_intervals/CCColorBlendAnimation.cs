@@ -27,6 +27,7 @@ public class CCColorBlendAnimation : CCFiniteTimeAction
 
     protected internal override void StartWithTarget(CCNode target)
     {
+        base.StartWithTarget(target);
         _startColor = target.Color;
 
         var endColor = EndColor;

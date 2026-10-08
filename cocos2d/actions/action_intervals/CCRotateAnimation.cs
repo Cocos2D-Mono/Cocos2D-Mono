@@ -21,7 +21,8 @@ public class CCRotateAnimation : CCFiniteTimeAction
 
     protected internal override void StartWithTarget(CCNode target)
     {
-        _startAngle = (Target as ICCRotationAnimationGetter).CurrentRotation;
+        base.StartWithTarget(target);
+        _startAngle = target is ICCRotationAnimationGetter getter ? getter.CurrentRotation : target.Rotation;
     }
 
     public override void Update(float time)

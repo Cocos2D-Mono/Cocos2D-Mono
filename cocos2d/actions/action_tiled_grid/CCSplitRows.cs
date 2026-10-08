@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2010 Ricardo Quesada
@@ -41,7 +40,7 @@ public class CCSplitRows : CCTiledGrid3DAction
         return base.InitWithDuration(duration, new CCGridSize(1, nRows));
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCSplitRows pCopy;
         if (pZone != null)

@@ -66,6 +66,13 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   change: `CCEaseElastic.Reverse()` throws `NotSupportedException` instead of returning
   null. The base elastic ease has no curve of its own to reverse; `CCEaseElasticIn`,
   `CCEaseElasticOut` and `CCEaseElasticInOut` reverse as before.
+- **Nullable annotations for the grid actions.** The visible changes:
+  - `CCGridAction.Grid` throws `NotSupportedException` instead of returning null for a grid
+    action that doesn't create a grid, so running one fails with that instead of
+    `NullReferenceException`. `CCGrid3DAction` and `CCTiledGrid3DAction` create a grid, as
+    before.
+  - `CCShuffleTiles` and `CCTurnOffTiles` keep empty tile arrays, not null, until they
+    start.
 
 ### Fixed
 
@@ -129,6 +136,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   fill the zone from the original. They used to copy the zone's values into the original.
 - Copying a `CCReverseTime` copies its inner action, so the original and the copy can run
   at the same time on different nodes. They used to share it.
+- `CCAccelAmplitude`, `CCAccelDeccelAmplitude` and `CCDeccelAmplitude` throw
+  `InvalidCastException` when given an action that isn't an interval action, instead of
+  `NullReferenceException` when they start.
 
 ## 2.6.1 - 2026-10-09
 

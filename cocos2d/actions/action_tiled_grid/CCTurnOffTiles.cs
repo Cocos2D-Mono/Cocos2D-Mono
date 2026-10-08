@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2010 Ricardo Quesada
@@ -24,6 +23,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 
+using System;
+
 namespace Cocos2D;
 
 /// <summary>
@@ -35,7 +36,7 @@ public class CCTurnOffTiles : CCTiledGrid3DAction
     private CCQuad3 _zero;
     protected int m_nSeed;
     protected int m_nTilesCount;
-    protected int[] m_pTilesOrder;
+    protected int[] m_pTilesOrder = Array.Empty<int>();
 
     /// <summary>
     /// initializes the action with a random seed, the grid size and the duration 
@@ -45,7 +46,7 @@ public class CCTurnOffTiles : CCTiledGrid3DAction
         if (base.InitWithDuration(duration, gridSize))
         {
             m_nSeed = seed;
-            m_pTilesOrder = null;
+            m_pTilesOrder = Array.Empty<int>();
 
             return true;
         }
@@ -76,7 +77,7 @@ public class CCTurnOffTiles : CCTiledGrid3DAction
         SetTile(pos, ref _zero);
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCTurnOffTiles pCopy;
         if (pZone != null)

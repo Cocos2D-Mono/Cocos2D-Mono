@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2010 Ricardo Quesada
@@ -24,6 +23,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 
+using System;
+using System.Diagnostics;
+
 namespace Cocos2D;
 
 /// <summary>
@@ -34,8 +36,8 @@ public class CCShuffleTiles : CCTiledGrid3DAction
 {
     protected int m_nSeed;
     protected int m_nTilesCount;
-    protected CCTile[] m_pTiles;
-    protected int[] m_pTilesOrder;
+    protected CCTile[] m_pTiles = Array.Empty<CCTile>();
+    protected int[] m_pTilesOrder = Array.Empty<int>();
 
     /// <summary>
     /// initializes the action with a random seed, the grid size and the duration
@@ -45,8 +47,8 @@ public class CCShuffleTiles : CCTiledGrid3DAction
         if (base.InitWithDuration(duration, gridSize))
         {
             m_nSeed = seed;
-            m_pTilesOrder = null;
-            m_pTiles = null;
+            m_pTilesOrder = Array.Empty<int>();
+            m_pTiles = Array.Empty<CCTile>();
 
             return true;
         }
@@ -80,6 +82,7 @@ public class CCShuffleTiles : CCTiledGrid3DAction
 
     public void PlaceTile(CCGridSize pos, CCTile t)
     {
+        Debug.Assert(m_pTarget?.Grid != null, "PlaceTile only runs while the action is started");
         CCQuad3 coords = OriginalTile(pos);
 
         CCPoint step = m_pTarget.Grid.Step;
@@ -160,7 +163,7 @@ public class CCShuffleTiles : CCTiledGrid3DAction
         }
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCShuffleTiles pCopy;
         if (pZone != null)

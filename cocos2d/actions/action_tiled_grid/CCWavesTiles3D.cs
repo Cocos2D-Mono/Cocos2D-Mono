@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2010 Ricardo Quesada
@@ -71,7 +70,7 @@ public class CCWavesTiles3D : CCTiledGrid3DAction
         return false;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCWavesTiles3D pCopy;
         if (pZone != null)

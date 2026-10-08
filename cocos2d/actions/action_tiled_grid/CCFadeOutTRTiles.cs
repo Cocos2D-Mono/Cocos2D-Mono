@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2010 Ricardo Quesada
@@ -25,6 +24,7 @@ THE SOFTWARE.
 ****************************************************************************/
 
 using System;
+using System.Diagnostics;
 
 namespace Cocos2D;
 
@@ -61,6 +61,7 @@ public class CCFadeOutTRTiles : CCTiledGrid3DAction
 
     public virtual void TransformTile(CCGridSize pos, float distance)
     {
+        Debug.Assert(m_pTarget?.Grid != null, "TransformTile only runs while the action is started");
         CCQuad3 coords = OriginalTile(pos);
         CCPoint step = m_pTarget.Grid.Step;
 

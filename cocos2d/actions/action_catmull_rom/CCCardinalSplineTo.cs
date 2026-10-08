@@ -138,6 +138,23 @@ public class CCCardinalSplineBy : CCCardinalSplineTo
         InitWithDuration(duration, points, tension);
     }
 
+    protected CCCardinalSplineBy(CCCardinalSplineBy cardinalSplineBy) : base(cardinalSplineBy)
+    {
+    }
+
+    public override object Copy(ICCCopyable? pZone)
+    {
+        if (pZone != null)
+        {
+            //in case of being called at sub class
+            var pCopy = (CCCardinalSplineBy) pZone;
+            base.Copy(pCopy);
+
+            return pCopy;
+        }
+        return new CCCardinalSplineBy(this);
+    }
+
     protected internal override void StartWithTarget(CCNode target)
     {
         base.StartWithTarget(target);
@@ -201,6 +218,23 @@ public class CCCatmullRomTo : CCCardinalSplineTo
         InitWithDuration(dt, points);
     }
 
+    protected CCCatmullRomTo(CCCatmullRomTo catmullRomTo) : base(catmullRomTo)
+    {
+    }
+
+    public override object Copy(ICCCopyable? pZone)
+    {
+        if (pZone != null)
+        {
+            //in case of being called at sub class
+            var pCopy = (CCCatmullRomTo) pZone;
+            base.Copy(pCopy);
+
+            return pCopy;
+        }
+        return new CCCatmullRomTo(this);
+    }
+
     public bool InitWithDuration(float dt, List<CCPoint> points)
     {
         if (base.InitWithDuration(dt, points, 0.5f))
@@ -216,6 +250,23 @@ public class CCCatmullRomBy : CCCardinalSplineBy
     public CCCatmullRomBy(float dt, List<CCPoint> points) : base(dt, points, 0.5f)
     {
         InitWithDuration(dt, points);
+    }
+
+    protected CCCatmullRomBy(CCCatmullRomBy catmullRomBy) : base(catmullRomBy)
+    {
+    }
+
+    public override object Copy(ICCCopyable? pZone)
+    {
+        if (pZone != null)
+        {
+            //in case of being called at sub class
+            var pCopy = (CCCatmullRomBy) pZone;
+            base.Copy(pCopy);
+
+            return pCopy;
+        }
+        return new CCCatmullRomBy(this);
     }
 
     public bool InitWithDuration(float dt, List<CCPoint> points)

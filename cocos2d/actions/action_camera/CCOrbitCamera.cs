@@ -97,8 +97,7 @@ public class CCOrbitCamera : CCActionCamera
         {
             var ret = (CCOrbitCamera) zone;
             base.Copy(zone);
-            Init(ret.m_fRadius, ret.m_fDeltaRadius, ret.m_fAngleZ, ret.m_fDeltaAngleZ, ret.m_fAngleX,
-                 ret.m_fDeltaAngleX);
+            ret.Init(m_fRadius, m_fDeltaRadius, m_fAngleZ, m_fDeltaAngleZ, m_fAngleX, m_fDeltaAngleX);
             return ret;
         }
         else

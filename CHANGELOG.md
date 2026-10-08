@@ -132,8 +132,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   naming that action, instead of `NullReferenceException`.
 - `Copy(zone)` on an interval action throws `InvalidCastException` for a zone of another
   type, as most already did. Some returned null and others threw `NullReferenceException`.
-- `CCScaleTo.Copy(zone)`, which `CCScaleBy` also uses, and `CCReverseTime.Copy(zone)`
-  fill the zone from the original. They used to copy the zone's values into the original.
+- `CCScaleTo.Copy(zone)`, which `CCScaleBy` also uses, `CCReverseTime.Copy(zone)` and
+  `CCOrbitCamera.Copy(zone)` fill the zone from the original. They used to copy the zone's
+  values into the original.
 - Copying a `CCReverseTime` copies its inner action, so the original and the copy can run
   at the same time on different nodes. They used to share it.
 - `CCAccelAmplitude`, `CCAccelDeccelAmplitude` and `CCDeccelAmplitude` throw

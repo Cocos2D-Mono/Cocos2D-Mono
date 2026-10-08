@@ -19,6 +19,19 @@ public class CCParticleSystemQuadTests
     }
 
     [Fact]
+    public void SetDisplayFrame_WithAFrameWithoutATexture_ClearsTheTexture()
+    {
+        // A frame made with the parameterless constructor has no texture, and reading its
+        // texture's name threw (C2D-286).
+        var system = new CCParticleSystemQuad(1);
+        system.Texture = new CCTexture2D();
+
+        system.SetDisplayFrame(new CCSpriteFrame());
+
+        Assert.Null(system.Texture);
+    }
+
+    [Fact]
     public void Texture_SetToNull_ClearsTheTexture()
     {
         // The setter read the new texture's size before checking it, so null threw

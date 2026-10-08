@@ -26,6 +26,12 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     already said it could.
   - `CCScriptEngineManager.ScriptEngine` is nullable.
   - The geometry types' `Equals(object)` overrides accept null.
+- **Nullable annotations for input handling** (the touch, keyboard and keypad dispatchers
+  and the text input node). The visible changes:
+  - `CCTouchDispatcher.FindHandler` returns `CCTouchHandler?`. It already returned null for
+    a delegate that isn't registered.
+  - `CCKeypadHandler.Delegate` is nullable: a handler created with `new` has no delegate
+    until `InitWithDelegate`.
 
 ### Fixed
 
@@ -43,6 +49,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - `CCLightningTrack.GetPoint`'s fallback interpolates on the segment that contains the
   requested position. It used to skip that segment, returning a point on the next one or
   the end of the bolt.
+- A `CCTouchDispatcher` used before `Init()` no longer throws when delegates are added or
+  removed.
 
 ## 2.6.1 - 2026-10-09
 

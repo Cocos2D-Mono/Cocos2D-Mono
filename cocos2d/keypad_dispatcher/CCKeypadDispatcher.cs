@@ -1,6 +1,6 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -106,7 +106,8 @@ public class CCKeypadDispatcher
             for (int i = 0; i < m_pDelegates.Count; i++)
             {
                 CCKeypadHandler pHandler = m_pDelegates[i];
-                ICCKeypadDelegate pDelegate = pHandler.Delegate;
+                ICCKeypadDelegate? pDelegate = pHandler.Delegate;
+                Debug.Assert(pDelegate != null, "Keypad handlers are always created with a delegate");
 
                 switch (nMsgType)
                 {

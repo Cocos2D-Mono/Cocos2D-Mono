@@ -1,5 +1,5 @@
-#nullable disable
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework.Input;
 
 namespace Cocos2D;
@@ -45,6 +45,7 @@ namespace Cocos2D;
 
 		/** initializes a CCKeyboardHandler with a delegate */
 
+		[MemberNotNull(nameof(m_pDelegate))]
 		public virtual bool InitWithDelegate(ICCKeyboardDelegate pDelegate)
 		{
 			m_pDelegate = pDelegate;

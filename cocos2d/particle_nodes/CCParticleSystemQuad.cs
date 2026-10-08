@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
@@ -8,7 +7,8 @@ namespace Cocos2D;
 
 public class CCParticleSystemQuad : CCParticleSystem
 {
-    private CCRawList<CCV3F_C4B_T2F_Quad> _quads; // quads to be rendered
+    // quads to be rendered; null while the system renders through a batch node
+    private CCRawList<CCV3F_C4B_T2F_Quad>? _quads;
 
     //implementation CCParticleSystemQuad
     // overriding the init method
@@ -75,6 +75,7 @@ public class CCParticleSystemQuad : CCParticleSystem
         }
         else
         {
+            Debug.Assert(_quads != null, "A system outside a batch node has its own quads");
             quads = _quads.Elements;
             start = 0;
             end = m_uTotalParticles;
@@ -108,10 +109,16 @@ public class CCParticleSystemQuad : CCParticleSystem
         InitTexCoordsWithRect(rect);
     }
 
-    public override CCTexture2D Texture
+    public override CCTexture2D? Texture
     {
         set
         {
+            if (value == null)
+            {
+                base.Texture = null;
+                return;
+            }
+
             CCSize s = value.ContentSize;
             SetTextureWithRect(value, new CCRect(0, 0, s.Width, s.Height));
         }
@@ -123,7 +130,7 @@ public class CCParticleSystemQuad : CCParticleSystem
                      "QuadParticle only supports SpriteFrames with no offsets");
 
         // update texture before updating texture rect
-        if (m_pTexture != null || spriteFrame.Texture.Name != m_pTexture.Name)
+        if (m_pTexture == null || spriteFrame.Texture.Name != m_pTexture.Name)
         {
             Texture = spriteFrame.Texture;
         }
@@ -262,6 +269,7 @@ public class CCParticleSystemQuad : CCParticleSystem
         }
         else
         {
+            Debug.Assert(_quads != null, "A system outside a batch node has its own quads");
             quads = _quads.Elements;
         }
 
@@ -341,13 +349,13 @@ public class CCParticleSystemQuad : CCParticleSystem
         return true;
     }
 
-    public override CCParticleBatchNode BatchNode
+    public override CCParticleBatchNode? BatchNode
     {
         set
         {
             if (m_pBatchNode != value)
             {
-                CCParticleBatchNode oldBatch = m_pBatchNode;
+                CCParticleBatchNode? oldBatch = m_pBatchNode;
 
                 base.BatchNode = value;
 
@@ -355,14 +363,17 @@ public class CCParticleSystemQuad : CCParticleSystem
                 if (value == null)
                 {
                     AllocMemory();
+                    // value differs from the old batch node, so leaving one means there was one.
+                    Debug.Assert(oldBatch != null, "Leaving a batch node");
                     Texture = oldBatch.Texture;
                 }
                     // OLD: was it self render ? cleanup
                 else if (oldBatch == null)
                 {
                     // copy current state to batch
-                    var batchQuads = m_pBatchNode.TextureAtlas.m_pQuads.Elements;
-                    m_pBatchNode.TextureAtlas.Dirty = true;
+                    var batchQuads = value.TextureAtlas.m_pQuads.Elements;
+                    value.TextureAtlas.Dirty = true;
+                    Debug.Assert(_quads != null, "A system outside a batch node has its own quads");
                     Array.Copy(_quads.Elements, 0, batchQuads, m_uAtlasIndex, m_uTotalParticles);
                     _quads = null;
                 }

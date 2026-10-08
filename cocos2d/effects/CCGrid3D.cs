@@ -1,4 +1,3 @@
-#nullable disable
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Cocos2D;
@@ -43,11 +42,12 @@ internal struct CCV3F_T2F : IVertexType
 public class CCGrid3D : CCGridBase
 {
     private bool _dirty;
-    private CCIndexBuffer<ushort> _indexBuffer;
-    protected ushort[] m_pIndices;
-    protected CCVertex3F[] m_pOriginalVertices;
-    private CCVertexBuffer<CCV3F_T2F> _vertexBuffer;
-    internal CCV3F_T2F[] m_pVertices;
+    // CalculateVertexPoints creates these, and every constructor reaches it through InitWithSize.
+    private CCIndexBuffer<ushort> _indexBuffer = null!;
+    protected ushort[] m_pIndices = null!;
+    protected CCVertex3F[] m_pOriginalVertices = null!;
+    private CCVertexBuffer<CCV3F_T2F> _vertexBuffer = null!;
+    internal CCV3F_T2F[] m_pVertices = null!;
 
     //protected CCPoint[] m_pTexCoordinates;
     //protected ccVertex3F[] m_pVertices;

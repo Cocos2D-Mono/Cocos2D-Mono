@@ -1,4 +1,3 @@
-#nullable disable
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -6,7 +5,8 @@ namespace Cocos2D;
 
 public class CCGrabber
 {
-    private RenderTarget2D _oldRenderTarget;
+    // Null when the previous target was the back buffer.
+    private RenderTarget2D? _oldRenderTarget;
 
     public void Grab(CCTexture2D pTexture)
     {

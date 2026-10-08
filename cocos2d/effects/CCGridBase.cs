@@ -1,4 +1,4 @@
-#nullable disable
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -19,6 +19,13 @@ public abstract class CCGridBase
     protected CCTexture2D m_pTexture;
 
     protected CCGridSize m_sGridSize;
+
+    // Subclass constructors call InitWithSize, which sets the texture and grabber.
+    protected CCGridBase()
+    {
+        m_pGrabber = null!;
+        m_pTexture = null!;
+    }
 
     /// <summary>
     ///  wheter or not the grid is active
@@ -80,10 +87,9 @@ public abstract class CCGridBase
         }
     }
 
+    [MemberNotNull(nameof(m_pTexture), nameof(m_pGrabber))]
     protected virtual bool InitWithSize(CCGridSize gridSize, CCTexture2D pTexture, bool bFlipped)
     {
-        bool bRet = true;
-
         m_bActive = false;
         m_nReuseGrid = 0;
         m_sGridSize = gridSize;
@@ -97,19 +103,12 @@ public abstract class CCGridBase
         m_obStep.Y = texSize.Height / m_sGridSize.Y;
 
         m_pGrabber = new CCGrabber();
-        if (m_pGrabber != null)
-        {
-            m_pGrabber.Grab(m_pTexture);
-        }
-        else
-        {
-            bRet = false;
-        }
+        m_pGrabber.Grab(m_pTexture);
 
         //m_pShaderProgram = CCShaderCache::sharedShaderCache()->programForKey(kCCShader_PositionTexture);
         CalculateVertexPoints();
 
-        return bRet;
+        return true;
     }
 
     protected virtual bool InitWithSize(CCGridSize gridSize)

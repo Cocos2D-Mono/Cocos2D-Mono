@@ -1,6 +1,6 @@
-#nullable disable
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -13,7 +13,13 @@ public class CCTransitionScene : CCScene
     protected CCScene m_pOutScene;
 
     // This can be taken out once all the transitions have been modified with constructors.
-    protected CCTransitionScene() {}
+    // A transition made this way has no scenes before Reset, which
+    // CCDirector.PopScene(t, transition) calls with the scene to show.
+    protected CCTransitionScene()
+    {
+        m_pInScene = null!;
+        m_pOutScene = null!;
+    }
 
     /*
     public CCTransitionScene(float t)
@@ -93,23 +99,24 @@ public class CCTransitionScene : CCScene
         InitWithDuration(t, scene);
     }
 
+    [MemberNotNull(nameof(m_pInScene), nameof(m_pOutScene))]
     protected virtual bool InitWithDuration(float t, CCScene scene)
     {
         Debug.Assert(scene != null, "Argument scene must be non-nil");
 
+        // retain
+        m_pInScene = scene;
+        m_pOutScene = CCDirector.SharedDirector.RunningScene;
+        if (m_pOutScene == null)
+        {
+            // Creating an empty scene.
+            m_pOutScene = new CCScene();
+            m_pOutScene.Init();
+        }
+
         if (base.Init())
         {
             m_fDuration = t;
-
-            // retain
-            m_pInScene = scene;
-            m_pOutScene = CCDirector.SharedDirector.RunningScene;
-            if (m_pOutScene == null)
-            {
-                // Creating an empty scene.
-                m_pOutScene = new CCScene();
-                m_pOutScene.Init();
-            }
 
             Debug.Assert(m_pInScene != m_pOutScene, "Incoming scene must be different from the outgoing scene");
 

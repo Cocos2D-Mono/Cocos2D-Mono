@@ -1,4 +1,5 @@
-#nullable disable
+using System.Diagnostics.CodeAnalysis;
+
 namespace Cocos2D;
 
 public abstract class CCTransitionProgress : CCTransitionScene
@@ -6,7 +7,8 @@ public abstract class CCTransitionProgress : CCTransitionScene
     private const int kCCSceneRadial = 0xc001;
     protected float m_fFrom;
     protected float m_fTo;
-    protected CCScene m_pSceneToBeModified;
+    // Set by SetupTransition when the transition starts.
+    protected CCScene? m_pSceneToBeModified;
 
     public CCTransitionProgress()
     {
@@ -70,6 +72,7 @@ public abstract class CCTransitionProgress : CCTransitionScene
 
     protected abstract CCProgressTimer ProgressTimerNodeWithRenderTexture(CCRenderTexture texture);
 
+    [MemberNotNull(nameof(m_pSceneToBeModified))]
     protected virtual void SetupTransition()
     {
         m_pSceneToBeModified = m_pOutScene;

@@ -32,6 +32,14 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     a delegate that isn't registered.
   - `CCKeypadHandler.Delegate` is nullable: a handler created with `new` has no delegate
     until `InitWithDelegate`.
+- **Nullable annotations for layers, scenes and transitions.** The visible changes:
+  - `CCLayerMultiplex`'s `SwitchTo`, `SwitchToFirstLayer`, `SwitchToNextLayer`,
+    `SwitchToPreviousLayer`, `SwitchToAndReleaseMe` and `ActiveLayer` return `CCLayer?`.
+    They already returned null when there was no layer to show.
+  - `CCLayerMultiplex.InAction`, `OutAction` and the constructors' action arguments are
+    nullable.
+  - Overrides of `CCTransitionScene.InitWithDuration(float, CCScene)` must set the in and
+    out scenes, for example by calling the base method; the compiler now checks.
 
 ### Fixed
 
@@ -61,6 +69,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   registered, instead of `NullReferenceException`.
 - A `CCTouchDispatcher` used before `Init()` no longer throws when delegates are added or
   removed.
+- `CCLayerMultiplex.SwitchTo` returns null for a layer released by `SwitchToAndReleaseMe`
+  instead of throwing, and switching away from a released active layer no longer throws.
 
 ## 2.6.1 - 2026-10-09
 

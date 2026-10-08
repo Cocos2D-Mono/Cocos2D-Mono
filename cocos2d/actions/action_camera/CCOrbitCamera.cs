@@ -1,5 +1,5 @@
-#nullable disable
 using System;
+using System.Diagnostics;
 
 namespace Cocos2D;
 
@@ -66,6 +66,7 @@ public class CCOrbitCamera : CCActionCamera
         float r; // radius
         float s;
 
+        Debug.Assert(m_pTarget != null, "SphericalRadius reads the target's camera, so the action must be started");
         CCCamera pCamera = m_pTarget.Camera;
         pCamera.GetEyeXyz(out ex, out ey, out ez);
         pCamera.GetCenterXyz(out cx, out cy, out cz);
@@ -90,11 +91,11 @@ public class CCOrbitCamera : CCActionCamera
         newRadius = r / CCCamera.GetZEye();
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
-            var ret = zone as CCOrbitCamera;
+            var ret = (CCOrbitCamera) zone;
             base.Copy(zone);
             Init(ret.m_fRadius, ret.m_fDeltaRadius, ret.m_fAngleZ, ret.m_fDeltaAngleZ, ret.m_fAngleX,
                  ret.m_fDeltaAngleX);
@@ -128,6 +129,7 @@ public class CCOrbitCamera : CCActionCamera
 
     public override void Update(float time)
     {
+        Debug.Assert(m_pTarget != null, "Update only runs while the action is started");
         float r = (m_fRadius + m_fDeltaRadius * time) * CCCamera.GetZEye();
         float za = m_fRadZ + m_fRadDeltaZ * time;
         float xa = m_fRadX + m_fRadDeltaX * time;

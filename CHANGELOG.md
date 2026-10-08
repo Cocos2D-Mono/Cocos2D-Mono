@@ -49,7 +49,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   - `CCAction.Target` and `OriginalTarget` are nullable: an action has no target until it
     starts, and `Stop` clears `Target`.
   - `CCFiniteTimeAction.Reverse()` returns `CCFiniteTimeAction?`, since the base class has
-    no reverse. Every engine action overrides it with a non-null result.
+    no reverse. Every engine action except `CCBRotateTo`, `CCBRotateXTo` and `CCBRotateYTo`
+    overrides it with a non-null result.
   - `CCActionManager.GetAction` and `CCNode.GetAction` return `CCAction?`; they already
     returned null for an unknown tag.
   - `CCCallFuncO`'s callback takes `object?`, since its object can be null.
@@ -61,6 +62,10 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     like the four-argument one.
   - `CCParallel.Actions` is an empty array, not null, for a `CCParallel` made with the
     parameterless constructor.
+- **Nullable annotations for the ease, camera, spline and progress actions.** The visible
+  change: `CCEaseElastic.Reverse()` throws `NotSupportedException` instead of returning
+  null. The base elastic ease has no curve of its own to reverse; `CCEaseElasticIn`,
+  `CCEaseElasticOut` and `CCEaseElasticInOut` reverse as before.
 
 ### Fixed
 
@@ -116,6 +121,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - Reversing a `CCSequence`, `CCSpawn`, `CCRepeat`, `CCParallel` or `CCTargetedAction` whose
   part has no reverse throws `NotSupportedException` naming that action, instead of
   failing later with `NullReferenceException`.
+- Reversing an ease action whose inner action has no reverse throws `NotSupportedException`
+  naming that action, instead of `NullReferenceException`.
 - `Copy(zone)` on an interval action throws `InvalidCastException` for a zone of another
   type, as most already did. Some returned null and others threw `NullReferenceException`.
 - `CCScaleTo.Copy(zone)`, which `CCScaleBy` also uses, and `CCReverseTime.Copy(zone)`

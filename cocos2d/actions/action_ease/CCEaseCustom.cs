@@ -1,5 +1,5 @@
-#nullable disable
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -29,12 +29,14 @@ public partial class CCEaseCustom : CCActionEase
         InitWithAction((CCActionInterval) easeCustom.InnerAction.Copy(), easeCustom.EaseFunc);
     }
 
+    [MemberNotNull(nameof(_easeFunc))]
     public void InitWithAction(CCActionInterval action, Func<float, float> easeFunc)
     {
         base.InitWithAction(action);
         _easeFunc = easeFunc;
     }
 
+    [MemberNotNull(nameof(_easeFunc))]
     public void InitWithAction(CCFiniteTimeAction action, Func<float, float> easeFunc)
     {
         base.InitWithAction(action);
@@ -51,12 +53,12 @@ public partial class CCEaseCustom : CCActionEase
         return new CCReverseTime(new CCEaseCustom(this));
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
             //in case of being called at sub class
-            var pCopy = pZone as CCEaseCustom;
+            var pCopy = (CCEaseCustom) pZone;
             base.Copy(pCopy);
             pCopy.InitWithAction((CCActionInterval) m_pInner.Copy(), _easeFunc);
 

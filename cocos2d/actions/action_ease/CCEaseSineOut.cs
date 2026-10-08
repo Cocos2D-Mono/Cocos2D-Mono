@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCEaseSineOut : CCActionEase
@@ -22,15 +21,15 @@ public class CCEaseSineOut : CCActionEase
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCEaseSineIn((CCActionInterval) m_pInner.Reverse());
+        return new CCEaseSineIn((CCActionInterval) m_pInner.ReverseOrThrow());
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
             //in case of being called at sub class
-            var pCopy = pZone as CCEaseSineOut;
+            var pCopy = (CCEaseSineOut) pZone;
             pCopy.InitWithAction((CCActionInterval) (m_pInner.Copy()));
 
             return pCopy;

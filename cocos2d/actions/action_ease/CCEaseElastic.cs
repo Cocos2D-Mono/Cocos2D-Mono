@@ -1,4 +1,5 @@
-#nullable disable
+using System;
+
 namespace Cocos2D;
 
 public class CCEaseElastic : CCActionEase
@@ -53,16 +54,16 @@ public class CCEaseElastic : CCActionEase
 
     public override CCFiniteTimeAction Reverse()
     {
-        //assert(0);
-        return null;
+        // Only the elastic curves of CCEaseElasticIn, CCEaseElasticOut and CCEaseElasticInOut have a reverse.
+        throw new NotSupportedException(GetType().Name + " has no reverse.");
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
             //in case of being called at sub class
-            var pCopy = pZone as CCEaseElastic;
+            var pCopy = (CCEaseElastic) pZone;
             pCopy.InitWithAction((CCActionInterval) (m_pInner.Copy()), m_fPeriod);
 
             return pCopy;

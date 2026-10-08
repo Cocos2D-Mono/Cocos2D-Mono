@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCEaseSineInOut : CCActionEase
@@ -20,7 +19,7 @@ public class CCEaseSineInOut : CCActionEase
         m_pInner.Update(CCEaseMath.SineInOut(time));
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
@@ -35,6 +34,6 @@ public class CCEaseSineInOut : CCActionEase
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCEaseSineInOut((CCActionInterval) m_pInner.Reverse());
+        return new CCEaseSineInOut((CCActionInterval) m_pInner.ReverseOrThrow());
     }
 }

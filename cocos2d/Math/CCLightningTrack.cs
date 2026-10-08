@@ -159,12 +159,17 @@ public class CCLightningTrack
         }
         // New algorithm did not work, so use the old algorithm
         position = u * _Length;
-        for (int i = 0; i < _Track.Count; i += 2)
+        for (int i = 0; i + 1 < _Track.Count; i += 2)
         {
-            if (CCPoint.Dot(_Track[i] - _Start, _uDir) >= position)
+            float lineStartPos = CCPoint.Dot(_Track[i] - _Start, _uDir);
+            float lineEndPos = CCPoint.Dot(_Track[i + 1] - _Start, _uDir);
+            // The position lies on the first segment that ends at or past it.
+            if (lineEndPos >= position)
             {
-                float lineStartPos = CCPoint.Dot(_Track[i] - _Start, _uDir);
-                float lineEndPos = CCPoint.Dot(_Track[i + 1] - _Start, _uDir);
+                if (lineEndPos == lineStartPos)
+                {
+                    return _Track[i + 1];
+                }
                 float linePos = (position - lineStartPos) / (lineEndPos - lineStartPos);
 
                 return CCPoint.Lerp(_Track[i], _Track[i + 1], linePos);

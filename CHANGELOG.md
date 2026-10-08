@@ -40,6 +40,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   another type. They used to throw `NullReferenceException` or `InvalidCastException`.
 - `CCLightningTrack.GetPoint` no longer throws when a subclass overrides `CreateBolt`
   without calling the base method; it falls back to its older algorithm instead.
+- `CCLightningTrack.GetPoint`'s fallback interpolates on the segment that contains the
+  requested position. It used to skip that segment, returning a point on the next one or
+  the end of the bolt.
 
 ## 2.6.1 - 2026-10-09
 

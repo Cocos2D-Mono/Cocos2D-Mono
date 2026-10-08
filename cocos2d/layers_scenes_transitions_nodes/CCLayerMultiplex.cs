@@ -291,7 +291,8 @@ public class CCLayerMultiplex : CCLayerRGBA
     {
         if (m_nEnabledLayer == -1 && m_pLayers.Count > 0 && ShowFirstLayerOnEnter)
         {
-            SwitchTo(0);
+            // The first layer that hasn't been released.
+            SwitchToFirstLayer();
         }
         base.OnEnter();
     }

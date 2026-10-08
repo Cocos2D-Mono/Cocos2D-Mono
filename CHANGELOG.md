@@ -81,7 +81,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   as `CCParticleSystem` already did.
 - `CCLayerMultiplex.SwitchToFirstLayer`, `SwitchToNextLayer` and `SwitchToPreviousLayer`
   work for a multiplex built from a layer list; they used to return null. They also skip
-  layers released by `SwitchToAndReleaseMe` instead of showing nothing.
+  layers released by `SwitchToAndReleaseMe` instead of showing nothing, and so does the
+  layer a multiplex shows when it enters a scene.
 - `CCLayerMultiplex.AddLayer` numbers layers consecutively. A layer added after a tagged
   one used to get an index one higher than expected.
 - `CCLayerMultiplex.SwitchToAndReleaseMe` releases a tagged layer's tag as well as its

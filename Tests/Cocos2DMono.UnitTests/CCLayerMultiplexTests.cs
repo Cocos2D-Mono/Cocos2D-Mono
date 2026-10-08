@@ -107,4 +107,25 @@ public class CCLayerMultiplexTests
         Assert.Same(a, multiplex.SwitchToPreviousLayer());
         Assert.Same(c, multiplex.SwitchToNextLayer());
     }
+
+    [Fact]
+    public void OnEnter_AfterTheFirstLayerWasReleased_ShowsTheFirstRemainingLayer()
+    {
+        // OnEnter switched to index 0 even when that layer had been released, and then
+        // showed nothing (C2D-273).
+        var b = new CCLayer();
+        var multiplex = new CCLayerMultiplex(new CCLayer(), b);
+        multiplex.SwitchTo(0);
+        multiplex.SwitchToAndReleaseMe(0);
+
+        multiplex.OnEnter();
+        try
+        {
+            Assert.Same(b, multiplex.ActiveLayer);
+        }
+        finally
+        {
+            multiplex.OnExit();
+        }
+    }
 }

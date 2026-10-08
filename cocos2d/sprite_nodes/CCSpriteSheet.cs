@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,7 +19,7 @@ public class CCSpriteSheet
 		// to be loaded this allows us to load those files relative to the plist.  Right now
 		// only used for PlistType SpriteKit right now but can be used for other types as well
 		// in the future
-		private string plistFilePath;
+		private string plistFilePath = string.Empty;
 
 		private enum PlistType
 		{
@@ -106,7 +105,7 @@ public class CCSpriteSheet
 			{
 				var images = dict.ContainsKey ("images") ? dict ["images"].AsArray : null;
 
-				var imageDict = images [0].AsDictionary;
+				var imageDict = images != null && images.Count > 0 ? images [0].AsDictionary : null;
 
 				if (imageDict != null) {
 					// try to read  texture file name from meta data
@@ -143,7 +142,7 @@ public class CCSpriteSheet
             CCLog.Log("cocos2d: CCSpriteFrameCache: Trying to use file {0} as texture", texturePath);
         }
 
-			plistFilePath = Path.GetDirectoryName (texturePath);
+			plistFilePath = Path.GetDirectoryName (texturePath) ?? string.Empty;
 
         CCTexture2D pTexture = CCTextureCache.SharedTextureCache.AddImage(texturePath);
 
@@ -238,6 +237,12 @@ public class CCSpriteSheet
 
 			var images = dict.ContainsKey ("images") ? dict ["images"].AsArray : null;
 
+			if (images == null)
+			{
+				CCLog.Log("cocos2d: CCSpriteSheet: No images were found in the provided dictionary.");
+				return;
+			}
+
 			foreach (var imageEntry in images) 
 			{
 				// we only support one image for now
@@ -260,7 +265,7 @@ public class CCSpriteSheet
 				var subImages = imageDict ["subimages"].AsArray;
 
 				foreach (var subImage in subImages) {
-					CCSpriteFrame spriteFrame = null;
+					CCSpriteFrame spriteFrame;
 
 					var subImageDict = subImage.AsDictionary;
 					var name = subImageDict ["name"].AsString;
@@ -310,14 +315,14 @@ public class CCSpriteSheet
 		private void LoadCocos2DDictionary(PlistDictionary dict, CCTexture2D texture)
 		{
 			
-			PlistDictionary metadataDict = null;
+			PlistDictionary? metadataDict = null;
 
 			if (dict.ContainsKey("metadata"))
 			{
 				metadataDict = dict["metadata"].AsDictionary;
 			}
 
-			PlistDictionary framesDict = null;
+			PlistDictionary? framesDict = null;
 			if (dict.ContainsKey("frames"))
 			{
 				framesDict = dict["frames"].AsDictionary;
@@ -336,10 +341,16 @@ public class CCSpriteSheet
 				throw (new NotSupportedException("PList format " + format + " is not supported."));
 			}
 
+			if (framesDict == null)
+			{
+				CCLog.Log("cocos2d: CCSpriteSheet: No frames were found in the provided dictionary.");
+				return;
+			}
+
 			foreach (var pair in framesDict)
 			{
 				PlistDictionary frameDict = pair.Value.AsDictionary;
-				CCSpriteFrame spriteFrame = null;
+				CCSpriteFrame spriteFrame;
 
 				if (format == 0)
 				{
@@ -393,7 +404,7 @@ public class CCSpriteSheet
 					// create frame
 					spriteFrame = new CCSpriteFrame(texture, frame, rotated, offset, sourceSize);
 				}
-				else if (format == 3)
+				else // format == 3
 				{
 					var spriteSize = CCSize.Parse(frameDict["spriteSize"].AsString);
 					var spriteOffset = CCPoint.Parse(frameDict["spriteOffset"].AsString);
@@ -457,7 +468,7 @@ public class CCSpriteSheet
 
 		}
 
-		public CCSpriteFrame this [string name]
+		public CCSpriteFrame? this [string name]
 		{
 			get 
 			{
@@ -466,13 +477,13 @@ public class CCSpriteSheet
 		}
 
 
-    public CCSpriteFrame SpriteFrameByName(string name)
+    public CCSpriteFrame? SpriteFrameByName(string name)
     {
-        CCSpriteFrame frame;
+        CCSpriteFrame? frame;
 
         if (!_spriteFrames.TryGetValue(name, out frame))
         {
-            string key;
+            string? key;
             
             if (_spriteFramesAliases.TryGetValue(name, out key))
             {

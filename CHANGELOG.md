@@ -123,6 +123,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   failing later with `NullReferenceException`.
 - Reversing an ease action whose inner action has no reverse throws `NotSupportedException`
   naming that action, instead of `NullReferenceException`.
+- Copying a `CCCardinalSplineBy`, `CCCatmullRomTo` or `CCCatmullRomBy` returns an action of
+  the same type. It used to return a `CCCardinalSplineTo`, so a copied spline-by action moved
+  the node to the spline's absolute points instead of relative to where it started.
 - `Copy(zone)` on an interval action throws `InvalidCastException` for a zone of another
   type, as most already did. Some returned null and others threw `NullReferenceException`.
 - `CCScaleTo.Copy(zone)`, which `CCScaleBy` also uses, and `CCReverseTime.Copy(zone)`

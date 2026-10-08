@@ -1,4 +1,3 @@
-#nullable disable
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -25,8 +24,9 @@ public class CCLayerMultiplex : CCLayerRGBA
     /// Current index of the active layer.
     /// </summary>
     protected int m_nEnabledLayer=NoLayer;
-    protected Dictionary<int, CCLayer> m_pLayers = new Dictionary<int,CCLayer>();
-    private CCAction _inAction, _outAction;
+    // SwitchToAndReleaseMe leaves a null entry for the layer it releases.
+    protected Dictionary<int, CCLayer?> m_pLayers = new Dictionary<int,CCLayer?>();
+    private CCAction? _inAction, _outAction;
     public bool ShowFirstLayerOnEnter { get; set; }
 
     #region Constructors
@@ -46,7 +46,7 @@ public class CCLayerMultiplex : CCLayerRGBA
         ShowFirstLayerOnEnter = true;
     }
 
-    public CCLayerMultiplex(CCAction inAction, CCAction outAction, params CCLayer[] layer)
+    public CCLayerMultiplex(CCAction? inAction, CCAction? outAction, params CCLayer[] layer)
     {
         InitWithLayers(layer);
         _inAction = inAction;
@@ -54,13 +54,13 @@ public class CCLayerMultiplex : CCLayerRGBA
         ShowFirstLayerOnEnter = true;
     }
 
-    public CCLayerMultiplex(CCAction inAction, CCAction outAction)
+    public CCLayerMultiplex(CCAction? inAction, CCAction? outAction)
     {
         _inAction = inAction;
         _outAction = outAction;
     }
 
-    public CCLayerMultiplex(CCAction inAction, CCAction outAction, CCLayer layer)
+    public CCLayerMultiplex(CCAction? inAction, CCAction? outAction, CCLayer layer)
     {
         InitWithLayer(layer);
         _inAction = inAction;
@@ -71,7 +71,7 @@ public class CCLayerMultiplex : CCLayerRGBA
     #region Legacy Init Methods
     private bool InitWithLayer(CCLayer layer)
     {
-        m_pLayers = new Dictionary<int,CCLayer>();
+        m_pLayers = new Dictionary<int,CCLayer?>();
         int ix = m_pLayers.Count;
         m_pLayers[ix] = layer;
         _LayersInOrder.Add(ix);
@@ -86,7 +86,7 @@ public class CCLayerMultiplex : CCLayerRGBA
 
     private bool InitWithLayers(params CCLayer[] layer)
     {
-        m_pLayers = new Dictionary<int, CCLayer>();
+        m_pLayers = new Dictionary<int, CCLayer?>();
         for (int i = 0; i < layer.Length; i++)
         {
             m_pLayers[i] = layer[i];
@@ -102,7 +102,7 @@ public class CCLayerMultiplex : CCLayerRGBA
     /// <summary>
     /// The action to play on the layer that becomes the active layer
     /// </summary>
-    public CCAction InAction
+    public CCAction? InAction
     {
         get { return (_inAction); }
         set { _inAction = value; }
@@ -111,7 +111,7 @@ public class CCLayerMultiplex : CCLayerRGBA
     /// <summary>
     /// The action to play on the active layer when it becomes inactive.
     /// </summary>
-    public CCAction OutAction
+    public CCAction? OutAction
     {
         get { return (_outAction); }
         set { _outAction = value; }
@@ -126,7 +126,7 @@ public class CCLayerMultiplex : CCLayerRGBA
     /// Switches to the first layer.
     /// </summary>
     /// <returns></returns>
-    public CCLayer SwitchToFirstLayer()
+    public CCLayer? SwitchToFirstLayer()
     {
         if (_LayersInOrder.Count == 0)
         {
@@ -139,7 +139,7 @@ public class CCLayerMultiplex : CCLayerRGBA
     /// Switches to the next logical layer that was added to the multiplexer. Switches to the
     /// first layer when no layer is active.
     /// </summary>
-    public CCLayer SwitchToNextLayer()
+    public CCLayer? SwitchToNextLayer()
     {
         if (_LayersInOrder.Count == 0)
         {
@@ -151,9 +151,10 @@ public class CCLayerMultiplex : CCLayerRGBA
             for(int z = 0; z < _LayersInOrder.Count; z++)
             {
                 int ix = _LayersInOrder[z];
-                if (m_pLayers[ix] != null)
+                CCLayer? layer = m_pLayers[ix];
+                if (layer != null)
                 {
-                    if ((m_nEnabledLayer > kTagOffsetForUniqueness) && m_pLayers[ix].Tag == (m_nEnabledLayer - kTagOffsetForUniqueness))
+                    if ((m_nEnabledLayer > kTagOffsetForUniqueness) && layer.Tag == (m_nEnabledLayer - kTagOffsetForUniqueness))
                     {
                         idx = z;
                         break;
@@ -181,7 +182,7 @@ public class CCLayerMultiplex : CCLayerRGBA
     /// Switches to the previous logical layer that was added to the multiplexer. Switches to the
     /// first layer when no layer is active.
     /// </summary>
-    public CCLayer SwitchToPreviousLayer()
+    public CCLayer? SwitchToPreviousLayer()
     {
         if (_LayersInOrder.Count == 0)
         {
@@ -193,9 +194,10 @@ public class CCLayerMultiplex : CCLayerRGBA
             for (int z = 0; z < _LayersInOrder.Count; z++)
             {
                 int ix = _LayersInOrder[z];
-                if (m_pLayers[ix] != null)
+                CCLayer? layer = m_pLayers[ix];
+                if (layer != null)
                 {
-                    if ((m_nEnabledLayer > kTagOffsetForUniqueness) && m_pLayers[ix].Tag == (m_nEnabledLayer - kTagOffsetForUniqueness))
+                    if ((m_nEnabledLayer > kTagOffsetForUniqueness) && layer.Tag == (m_nEnabledLayer - kTagOffsetForUniqueness))
                     {
                         idx = z;
                         break;
@@ -247,7 +249,7 @@ public class CCLayerMultiplex : CCLayerRGBA
     /// Returns the active layer that was last selected. This method will return null
     /// if no layer has been selected.
     /// </summary>
-    public virtual CCLayer ActiveLayer
+    public virtual CCLayer? ActiveLayer
     {
         get
         {
@@ -289,7 +291,7 @@ public class CCLayerMultiplex : CCLayerRGBA
     /// <param name="n">Send in NoLayer to hide all multiplexed layers. Otherwise, send in a tag or the logical index of the 
     /// layer to show.</param>
     /// <returns>The layer that is going to be shown. This can return null if the SwitchTo layer is NoLayer</returns>
-    public CCLayer SwitchTo(int n)
+    public CCLayer? SwitchTo(int n)
     {
         if (n != -1)
         {
@@ -305,10 +307,9 @@ public class CCLayerMultiplex : CCLayerRGBA
         }
         if (m_nEnabledLayer != -1)
         {
-            CCLayer outLayer = null;
-            if (m_pLayers.ContainsKey(m_nEnabledLayer))
+            // Null if SwitchToAndReleaseMe released the active layer itself.
+            if (m_pLayers.TryGetValue(m_nEnabledLayer, out CCLayer? outLayer) && outLayer != null)
             {
-                outLayer = m_pLayers[m_nEnabledLayer];
                 if (_outAction != null)
                 {
                     outLayer.RunAction(
@@ -345,15 +346,21 @@ public class CCLayerMultiplex : CCLayerRGBA
                 return(null);
             }
         }
+        CCLayer? inLayer = m_pLayers[n];
+        if (inLayer == null)
+        {
+            // Released by SwitchToAndReleaseMe, so treat it like a missing layer.
+            return(null);
+        }
         // Set the active layer
-        AddChild(m_pLayers[n]);
+        AddChild(inLayer);
         m_nEnabledLayer = n;
         // Run the in-action on the new layer
         if (_inAction != null)
         {
-            m_pLayers[n].RunAction(_inAction.Copy());
+            inLayer.RunAction(_inAction.Copy());
         }
-        return (m_pLayers[m_nEnabledLayer]);
+        return (inLayer);
     }
 
 
@@ -362,10 +369,10 @@ public class CCLayerMultiplex : CCLayerRGBA
     /// </summary>
     /// <param name="n"></param>
     /// <returns></returns>
-    public CCLayer SwitchToAndReleaseMe(int n)
+    public CCLayer? SwitchToAndReleaseMe(int n)
     {
         var prevLayer = m_nEnabledLayer;
-        CCLayer l = SwitchTo(n);
+        CCLayer? l = SwitchTo(n);
         m_pLayers[prevLayer] = null;
         return (l);
     }

@@ -1,4 +1,3 @@
-#nullable disable
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
 
@@ -6,7 +5,7 @@ namespace Cocos2D;
 
 public class CCGrid3DAction : CCGridAction
 {
-    private CCGrid3D _grid;
+    private CCGrid3D? _grid;
 
     protected CCGrid3DAction(float duration)
         : base(duration)
@@ -41,16 +40,19 @@ public class CCGrid3DAction : CCGridAction
 
     public CCVertex3F Vertex(CCGridSize pos)
     {
+        Debug.Assert(_grid != null, "Vertex only works once the action has started");
         return _grid.Vertex(pos);
     }
 
     public CCVertex3F OriginalVertex(CCGridSize pos)
     {
+        Debug.Assert(_grid != null, "OriginalVertex only works once the action has started");
         return _grid.OriginalVertex(pos);
     }
 
     public void SetVertex(CCGridSize pos, ref CCVertex3F vertex)
     {
+        Debug.Assert(_grid != null, "SetVertex only works once the action has started");
         _grid.SetVertex(pos, ref vertex);
     }
 }

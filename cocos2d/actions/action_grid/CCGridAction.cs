@@ -1,4 +1,4 @@
-#nullable disable
+using System;
 using System.Diagnostics;
 
 namespace Cocos2D;
@@ -35,7 +35,7 @@ public class CCGridAction : CCActionInterval
     {
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
@@ -57,8 +57,8 @@ public class CCGridAction : CCActionInterval
     {
         base.StartWithTarget(target);
 
-        CCNode t = m_pTarget;
-        CCGridBase targetGrid = t.Grid;
+        CCNode t = target;
+        CCGridBase? targetGrid = t.Grid;
 
         if (targetGrid != null && targetGrid.ReuseGrid > 0)
         {
@@ -96,6 +96,7 @@ public class CCGridAction : CCActionInterval
     public virtual CCGridBase Grid
     {
         set { }
-        get { return null; }
+        // Abstract in cocos2d-x: CCGrid3DAction and CCTiledGrid3DAction create the grid.
+        get { throw new NotSupportedException(GetType().Name + " has no grid; override Grid to create one."); }
     }
 }

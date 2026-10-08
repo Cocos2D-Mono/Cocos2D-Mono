@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Diagnostics;
 
@@ -40,7 +39,7 @@ public class CCFlipX3D : CCGrid3DAction
         return base.InitWithDuration(duration, gridSize);
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {

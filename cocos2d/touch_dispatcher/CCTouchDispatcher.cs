@@ -90,19 +90,9 @@ public class CCTouchDispatcher : ICCEGLTouchDelegate
     /// <param name="d"></param>
     public void UpdateGraphPriority(ICCTouchDelegate d)
     {
-        CCTouchHandler? h = FindHandler(d);
-        if (h != null)
+        if (SetHandlerPriorities(d, d.TouchPriority))
         {
-            h.Priority = d.TouchPriority;
             RearrangeAllHandlersUponTouch();
-        }
-
-        // A delegate added during the current touch dispatch is still queued. Update that
-        // handler too, so it's inserted with this priority when the dispatch ends.
-        CCTouchHandler? queued = FindQueuedHandler(d);
-        if (queued != null)
-        {
-            queued.Priority = d.TouchPriority;
         }
     }
 
@@ -211,22 +201,9 @@ public class CCTouchDispatcher : ICCEGLTouchDelegate
     /// </summary>
     public void SetPriority(int nPriority, ICCTouchDelegate pDelegate)
     {
-        // During a touch dispatch, a delegate added in that dispatch is still queued, and one
-        // removed and added again has a handler in both places, so update both.
-        CCTouchHandler? handler = FindHandler(pDelegate);
-        CCTouchHandler? queued = FindQueuedHandler(pDelegate);
-        if (handler == null && queued == null)
+        if (!SetHandlerPriorities(pDelegate, nPriority))
         {
             throw new ArgumentException("The delegate is not registered with the touch dispatcher.", nameof(pDelegate));
-        }
-
-        if (handler != null)
-        {
-            handler.Priority = nPriority;
-        }
-        if (queued != null)
-        {
-            queued.Priority = nPriority;
         }
 
         if (_locked)
@@ -515,18 +492,30 @@ public class CCTouchDispatcher : ICCEGLTouchDelegate
         return null;
     }
 
-    // Handlers added during a touch dispatch wait here until it ends.
-    private CCTouchHandler? FindQueuedHandler(ICCTouchDelegate pDelegate)
+    // Updates every handler the delegate has: a targeted and a standard one if it registered
+    // both ways, and any added during the current touch dispatch, which wait in _handlersToAdd
+    // until it ends. Returns whether the delegate had any.
+    private bool SetHandlerPriorities(ICCTouchDelegate pDelegate, int nPriority)
     {
-        foreach (CCTouchHandler handler in _handlersToAdd)
+        bool found = SetPrioritiesIn(m_pTargetedHandlers, pDelegate, nPriority);
+        found |= SetPrioritiesIn(m_pStandardHandlers, pDelegate, nPriority);
+        found |= SetPrioritiesIn(_handlersToAdd, pDelegate, nPriority);
+        return found;
+    }
+
+    private static bool SetPrioritiesIn(List<CCTouchHandler> handlers, ICCTouchDelegate pDelegate, int nPriority)
+    {
+        bool found = false;
+        foreach (CCTouchHandler handler in handlers)
         {
             if (handler.Delegate == pDelegate)
             {
-                return handler;
+                handler.Priority = nPriority;
+                found = true;
             }
         }
 
-        return null;
+        return found;
     }
 
     protected void ForceRemoveDelegate(ICCTouchDelegate pDelegate)

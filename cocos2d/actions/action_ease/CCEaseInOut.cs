@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 
 namespace Cocos2D;
@@ -31,12 +30,12 @@ public class CCEaseInOut : CCEaseRateAction
         }
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
             //in case of being called at sub class
-            var pCopy = pZone as CCEaseInOut;
+            var pCopy = (CCEaseInOut) pZone;
             pCopy.InitWithAction((CCActionInterval) (m_pInner.Copy()), m_fRate);
 
             return pCopy;
@@ -46,6 +45,6 @@ public class CCEaseInOut : CCEaseRateAction
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCEaseInOut((CCActionInterval) m_pInner.Reverse(), m_fRate);
+        return new CCEaseInOut((CCActionInterval) m_pInner.ReverseOrThrow(), m_fRate);
     }
 }

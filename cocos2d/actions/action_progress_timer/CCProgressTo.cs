@@ -1,4 +1,5 @@
-#nullable disable
+using System.Diagnostics;
+
 namespace Cocos2D;
 
 public class CCProgressTo : CCActionInterval
@@ -21,7 +22,7 @@ public class CCProgressTo : CCActionInterval
         return false;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCProgressTo pCopy;
         if (pZone != null)
@@ -56,6 +57,7 @@ public class CCProgressTo : CCActionInterval
 
     public override void Update(float time)
     {
+        Debug.Assert(m_pTarget != null, "Update only runs while the action is started");
         ((CCProgressTimer) m_pTarget).Percentage = m_fFrom + (m_fTo - m_fFrom) * time;
     }
 

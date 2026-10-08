@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCEaseExponentialOut : CCActionEase
@@ -22,15 +21,15 @@ public class CCEaseExponentialOut : CCActionEase
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCEaseExponentialIn((CCActionInterval) m_pInner.Reverse());
+        return new CCEaseExponentialIn((CCActionInterval) m_pInner.ReverseOrThrow());
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
             //in case of being called at sub class
-            var pCopy = pZone as CCEaseExponentialOut;
+            var pCopy = (CCEaseExponentialOut) pZone;
             pCopy.InitWithAction((CCActionInterval) (m_pInner.Copy()));
 
             return pCopy;

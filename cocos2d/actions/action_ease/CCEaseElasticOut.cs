@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCEaseElasticOut : CCEaseElastic
@@ -30,15 +29,15 @@ public class CCEaseElasticOut : CCEaseElastic
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCEaseElasticIn((CCActionInterval) m_pInner.Reverse(), m_fPeriod);
+        return new CCEaseElasticIn((CCActionInterval) m_pInner.ReverseOrThrow(), m_fPeriod);
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
             //in case of being called at sub class
-            var pCopy = pZone as CCEaseElasticOut;
+            var pCopy = (CCEaseElasticOut) pZone;
             pCopy.InitWithAction((CCActionInterval) (m_pInner.Copy()), m_fPeriod);
 
             return pCopy;

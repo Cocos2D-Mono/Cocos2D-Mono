@@ -1,4 +1,5 @@
-#nullable disable
+using System.Diagnostics.CodeAnalysis;
+
 namespace Cocos2D;
 
 public class CCActionEase : CCActionInterval
@@ -8,6 +9,9 @@ public class CCActionEase : CCActionInterval
     // This can be taken out once all the classes that extend it have had their constructors created.
     protected CCActionEase()
     {
+        // Subclasses using this constructor (CCEaseCustom, CCBEaseInstant) call InitWithAction
+        // straight after construction, which sets it.
+        m_pInner = null!;
     }
 
     public CCFiniteTimeAction InnerAction
@@ -25,32 +29,36 @@ public class CCActionEase : CCActionInterval
         InitWithAction((CCActionInterval) (actionEase.m_pInner.Copy()));
     }
 
+    [MemberNotNull(nameof(m_pInner))]
     protected bool InitWithAction(CCActionInterval pAction)
     {
+        m_pInner = pAction;
+
         if (base.InitWithDuration(pAction.Duration))
         {
-            m_pInner = pAction;
             return true;
         }
         return false;
     }
 
+    [MemberNotNull(nameof(m_pInner))]
     protected bool InitWithAction(CCFiniteTimeAction pAction)
     {
+        m_pInner = pAction;
+
         if (base.InitWithDuration(pAction.Duration))
         {
-            m_pInner = pAction;
             return true;
         }
         return false;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
             //in case of being called at sub class
-            var pCopy = pZone as CCActionEase;
+            var pCopy = (CCActionEase) pZone;
             base.Copy(pZone);
 
             pCopy.InitWithAction((CCActionInterval) (m_pInner.Copy()));
@@ -63,7 +71,7 @@ public class CCActionEase : CCActionInterval
     protected internal override void StartWithTarget(CCNode target)
     {
         base.StartWithTarget(target);
-        m_pInner.StartWithTarget(m_pTarget);
+        m_pInner.StartWithTarget(target);
     }
 
     public override void Stop()
@@ -79,6 +87,6 @@ public class CCActionEase : CCActionInterval
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCActionEase((CCActionInterval) m_pInner.Reverse());
+        return new CCActionEase((CCActionInterval) m_pInner.ReverseOrThrow());
     }
 }

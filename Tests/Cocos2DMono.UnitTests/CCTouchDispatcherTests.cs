@@ -93,6 +93,44 @@ public class CCTouchDispatcherTests
         Assert.Equal(5, dispatcher.FindHandler(popup)?.Priority);
     }
 
+    [Fact]
+    public void SetPriority_DelegateRegisteredBothWays_UpdatesBothHandlers()
+    {
+        // A delegate that implements both touch interfaces can have a targeted and a
+        // standard handler. SetPriority only updated the first one it found (C2D-271).
+        var dispatcher = new ListDispatcher();
+        dispatcher.Init();
+        var both = new BothWays();
+        dispatcher.AddTargetedDelegate(both, 0, true);
+        dispatcher.AddStandardDelegate(both, 0);
+
+        dispatcher.SetPriority(-10, both);
+
+        Assert.Equal(-10, dispatcher.Targeted.Single(h => h.Delegate == both).Priority);
+        Assert.Equal(-10, dispatcher.Standard.Single(h => h.Delegate == both).Priority);
+    }
+
+    [Fact]
+    public void SetPriority_DelegateQueuedBothWays_UpdatesBothHandlers()
+    {
+        // The same, for handlers still queued from the current dispatch.
+        var dispatcher = new ListDispatcher();
+        dispatcher.Init();
+        var both = new BothWays();
+        var opener = new Target(() =>
+        {
+            dispatcher.AddTargetedDelegate(both, 0, true);
+            dispatcher.AddStandardDelegate(both, 0);
+            dispatcher.SetPriority(-10, both);
+        });
+        dispatcher.AddTargetedDelegate(opener, 0, true);
+
+        Touch(dispatcher);
+
+        Assert.Equal(-10, dispatcher.Targeted.Single(h => h.Delegate == both).Priority);
+        Assert.Equal(-10, dispatcher.Standard.Single(h => h.Delegate == both).Priority);
+    }
+
     private static CCTouchDispatcher NewDispatcher()
     {
         var dispatcher = new CCTouchDispatcher();
@@ -103,6 +141,29 @@ public class CCTouchDispatcherTests
     private static void Touch(CCTouchDispatcher dispatcher)
     {
         dispatcher.TouchesBegan(new List<CCTouch> { new CCTouch(1, 0, 0) });
+    }
+
+    // Exposes the registered handler lists.
+    private sealed class ListDispatcher : CCTouchDispatcher
+    {
+        public List<CCTouchHandler> Targeted => m_pTargetedHandlers;
+        public List<CCTouchHandler> Standard => m_pStandardHandlers;
+    }
+
+    private sealed class BothWays : ICCTargetedTouchDelegate, ICCStandardTouchDelegate
+    {
+        public int TouchPriority => 0;
+        public bool VisibleForTouches { get; set; } = true;
+
+        public bool TouchBegan(CCTouch pTouch) => false;
+        public void TouchMoved(CCTouch pTouch) { }
+        public void TouchEnded(CCTouch pTouch) { }
+        public void TouchCancelled(CCTouch pTouch) { }
+
+        public void TouchesBegan(List<CCTouch> pTouches) { }
+        public void TouchesMoved(List<CCTouch> pTouches) { }
+        public void TouchesEnded(List<CCTouch> pTouches) { }
+        public void TouchesCancelled(List<CCTouch> pTouches) { }
     }
 
     private sealed class Target : ICCTargetedTouchDelegate

@@ -55,6 +55,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   a registered delegate, it no longer throws `InvalidOperationException`; the new order
   applies from the next touch. `UpdateGraphPriority` also reaches a delegate added in the
   same dispatch.
+- `CCTouchDispatcher.SetPriority` and `UpdateGraphPriority` update both handlers of a
+  delegate registered as both targeted and standard, instead of only the first.
 - `CCTouchDispatcher.SetPriority` throws `ArgumentException` for a delegate that isn't
   registered, instead of `NullReferenceException`.
 - A `CCTouchDispatcher` used before `Init()` no longer throws when delegates are added or

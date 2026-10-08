@@ -44,6 +44,18 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   - `CCParticleSystem.Texture` and `BatchNode` are nullable: a system has no texture until
     one is set, and a batch node only while it renders through one.
   - `CCParticleEmitterLight.OnUpdateParticle` is nullable; it's optional.
+- **Nullable annotations for the core actions** (`CCAction`, `CCActionManager` and the
+  instant actions). The visible changes:
+  - `CCAction.Target` and `OriginalTarget` are nullable: an action has no target until it
+    starts, and `Stop` clears `Target`.
+  - `CCFiniteTimeAction.Reverse()` returns `CCFiniteTimeAction?`, since the base class has
+    no reverse. Every engine action overrides it with a non-null result.
+  - `CCActionManager.GetAction` and `CCNode.GetAction` return `CCAction?`; they already
+    returned null for an unknown tag.
+  - `CCCallFuncO`'s callback takes `object?`, since its object can be null.
+
+  Subclasses that override `Copy(ICCCopyable zone)` should declare `zone` nullable; the
+  compiler now checks it.
 
 ### Fixed
 

@@ -1,12 +1,12 @@
-#nullable disable
 using System;
 
 namespace Cocos2D;
 
 public class CCCallFunc : CCActionInstant
 {
-    private Action _callFunc;
-    protected string m_scriptFuncName;
+    // Null for a CCCallFunc made with the parameterless constructor.
+    private Action? _callFunc;
+    protected string m_scriptFuncName = "";
 
     public CCCallFunc()
     {
@@ -41,7 +41,7 @@ public class CCCallFunc : CCActionInstant
         Execute();
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {

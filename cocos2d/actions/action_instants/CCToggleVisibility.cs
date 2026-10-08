@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCToggleVisibility : CCActionInstant
@@ -11,7 +10,7 @@ public class CCToggleVisibility : CCActionInstant
     {
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {

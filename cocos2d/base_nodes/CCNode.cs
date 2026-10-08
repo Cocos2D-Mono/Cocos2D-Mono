@@ -1764,7 +1764,7 @@ public class CCNode : ICCSelectorProtocol, ICCFocusable, ICCTargetedTouchDelegat
         m_pActionManager.RemoveActionByTag(tag, this);
     }
 
-    public CCAction GetAction(int tag)
+    public CCAction? GetAction(int tag)
     {
         Debug.Assert(tag != (int) CCNodeTag.Invalid, "Invalid tag");
         return m_pActionManager.GetAction(tag, this);

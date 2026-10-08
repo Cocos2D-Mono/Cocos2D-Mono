@@ -1,5 +1,6 @@
-#nullable disable
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -18,6 +19,7 @@ public class CCCallFuncND : CCCallFuncN
         InitWithTarget(callFuncND.m_pCallFuncND, callFuncND.m_pData);
     }
 
+    [MemberNotNull(nameof(m_pCallFuncND), nameof(m_pData))]
     public bool InitWithTarget(Action<CCNode, object> selector, object d)
     {
         m_pData = d;
@@ -25,7 +27,7 @@ public class CCCallFuncND : CCCallFuncN
         return true;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
@@ -45,6 +47,7 @@ public class CCCallFuncND : CCCallFuncN
     {
         if (null != m_pCallFuncND)
         {
+            Debug.Assert(m_pTarget != null, "Execute only runs while the action is started");
             m_pCallFuncND(m_pTarget, m_pData);
         }
 

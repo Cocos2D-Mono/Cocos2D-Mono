@@ -1,5 +1,5 @@
-#nullable disable
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -18,6 +18,7 @@ public class CCSpeed : CCAction
         InitWithAction((CCActionInterval) speed.m_pInnerAction.Copy(), speed.m_fSpeed);
     }
 
+    [MemberNotNull(nameof(m_pInnerAction))]
     protected bool InitWithAction(CCActionInterval action, float fRate)
     {
         Debug.Assert(action != null);
@@ -28,7 +29,7 @@ public class CCSpeed : CCAction
         return true;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {

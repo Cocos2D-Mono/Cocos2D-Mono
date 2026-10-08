@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 
@@ -7,8 +6,9 @@ public class CCAction : ICCCopyable
     public const int kInvalidTag = -1;
 
     protected int m_nTag = kInvalidTag;
-    protected CCNode m_pOriginalTarget;
-    protected CCNode m_pTarget;
+    // Set by StartWithTarget. Stop clears m_pTarget.
+    protected CCNode? m_pOriginalTarget;
+    protected CCNode? m_pTarget;
 
     public CCAction()
     {
@@ -21,13 +21,13 @@ public class CCAction : ICCCopyable
         m_pTarget = action.m_pTarget;
     }
 
-    public CCNode Target
+    public CCNode? Target
     {
         get { return m_pTarget; }
         set { m_pTarget = value; }
     }
 
-    public CCNode OriginalTarget
+    public CCNode? OriginalTarget
     {
         get { return m_pOriginalTarget; }
     }
@@ -50,7 +50,7 @@ public class CCAction : ICCCopyable
     /// </summary>
     /// <param name="zone"></param>
     /// <returns></returns>
-    public virtual object Copy(ICCCopyable zone)
+    public virtual object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {

@@ -1,11 +1,12 @@
-#nullable disable
 using System;
+using System.Diagnostics;
 
 namespace Cocos2D;
 
 public class CCCallFuncN : CCCallFunc
 {
-    private Action<CCNode> _callFuncN;
+    // Null for a CCCallFuncN made with the parameterless constructor.
+    private Action<CCNode>? _callFuncN;
 
     public CCCallFuncN() : base()
     {
@@ -23,13 +24,13 @@ public class CCCallFuncN : CCCallFunc
         InitWithTarget(callFuncN._callFuncN);
     }
 
-    public bool InitWithTarget(Action<CCNode> selector)
+    public bool InitWithTarget(Action<CCNode>? selector)
     {
         _callFuncN = selector;
         return true;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
@@ -51,6 +52,7 @@ public class CCCallFuncN : CCCallFunc
     {
         if (null != _callFuncN)
         {
+            Debug.Assert(m_pTarget != null, "Execute only runs while the action is started");
             _callFuncN(m_pTarget);
         }
         //if (m_nScriptHandler) {

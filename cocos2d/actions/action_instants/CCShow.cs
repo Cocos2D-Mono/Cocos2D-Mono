@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCShow : CCActionInstant
@@ -22,7 +21,7 @@ public class CCShow : CCActionInstant
         return (new CCHide());
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {

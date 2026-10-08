@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 
 namespace Cocos2D;
@@ -34,7 +33,7 @@ public class CCFiniteTimeAction : CCAction
     /// Does nothing by default. 
     /// </summary>
     /// <returns></returns>
-    public virtual CCFiniteTimeAction Reverse()
+    public virtual CCFiniteTimeAction? Reverse()
     {
         return null;
     }

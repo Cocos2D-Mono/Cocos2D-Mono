@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using Microsoft.Xna.Framework;
 
@@ -55,7 +54,7 @@ public class CCRipple3D : CCGrid3DAction
         return false;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCRipple3D pCopy;
         if (pZone != null)

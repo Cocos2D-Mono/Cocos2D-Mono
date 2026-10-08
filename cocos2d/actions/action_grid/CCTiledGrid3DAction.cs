@@ -1,11 +1,10 @@
-#nullable disable
 using System.Diagnostics;
 
 namespace Cocos2D;
 
 public class CCTiledGrid3DAction : CCGridAction
 {
-    private CCTiledGrid3D _grid;
+    private CCTiledGrid3D? _grid;
 
     public CCTiledGrid3DAction()
     {
@@ -23,16 +22,19 @@ public class CCTiledGrid3DAction : CCGridAction
 
     public CCQuad3 Tile(CCGridSize pos)
     {
+        Debug.Assert(_grid != null, "Tile only works once the action has started");
         return _grid.Tile(pos);
     }
 
     public CCQuad3 OriginalTile(CCGridSize pos)
     {
+        Debug.Assert(_grid != null, "OriginalTile only works once the action has started");
         return _grid.OriginalTile(pos);
     }
 
     public void SetTile(CCGridSize pos, ref CCQuad3 coords)
     {
+        Debug.Assert(_grid != null, "SetTile only works once the action has started");
         _grid.SetTile(pos, ref coords);
     }
 

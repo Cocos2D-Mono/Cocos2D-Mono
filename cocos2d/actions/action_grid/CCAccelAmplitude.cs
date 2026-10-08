@@ -1,5 +1,5 @@
-#nullable disable
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -14,12 +14,14 @@ public class CCAccelAmplitude : CCActionInterval
         set { m_fRate = value; }
     }
 
+    [MemberNotNull(nameof(m_pOther))]
     protected virtual bool InitWithAction(CCAction pAction, float duration)
     {
+        m_pOther = (CCActionInterval) pAction;
+
         if (base.InitWithDuration(duration))
         {
             m_fRate = 1.0f;
-            m_pOther = pAction as CCActionInterval;
 
             return true;
         }

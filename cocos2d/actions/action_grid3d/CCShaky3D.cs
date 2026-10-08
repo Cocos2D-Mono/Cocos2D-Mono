@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCShaky3D : CCGrid3DAction
@@ -19,7 +18,7 @@ public class CCShaky3D : CCGrid3DAction
         return false;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCShaky3D pCopy;
         if (pZone != null)

@@ -36,8 +36,8 @@ public class CCScaleTo : CCActionInterval
         {
             var ret = (CCScaleTo) zone;
             base.Copy(zone);
-            m_fEndScaleX = ret.m_fEndScaleX;
-            m_fEndScaleY = ret.m_fEndScaleY;
+            ret.m_fEndScaleX = m_fEndScaleX;
+            ret.m_fEndScaleY = m_fEndScaleY;
             return ret;
         }
         else

@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCRotateBy : CCActionInterval
@@ -45,15 +44,11 @@ public class CCRotateBy : CCActionInterval
         return false;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
-            var ret = zone as CCRotateBy;
-            if (ret == null)
-            {
-                return null;
-            }
+            var ret = (CCRotateBy) zone;
             base.Copy(ret);
 
             ret.InitWithDuration(m_fDuration, m_fAngleX, m_fAngleY);

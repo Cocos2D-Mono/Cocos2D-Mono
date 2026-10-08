@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Diagnostics;
 
@@ -78,7 +77,7 @@ public class CCActionInterval : CCFiniteTimeAction
         get { return m_elapsed >= m_fDuration; }
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {

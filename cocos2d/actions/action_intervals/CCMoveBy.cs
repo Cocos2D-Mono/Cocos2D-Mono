@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCMoveBy : CCActionInterval
@@ -28,16 +27,11 @@ public class CCMoveBy : CCActionInterval
         return false;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
-            var ret = zone as CCMoveBy;
-
-            if (ret == null)
-            {
-                return null;
-            }
+            var ret = (CCMoveBy) zone;
 
             base.Copy(zone);
 

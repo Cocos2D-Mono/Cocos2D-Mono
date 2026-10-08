@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCMoveTo : CCMoveBy
@@ -22,7 +21,7 @@ public class CCMoveTo : CCMoveBy
         return false;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {

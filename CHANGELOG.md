@@ -56,6 +56,11 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 
   Subclasses that override `Copy(ICCCopyable zone)` should declare `zone` nullable; the
   compiler now checks it.
+- **Nullable annotations for the interval actions.** The visible changes:
+  - `CCActionTween`'s five-argument constructor accepts a null callback, which then works
+    like the four-argument one.
+  - `CCParallel.Actions` is an empty array, not null, for a `CCParallel` made with the
+    parameterless constructor.
 
 ### Fixed
 
@@ -105,6 +110,14 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   `CCRotateAnimation` threw `NullReferenceException` as soon as it ran, and the action
   manager couldn't remove any of them. `CCRotateAnimation` starts from `Rotation` when the
   node doesn't implement `ICCRotationAnimationGetter`.
+- A `CCRepeat` around a `CCBlink` no longer throws `NullReferenceException` when it
+  finishes. `CCRepeat` stops its inner action twice at the end, and `CCBlink.Stop`
+  dereferenced the target the first stop had cleared.
+- Reversing a `CCSequence`, `CCSpawn`, `CCRepeat`, `CCParallel` or `CCTargetedAction` whose
+  part has no reverse throws `NotSupportedException` naming that action, instead of
+  failing later with `NullReferenceException`.
+- `Copy(zone)` on an interval action throws `InvalidCastException` for a zone of another
+  type, as most already did. Some returned null and others threw `NullReferenceException`.
 
 ## 2.6.1 - 2026-10-09
 

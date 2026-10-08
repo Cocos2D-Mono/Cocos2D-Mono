@@ -1,6 +1,6 @@
-#nullable disable
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -35,12 +35,13 @@ public class CCSpawn : CCActionInterval
 
     protected CCSpawn(CCSpawn spawn) : base(spawn)
     {
-        var param1 = spawn.m_pOne.Copy() as CCFiniteTimeAction;
-        var param2 = spawn.m_pTwo.Copy() as CCFiniteTimeAction;
+        var param1 = (CCFiniteTimeAction) spawn.m_pOne.Copy();
+        var param2 = (CCFiniteTimeAction) spawn.m_pTwo.Copy();
 
         InitOneTwo(param1, param2);
     }
 
+    [MemberNotNull(nameof(m_pOne), nameof(m_pTwo))]
     protected bool InitOneTwo(CCFiniteTimeAction action1, CCFiniteTimeAction action2)
     {
         Debug.Assert(action1 != null);
@@ -51,11 +52,11 @@ public class CCSpawn : CCActionInterval
         float d1 = action1.Duration;
         float d2 = action2.Duration;
 
+        m_pOne = action1;
+        m_pTwo = action2;
+
         if (base.InitWithDuration(Math.Max(d1, d2)))
         {
-            m_pOne = action1;
-            m_pTwo = action2;
-
             if (d1 > d2)
             {
                 m_pTwo = new CCSequence(action2, new CCDelayTime(d1 - d2));
@@ -71,23 +72,15 @@ public class CCSpawn : CCActionInterval
         return bRet;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
-            var ret = zone as CCSpawn;
-            if (ret == null)
-            {
-                return null;
-            }
+            var ret = (CCSpawn) zone;
             base.Copy(zone);
 
-            var param1 = m_pOne.Copy() as CCFiniteTimeAction;
-            var param2 = m_pTwo.Copy() as CCFiniteTimeAction;
-            if (param1 == null || param2 == null)
-            {
-                return null;
-            }
+            var param1 = (CCFiniteTimeAction) m_pOne.Copy();
+            var param2 = (CCFiniteTimeAction) m_pTwo.Copy();
 
             ret.InitOneTwo(param1, param2);
 
@@ -128,6 +121,6 @@ public class CCSpawn : CCActionInterval
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCSpawn(m_pOne.Reverse(), m_pTwo.Reverse());
+        return new CCSpawn(m_pOne.ReverseOrThrow(), m_pTwo.ReverseOrThrow());
     }
 }

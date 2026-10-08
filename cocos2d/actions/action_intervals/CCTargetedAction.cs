@@ -1,4 +1,5 @@
-#nullable disable
+using System.Diagnostics.CodeAnalysis;
+
 namespace Cocos2D;
 
 public class CCTargetedAction : CCActionInterval
@@ -23,18 +24,19 @@ public class CCTargetedAction : CCActionInterval
         InitWithTarget(targetedAction.m_pForcedTarget, (CCFiniteTimeAction) targetedAction.m_pAction.Copy());
     }
 
+    [MemberNotNull(nameof(m_pForcedTarget), nameof(m_pAction))]
     protected bool InitWithTarget(CCNode target, CCFiniteTimeAction pAction)
     {
+        m_pForcedTarget = target;
+        m_pAction = pAction;
         if (base.InitWithDuration(pAction.Duration))
         {
-            m_pForcedTarget = target;
-            m_pAction = pAction;
             return true;
         }
         return false;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null) //in case of being called at sub class
         {
@@ -65,6 +67,6 @@ public class CCTargetedAction : CCActionInterval
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCTargetedAction(m_pForcedTarget, m_pAction.Reverse());
+        return new CCTargetedAction(m_pForcedTarget, m_pAction.ReverseOrThrow());
     }
 }

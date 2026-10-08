@@ -1,4 +1,3 @@
-#nullable disable
 using System.Diagnostics;
 
 namespace Cocos2D;
@@ -36,8 +35,8 @@ public class CCSequence : CCActionInterval
 
     protected CCSequence(CCSequence sequence) : base(sequence)
     {
-        var param1 = sequence.m_pActions[0].Copy() as CCFiniteTimeAction;
-        var param2 = sequence.m_pActions[1].Copy() as CCFiniteTimeAction;
+        var param1 = (CCFiniteTimeAction) sequence.m_pActions[0].Copy();
+        var param2 = (CCFiniteTimeAction) sequence.m_pActions[1].Copy();
 
         InitOneTwo(param1, param2);
     }
@@ -70,27 +69,18 @@ public class CCSequence : CCActionInterval
         }
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
-        ICCCopyable tmpZone = zone;
+        ICCCopyable? tmpZone = zone;
         CCSequence ret;
 
         if (tmpZone != null && tmpZone != null)
         {
-            ret = tmpZone as CCSequence;
-            if (ret == null)
-            {
-                return null;
-            }
+            ret = (CCSequence) tmpZone;
             base.Copy(tmpZone);
 
-            var param1 = m_pActions[0].Copy() as CCFiniteTimeAction;
-            var param2 = m_pActions[1].Copy() as CCFiniteTimeAction;
-
-            if (param1 == null || param2 == null)
-            {
-                return null;
-            }
+            var param1 = (CCFiniteTimeAction) m_pActions[0].Copy();
+            var param2 = (CCFiniteTimeAction) m_pActions[1].Copy();
 
             ret.InitOneTwo(param1, param2);
 
@@ -135,6 +125,7 @@ public class CCSequence : CCActionInterval
 
     public override void Update(float t)
     {
+        Debug.Assert(m_pTarget != null, "Update only runs while the action is started");
         bool bRestart = false;
         int found;
         float new_t;
@@ -201,6 +192,6 @@ public class CCSequence : CCActionInterval
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCSequence(m_pActions[1].Reverse(), m_pActions[0].Reverse());
+        return new CCSequence(m_pActions[1].ReverseOrThrow(), m_pActions[0].ReverseOrThrow());
     }
 }

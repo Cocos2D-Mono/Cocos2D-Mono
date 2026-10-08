@@ -1,6 +1,6 @@
-#nullable disable
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -14,24 +14,27 @@ public class CCActionTween : CCActionInterval
     protected float m_fDelta;
     protected float m_fFrom, m_fTo;
     protected string m_strKey;
-    protected Action<float, string> _tweenAction;
+    // Optional; without it the target must implement ICCActionTweenDelegate.
+    protected Action<float, string>? _tweenAction;
 
     public CCActionTween(float aDuration, string key, float from, float to)
     {
         InitWithDuration(aDuration, key, from, to);
     }
 
-    public CCActionTween(float aDuration, string key, float from, float to, Action<float,string> tweenAction)
+    public CCActionTween(float aDuration, string key, float from, float to, Action<float,string>? tweenAction)
     {
         InitWithDuration(aDuration, key, from, to);
         _tweenAction = tweenAction;
     }
 
+    [MemberNotNull(nameof(m_strKey))]
     protected bool InitWithDuration(float aDuration, string key, float from, float to)
     {
+        m_strKey = key;
+
         if (base.InitWithDuration(aDuration))
         {
-            m_strKey = key;
             m_fTo = to;
             m_fFrom = from;
             return true;

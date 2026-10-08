@@ -1,5 +1,4 @@
-﻿#nullable disable
-namespace cocos2d.actions.action_intervals;
+﻿namespace cocos2d.actions.action_intervals;
 
 public interface ICCRotationAnimationGetter
 {

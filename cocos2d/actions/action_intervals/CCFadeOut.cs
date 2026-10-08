@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCFadeOut : CCActionInterval
@@ -12,7 +11,7 @@ public class CCFadeOut : CCActionInterval
     {
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {

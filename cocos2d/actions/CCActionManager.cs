@@ -1,4 +1,3 @@
-#nullable disable
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -8,7 +7,8 @@ public class CCActionManager : ICCSelectorProtocol
 {
     private static CCNode[] _tmpKeysArray = new CCNode[128];
     private bool _currentTargetSalvaged;
-    private HashElement _currentTarget;
+    // The element being updated, only while Update runs.
+    private HashElement? _currentTarget;
     private readonly Dictionary<object, HashElement> _targets = new Dictionary<object, HashElement>();
 
     #region SelectorProtocol Members
@@ -25,7 +25,7 @@ public class CCActionManager : ICCSelectorProtocol
 
         for (int i = 0; i < count; i++)
         {
-            HashElement elt;
+            HashElement? elt;
             if (!_targets.TryGetValue(_tmpKeysArray[i], out elt))
             {
                 continue;
@@ -94,6 +94,7 @@ public class CCActionManager : ICCSelectorProtocol
     protected void DeleteHashElement(HashElement element)
     {
         element.Actions.Clear();
+        Debug.Assert(element.Target != null, "Only elements still in the table are deleted");
         _targets.Remove(element.Target);
         element.Target = null;
     }
@@ -138,7 +139,7 @@ public class CCActionManager : ICCSelectorProtocol
 
     public void PauseTarget(object target)
     {
-        HashElement element;
+        HashElement? element;
         if (_targets.TryGetValue(target, out element))
         {
             element.Paused = true;
@@ -147,7 +148,7 @@ public class CCActionManager : ICCSelectorProtocol
 
     public void ResumeTarget(object target)
     {
-        HashElement element;
+        HashElement? element;
         if (_targets.TryGetValue(target, out element))
         {
             element.Paused = false;
@@ -158,12 +159,13 @@ public class CCActionManager : ICCSelectorProtocol
     {
         var idsWithActions = new List<object>();
 
-        foreach (var element in _targets.Values)
+        foreach (var pair in _targets)
         {
+            HashElement element = pair.Value;
             if (!element.Paused)
             {
                 element.Paused = true;
-                idsWithActions.Add(element.Target);
+                idsWithActions.Add(pair.Key);
             }
         }
 
@@ -183,7 +185,7 @@ public class CCActionManager : ICCSelectorProtocol
         Debug.Assert(action != null);
         Debug.Assert(target != null);
 
-        HashElement element;
+        HashElement? element;
         if (!_targets.TryGetValue(target, out element))
         {
             element = new HashElement();
@@ -216,17 +218,17 @@ public class CCActionManager : ICCSelectorProtocol
         }
     }
 
-    public void RemoveAllActionsFromTarget(CCNode target)
+    public void RemoveAllActionsFromTarget(CCNode? target)
     {
         if (target == null)
         {
             return;
         }
 
-        HashElement element;
+        HashElement? element;
         if (_targets.TryGetValue(target, out element))
         {
-            if (element.Actions.Contains(element.CurrentAction) && (!element.CurrentActionSalvaged))
+            if (element.CurrentAction != null && element.Actions.Contains(element.CurrentAction) && (!element.CurrentActionSalvaged))
             {
                 element.CurrentActionSalvaged = true;
             }
@@ -244,7 +246,7 @@ public class CCActionManager : ICCSelectorProtocol
         }
     }
 
-    public void RemoveAction(CCAction action)
+    public void RemoveAction(CCAction? action)
     {
         if (action == null || action.OriginalTarget == null)
         {
@@ -252,7 +254,7 @@ public class CCActionManager : ICCSelectorProtocol
         }
 
         object target = action.OriginalTarget;
-        HashElement element;
+        HashElement? element;
         if (_targets.TryGetValue(target, out element))
         {
             int i = element.Actions.IndexOf(action);
@@ -277,7 +279,7 @@ public class CCActionManager : ICCSelectorProtocol
         Debug.Assert((tag != CCAction.kInvalidTag));
         Debug.Assert(target != null);
 
-        HashElement element;
+        HashElement? element;
         if (_targets.TryGetValue(target, out element))
         {
             int limit = element.Actions.Count;
@@ -299,11 +301,11 @@ public class CCActionManager : ICCSelectorProtocol
         }
     }
 
-    public CCAction GetAction(int tag, CCNode target)
+    public CCAction? GetAction(int tag, CCNode target)
     {
         Debug.Assert(tag != CCAction.kInvalidTag);
 
-        HashElement element;
+        HashElement? element;
         if (_targets.TryGetValue(target, out element))
         {
             if (element.Actions != null)
@@ -330,7 +332,7 @@ public class CCActionManager : ICCSelectorProtocol
 
     public int NumberOfRunningActionsInTarget(CCNode target)
     {
-        HashElement element;
+        HashElement? element;
         if (_targets.TryGetValue(target, out element))
         {
             return (element.Actions != null) ? element.Actions.Count : 0;
@@ -341,10 +343,11 @@ public class CCActionManager : ICCSelectorProtocol
     protected class HashElement
     {
         public int ActionIndex;
-        public List<CCAction> Actions;
-        public CCAction CurrentAction;
+        public List<CCAction> Actions = new List<CCAction>();
+        public CCAction? CurrentAction;
         public bool CurrentActionSalvaged;
         public bool Paused;
-        public object Target;
+        // Set when the element is added; DeleteHashElement clears it.
+        public object? Target;
     }
 }

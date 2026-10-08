@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCFlipY : CCActionInstant
@@ -36,7 +35,7 @@ public class CCFlipY : CCActionInstant
         return new CCFlipY(!_flipY);
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {

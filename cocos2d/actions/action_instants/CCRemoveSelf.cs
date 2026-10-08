@@ -1,6 +1,6 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -32,7 +32,7 @@ public class CCRemoveSelf : CCActionInstant
         return true;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
@@ -46,6 +46,7 @@ public class CCRemoveSelf : CCActionInstant
 
     public override void Update(float time)
     {
+        Debug.Assert(m_pTarget != null, "Update only runs while the action is started");
         m_pTarget.RemoveFromParent(m_bIsNeedCleanUp);
     }
 

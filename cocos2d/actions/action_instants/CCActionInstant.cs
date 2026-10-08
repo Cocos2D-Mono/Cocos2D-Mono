@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCActionInstant : CCFiniteTimeAction
@@ -11,7 +10,7 @@ public class CCActionInstant : CCFiniteTimeAction
     {
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {

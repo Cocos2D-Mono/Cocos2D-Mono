@@ -76,4 +76,56 @@ public class CCSpriteFrameCacheTests
     {
         Assert.Null(new CCAnimationCache().AnimationByName("missing"));
     }
+
+    [Fact]
+    public void SpriteFrameCache_RemoveByName_RemovesAFrameWithoutAnAlias()
+    {
+        // Removing read the alias dictionary with its indexer, which threw for a name that
+        // isn't an alias (C2D-287).
+        var cache = new CCSpriteFrameCache();
+        cache.AddSpriteFrame(new CCSpriteFrame(new CCTexture2D(), new CCRect(0, 0, 1, 1)), "plain.png");
+
+        cache.RemoveSpriteFrameByName("plain.png");
+
+        Assert.Null(cache.SpriteFrameByName("plain.png"));
+    }
+
+    [Fact]
+    public void SpriteFrameCache_RemoveByAlias_RemovesTheFrameAndTheAlias()
+    {
+        // Removing by alias removed the frame, then an alias keyed by the frame's name instead
+        // of the alias, so the alias found a frame added later under that name (C2D-287).
+        var cache = new CCSpriteFrameCache();
+        cache.AddSpriteFramesWithDictionary(Format3SheetWithAlias(), new CCTexture2D());
+        Assert.NotNull(cache.SpriteFrameByName("alias-a"));
+
+        cache.RemoveSpriteFrameByName("alias-a");
+        cache.AddSpriteFrame(new CCSpriteFrame(new CCTexture2D(), new CCRect(0, 0, 1, 1)), "a.png");
+
+        Assert.Null(cache.SpriteFrameByName("alias-a"));
+    }
+
+    // A format-3 sprite sheet plist with one frame, "a.png", whose alias is "alias-a".
+    private static PlistDictionary Format3SheetWithAlias()
+    {
+        var aliases = new PlistArray();
+        aliases.Add(new PlistString("alias-a"));
+
+        var frame = new PlistDictionary();
+        frame.Add("spriteSize", new PlistString("{1,1}"));
+        frame.Add("spriteOffset", new PlistString("{0,0}"));
+        frame.Add("spriteSourceSize", new PlistString("{1,1}"));
+        frame.Add("textureRect", new PlistString("{{0,0},{1,1}}"));
+        frame.Add("aliases", aliases);
+
+        var frames = new PlistDictionary();
+        frames.Add("a.png", frame);
+        var metadata = new PlistDictionary();
+        metadata.Add("format", new PlistInteger(3));
+
+        var sheet = new PlistDictionary();
+        sheet.Add("metadata", metadata);
+        sheet.Add("frames", frames);
+        return sheet;
+    }
 }

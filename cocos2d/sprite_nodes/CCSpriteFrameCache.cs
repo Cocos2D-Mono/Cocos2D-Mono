@@ -332,12 +332,10 @@ public class CCSpriteFrameCache
         }
 
         // Is this an alias ?
-        string key = m_pSpriteFramesAliases[pszName];
-
-        if (!string.IsNullOrEmpty(key))
+        if (m_pSpriteFramesAliases.TryGetValue(pszName, out string? key))
         {
             m_pSpriteFrames.Remove(key);
-            m_pSpriteFramesAliases.Remove(key);
+            m_pSpriteFramesAliases.Remove(pszName);
         }
         else
         {

@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace Cocos2D;
 
 
@@ -73,7 +71,6 @@ public class CCAction : ICCCopyable
         get { return true; }
     }
 
-    [MemberNotNull(nameof(m_pTarget), nameof(m_pOriginalTarget))]
     protected internal virtual void StartWithTarget(CCNode target)
     {
         m_pOriginalTarget = m_pTarget = target;

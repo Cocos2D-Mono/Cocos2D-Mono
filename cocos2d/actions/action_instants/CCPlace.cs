@@ -39,6 +39,6 @@ public class CCPlace : CCActionInstant
     protected internal override void StartWithTarget(CCNode target)
     {
         base.StartWithTarget(target);
-        m_pTarget.Position = _position;
+        target.Position = _position;
     }
 }

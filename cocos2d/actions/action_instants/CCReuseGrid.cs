@@ -14,9 +14,9 @@ public class CCReuseGrid : CCActionInstant
     {
         base.StartWithTarget(target);
 
-        if (m_pTarget.Grid != null && m_pTarget.Grid.Active)
+        if (target.Grid != null && target.Grid.Active)
         {
-            m_pTarget.Grid.ReuseGrid += m_nTimes;
+            target.Grid.ReuseGrid += m_nTimes;
         }
     }
 

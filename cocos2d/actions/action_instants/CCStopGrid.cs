@@ -10,7 +10,7 @@ public class CCStopGrid : CCActionInstant
     {
         base.StartWithTarget(target);
 
-        CCGridBase? pGrid = m_pTarget.Grid;
+        CCGridBase? pGrid = target.Grid;
         if (pGrid != null && pGrid.Active)
         {
             pGrid.Active = false;

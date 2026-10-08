@@ -54,8 +54,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     returned null for an unknown tag.
   - `CCCallFuncO`'s callback takes `object?`, since its object can be null.
 
-  Subclasses that override `Copy(ICCCopyable zone)` should declare `zone` nullable, and
-  overrides of `StartWithTarget` should call the base method; the compiler now checks both.
+  Subclasses that override `Copy(ICCCopyable zone)` should declare `zone` nullable; the
+  compiler now checks it.
 
 ### Fixed
 

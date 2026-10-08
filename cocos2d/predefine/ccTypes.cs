@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2010 Ricardo Quesada
@@ -1028,7 +1027,7 @@ public struct CCBlendFunc
         return b1.Source != b2.Source || b1.Destination != b2.Destination;
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (obj is CCBlendFunc)
         {

@@ -85,4 +85,15 @@ public class CCPointTests
         Assert.Equal(25f, p.LengthSquared, 5);
         Assert.Equal(5f, p.Length, 5);
     }
+
+    [Fact]
+    public void Equals_NullOrOtherType_ReturnsFalse()
+    {
+        // Equals(object) used to unbox without checking, so null or another type threw (C2D-268).
+        var p = new CCPoint(3f, 4f);
+
+        Assert.False(p.Equals(null));
+        Assert.False(p.Equals("3,4"));
+        Assert.True(p.Equals((object)new CCPoint(3f, 4f)));
+    }
 }

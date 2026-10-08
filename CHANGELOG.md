@@ -19,6 +19,13 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 
   This only adds warnings, and only in projects that enable nullable; nothing stops
   compiling.
+- **Nullable annotations for the foundation types** (math, geometry, shared types, script
+  support and audio). The visible changes:
+  - `ICCCopyable.Copy` takes a nullable `zone`; the implementations already handle null.
+  - `CCSimpleAudioEngine.PlayEffectHandled` returns `CCSoundHandle?`, as its documentation
+    already said it could.
+  - `CCScriptEngineManager.ScriptEngine` is nullable.
+  - The geometry types' `Equals(object)` overrides accept null.
 
 ### Fixed
 
@@ -29,6 +36,10 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - `CCTapNode.RefreshContentSize` sizes a node with no children to zero instead of throwing.
 - Deserializing malformed node data throws an `InvalidDataException` that names the problem,
   instead of a null reference error.
+- `CCPoint`, `CCSize` and `CCRect` `Equals(object)` return false for null or a value of
+  another type. They used to throw `NullReferenceException` or `InvalidCastException`.
+- `CCLightningTrack.GetPoint` no longer throws when a subclass overrides `CreateBolt`
+  without calling the base method; it falls back to its older algorithm instead.
 
 ## 2.6.1 - 2026-10-09
 

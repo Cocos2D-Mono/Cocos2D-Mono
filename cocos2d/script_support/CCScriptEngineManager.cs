@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2010 Ricardo Quesada
@@ -33,7 +32,7 @@ public class CCScriptEngineManager
 {
     //private CCScriptEngineProtocol m_pScriptEngine;
 
-    public CCScriptEngineProtocol ScriptEngine { get; set; }
+    public CCScriptEngineProtocol? ScriptEngine { get; set; }
 
     public static CCScriptEngineManager SharedScriptEngineManager
     {

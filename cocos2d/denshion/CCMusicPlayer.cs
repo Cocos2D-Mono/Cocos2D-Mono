@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using Microsoft.Xna.Framework.Media;
 using Cocos2D;
@@ -17,7 +16,7 @@ public class CCMusicPlayer
     private bool _isRepeatingAfterClose;
     private bool _isShuffleAfterClose;
     //private MediaQueue _queueAfterClose;
-    private Song _songToPlayAfterClose;
+    private Song? _songToPlayAfterClose;
     private float _volumeAfterClose = 1f;
 
     /// <summary>
@@ -26,7 +25,8 @@ public class CCMusicPlayer
     /// </summary>
     private bool _didPlayGameSong;
 
-    private Song _music;
+    // Null until a song is opened, and again after Close.
+    private Song? _music;
     private int _soundId;
 
     public CCMusicPlayer()

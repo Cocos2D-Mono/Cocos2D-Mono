@@ -71,4 +71,15 @@ public class CCSizeTests
         Assert.Equal(5f, s.Width);    // 10 capped to 5
         Assert.Equal(20f, s.Height);  // 20 is under 25, unchanged
     }
+
+    [Fact]
+    public void Equals_NullOrOtherType_ReturnsFalse()
+    {
+        // Equals(object) used to unbox without checking, so null or another type threw (C2D-268).
+        var s = new CCSize(640f, 480f);
+
+        Assert.False(s.Equals(null));
+        Assert.False(s.Equals("640x480"));
+        Assert.True(s.Equals((object)new CCSize(640f, 480f)));
+    }
 }

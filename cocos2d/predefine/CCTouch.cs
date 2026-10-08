@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 
 namespace Cocos2D;
@@ -92,7 +91,8 @@ public class CCTouch
     /// The touch delegate that consumed this touch. This is designed only for the one-at-a-time handler
     /// of touches.
     /// </summary>
-    internal CCTargetedTouchHandler Consumer
+    // Set by CCTouchDispatcher when a targeted handler claims the touch.
+    internal CCTargetedTouchHandler? Consumer
     {
         get;
         set;

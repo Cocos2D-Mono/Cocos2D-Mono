@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2010 Ricardo Quesada
@@ -53,12 +52,12 @@ public class CCScriptEngineProtocol
         return false;
     }
 
-    public virtual bool ExecuteCallFuncNd(string pszFuncName, CCNode node, object pData)
+    public virtual bool ExecuteCallFuncNd(string pszFuncName, CCNode node, object? pData)
     {
         return false;
     }
 
-    public virtual bool ExecuteCallFunc0(string pszFuncName, object pObject)
+    public virtual bool ExecuteCallFunc0(string pszFuncName, object? pObject)
     {
         return false;
     }

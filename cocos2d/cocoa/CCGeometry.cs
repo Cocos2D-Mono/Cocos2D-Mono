@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 
@@ -97,9 +96,9 @@ public struct CCPoint
         return X.GetHashCode() + Y.GetHashCode();
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
-        return (Equals((CCPoint) obj));
+        return obj is CCPoint p && Equals(p);
     }
 
     public bool Equals(CCPoint p)
@@ -665,7 +664,8 @@ public struct CCPoint
 
     public static CCPoint Parse(string s)
     {
-        return (CCPoint) TypeDescriptor.GetConverter(typeof (CCPoint)).ConvertFromString(s);
+        return (CCPoint) (TypeDescriptor.GetConverter(typeof (CCPoint)).ConvertFromString(s)
+            ?? throw new FormatException($"'{s}' is not a valid CCPoint."));
     }
 
     public static implicit operator CCPoint(Vector2 point)
@@ -740,9 +740,9 @@ public struct CCSize
         return Width == s.Width && Height == s.Height;
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
-        return (Equals((CCSize) obj));
+        return obj is CCSize s && Equals(s);
     }
 
     public CCPoint Center
@@ -792,7 +792,8 @@ public struct CCSize
 
     public static CCSize Parse(string s)
     {
-        return (CCSize) TypeDescriptor.GetConverter(typeof (CCSize)).ConvertFromString(s);
+        return (CCSize) (TypeDescriptor.GetConverter(typeof (CCSize)).ConvertFromString(s)
+            ?? throw new FormatException($"'{s}' is not a valid CCSize."));
     }
 
     /**
@@ -1062,9 +1063,9 @@ public struct CCRect
         return Origin.GetHashCode() + Size.GetHashCode();
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
-        return (Equals((CCRect) obj));
+        return obj is CCRect r && Equals(r);
     }
 
     public bool Equals(CCRect rect)
@@ -1080,7 +1081,8 @@ public struct CCRect
 
     public static CCRect Parse(string s)
     {
-        return (CCRect) TypeDescriptor.GetConverter(typeof (CCRect)).ConvertFromString(s);
+        return (CCRect) (TypeDescriptor.GetConverter(typeof (CCRect)).ConvertFromString(s)
+            ?? throw new FormatException($"'{s}' is not a valid CCRect."));
     }
 }
 
@@ -1293,7 +1295,7 @@ public struct CCVector2 : IEquatable<CCVector2>
         result = (value1.X * value2.X) + (value1.Y * value2.Y);
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (obj is CCVector2)
         {

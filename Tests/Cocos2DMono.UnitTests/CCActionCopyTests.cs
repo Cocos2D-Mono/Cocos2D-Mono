@@ -92,6 +92,21 @@ public class CCActionCopyTests : System.IDisposable
         Assert.Equal(new CCPoint(10, 0), first.Position);
     }
 
+    [Fact]
+    public void CCOrbitCamera_CopyIntoZone_FillsTheZoneAndKeepsTheOriginal()
+    {
+        // Copy(zone) set the original's orbit from the zone instead of the other way round
+        // (C2D-281), as CCScaleTo's did.
+        var original = new CCOrbitCamera(1, 2, 0, 90, 0, 0, 0);
+        var zone = new CCOrbitCamera(1, 10, 0, 90, 0, 0, 0);
+        float expected = EyeXAtEnd(new CCOrbitCamera(1, 2, 0, 90, 0, 0, 0));
+
+        original.Copy(zone);
+
+        Assert.Equal(expected, EyeXAtEnd(zone));
+        Assert.Equal(expected, EyeXAtEnd(original));
+    }
+
     // Runs the action on a fresh node and returns the node's scale at the action's end.
     private static float ScaleAtEnd(CCFiniteTimeAction action)
     {
@@ -109,6 +124,17 @@ public class CCActionCopyTests : System.IDisposable
         node.RunAction(action);
         action.Update(0f);
         return node.Position;
+    }
+
+    // Runs the camera action on a fresh node and returns the camera's eye X at the action's end,
+    // which scales with the orbit's radius.
+    private static float EyeXAtEnd(CCOrbitCamera action)
+    {
+        var node = new CCNode();
+        node.RunAction(action);
+        action.Update(1f);
+        node.Camera.GetEyeXyz(out float x, out _, out _);
+        return x;
     }
 
     [Fact]

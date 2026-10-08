@@ -157,6 +157,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - `CCAccelAmplitude`, `CCAccelDeccelAmplitude` and `CCDeccelAmplitude` throw
   `InvalidCastException` when given an action that isn't an interval action, instead of
   `NullReferenceException` when they start.
+- `CCSpriteSheetCache.AddSpriteSheet` builds the sheet from the stream or dictionary it's
+  given. Those overloads used to ignore it and load a plist named after the cache key.
 - `CCSpriteFrameCache` and `CCSpriteSheet` load a plist with no frames, or a SpriteKit plist
   with no images, as empty. They used to throw `NullReferenceException`.
 - `CCSpriteFrameCache.RemoveSpriteFramesFromTexture` skips frames that have no texture, and

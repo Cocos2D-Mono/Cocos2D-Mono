@@ -68,7 +68,7 @@ public class CCSpriteSheetCache
         CCSpriteSheet? result;
         if (!_spriteSheets.TryGetValue(name, out result))
         {
-            result = new CCSpriteSheet(name, texture);
+            result = new CCSpriteSheet(stream, texture);
             _spriteSheets.Add(name, result);
         }
         return result;
@@ -79,7 +79,7 @@ public class CCSpriteSheetCache
         CCSpriteSheet? result;
         if (!_spriteSheets.TryGetValue(name, out result))
         {
-            result = new CCSpriteSheet(name, texture);
+            result = new CCSpriteSheet(dictionary, texture);
             _spriteSheets.Add(name, result);
         }
         return result;

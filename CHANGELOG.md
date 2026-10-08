@@ -140,6 +140,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   values into the original.
 - Copying a `CCReverseTime` copies its inner action, so the original and the copy can run
   at the same time on different nodes. They used to share it.
+- `CCAccelDeccelAmplitude` updates its inner action, so the grid effect it wraps animates. It
+  only set the effect's amplitude and never updated it, an omission cocos2d-x shares.
 - `CCAccelAmplitude`, `CCAccelDeccelAmplitude` and `CCDeccelAmplitude` throw
   `InvalidCastException` when given an action that isn't an interval action, instead of
   `NullReferenceException` when they start.

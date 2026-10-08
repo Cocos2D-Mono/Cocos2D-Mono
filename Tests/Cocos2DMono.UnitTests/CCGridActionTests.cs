@@ -62,10 +62,45 @@ public class CCGridActionTests : IDisposable
         Assert.Empty(new TurnOffTilesProbe(seed: 5).TilesOrder);
     }
 
+    [Theory]
+    [MemberData(nameof(AmplitudeActions))]
+    public void AmplitudeAction_Update_UpdatesItsInnerAction(string action, Func<CCAction, CCAction> wrap)
+    {
+        // CCAccelDeccelAmplitude set its inner action's amplitude but never updated it, so the
+        // wrapped effect didn't animate (C2D-284). The other two update it.
+        var inner = new UpdateRecorder();
+        var amplitude = (CCActionInterval) wrap(inner);
+        new CCNode().RunAction(amplitude);
+
+        amplitude.Update(0.25f);
+
+        Assert.True(inner.Updates == 1, action + " updated its inner action " + inner.Updates + " times");
+        Assert.Equal(0.25f, inner.LastTime);
+    }
+
     public void Dispose()
     {
         // RunAction registers actions with the shared ActionManager; clean it up to keep tests isolated.
         CCDirector.SharedDirector.ActionManager.RemoveAllActions();
+    }
+
+    // Records the updates an amplitude action passes on to its inner action.
+    private sealed class UpdateRecorder : CCActionInterval
+    {
+        public UpdateRecorder() : base(1)
+        {
+        }
+
+        public int Updates;
+        public float LastTime = -1;
+
+        public override float AmplitudeRate { get; set; }
+
+        public override void Update(float time)
+        {
+            Updates++;
+            LastTime = time;
+        }
     }
 
     // Expose the protected tile arrays, which were null until the action started.

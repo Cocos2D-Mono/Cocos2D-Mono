@@ -1,6 +1,6 @@
-#nullable disable
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -9,7 +9,8 @@ public class CCAnimate : CCActionInterval
     protected CCAnimation m_pAnimation;
     protected List<float> m_pSplitTimes = new List<float>();
     protected int m_nNextFrame;
-    protected CCSpriteFrame m_pOrigFrame;
+    // Set in StartWithTarget when the animation restores the original frame.
+    protected CCSpriteFrame? m_pOrigFrame;
     private uint _executedLoops;
 
     public CCAnimate(CCAnimation pAnimation)
@@ -22,16 +23,18 @@ public class CCAnimate : CCActionInterval
         InitWithAnimation((CCAnimation) animate.m_pAnimation.Copy());
     }
 
+    [MemberNotNull(nameof(m_pAnimation))]
     protected bool InitWithAnimation(CCAnimation pAnimation)
     {
         Debug.Assert(pAnimation != null);
 
         float singleDuration = pAnimation.Duration;
 
+        m_pAnimation = pAnimation;
+
         if (base.InitWithDuration(singleDuration * pAnimation.Loops))
         {
             m_nNextFrame = 0;
-            m_pAnimation = pAnimation;
             m_pOrigFrame = null;
             _executedLoops = 0;
 
@@ -56,7 +59,7 @@ public class CCAnimate : CCActionInterval
         return false;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
@@ -99,6 +102,7 @@ public class CCAnimate : CCActionInterval
 
     public override void Update(float t)
     {
+        Debug.Assert(m_pTarget != null, "Update only runs while the action is started");
         // if t==1, ignore. Animation should finish with t==1
         if (t < 1.0f)
         {

@@ -1,4 +1,3 @@
-#nullable disable
 using System.Diagnostics;
 
 namespace Cocos2D;
@@ -18,11 +17,11 @@ public class CCReverseTime : CCActionInterval
         m_pOther = copy.m_pOther;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
-            var ret = zone as CCReverseTime;
+            var ret = (CCReverseTime) zone;
             base.Copy(zone);
             m_pOther = (CCFiniteTimeAction) ret.m_pOther; // .Copy() was in here before
             return ret;
@@ -55,6 +54,6 @@ public class CCReverseTime : CCActionInterval
 
     public override CCFiniteTimeAction Reverse()
     {
-        return m_pOther.Copy() as CCFiniteTimeAction;
+        return (CCFiniteTimeAction) m_pOther.Copy();
     }
 }

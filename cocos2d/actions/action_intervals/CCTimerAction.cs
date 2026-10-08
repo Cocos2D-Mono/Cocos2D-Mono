@@ -1,12 +1,11 @@
-﻿#nullable disable
-using Cocos2D;
+﻿using Cocos2D;
 
 namespace cocos2d.actions.action_intervals;
 
 public class CCTimerAction : CCFiniteTimeAction
 {
     readonly float _duration;
-    ITimerActionListener _castedActionTarget;
+    ITimerActionListener? _castedActionTarget;
 
     public CCTimerAction(float duration) : base(duration)
     {

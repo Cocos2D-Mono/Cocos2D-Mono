@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCRotateTo : CCActionInterval
@@ -51,15 +50,11 @@ public class CCRotateTo : CCActionInterval
         return false;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
-            var ret = zone as CCRotateTo;
-            if (ret == null)
-            {
-                return null;
-            }
+            var ret = (CCRotateTo) zone;
             base.Copy(ret);
 
             ret.InitWithDuration(m_fDuration, m_fDstAngleX, m_fDstAngleY);
@@ -73,7 +68,7 @@ public class CCRotateTo : CCActionInterval
         base.StartWithTarget(target);
 
         // Calculate X
-        m_fStartAngleX = m_pTarget.RotationX;
+        m_fStartAngleX = target.RotationX;
         if (m_fStartAngleX > 0)
         {
             m_fStartAngleX = m_fStartAngleX % 360.0f;
@@ -94,7 +89,7 @@ public class CCRotateTo : CCActionInterval
         }
 
         //Calculate Y: It's duplicated from calculating X since the rotation wrap should be the same
-        m_fStartAngleY = m_pTarget.RotationY;
+        m_fStartAngleY = target.RotationY;
 
         if (m_fStartAngleY > 0)
         {

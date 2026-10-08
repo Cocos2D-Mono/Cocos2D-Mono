@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCTintBy : CCActionInterval
@@ -34,15 +33,11 @@ public class CCTintBy : CCActionInterval
         return false;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null && zone != null)
         {
-            var ret = zone as CCTintBy;
-            if (ret == null)
-            {
-                return null;
-            }
+            var ret = (CCTintBy) zone;
             base.Copy(zone);
 
             ret.InitWithDuration(m_fDuration, m_deltaR, m_deltaG, m_deltaB);

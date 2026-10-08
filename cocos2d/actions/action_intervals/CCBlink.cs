@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCBlink : CCActionInterval
@@ -27,7 +26,7 @@ public class CCBlink : CCActionInterval
         return false;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
@@ -46,7 +45,11 @@ public class CCBlink : CCActionInterval
 
     public override void Stop()
     {
-        m_pTarget.Visible = m_bOriginalState;
+        // A container such as CCRepeat can stop an action that is already stopped.
+        if (m_pTarget != null)
+        {
+            m_pTarget.Visible = m_bOriginalState;
+        }
         base.Stop();
     }
 

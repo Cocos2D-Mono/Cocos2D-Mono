@@ -37,4 +37,13 @@ public class CCFiniteTimeAction : CCAction
     {
         return null;
     }
+
+    /// <summary>
+    /// The reverse a container needs for each of its parts. Every engine action has one; a custom
+    /// action that doesn't override Reverse can't be reversed inside a container.
+    /// </summary>
+    internal CCFiniteTimeAction ReverseOrThrow()
+    {
+        return Reverse() ?? throw new NotSupportedException(GetType().Name + " has no reverse.");
+    }
 }

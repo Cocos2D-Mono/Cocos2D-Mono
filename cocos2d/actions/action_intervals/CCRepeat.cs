@@ -1,4 +1,6 @@
-#nullable disable
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+
 namespace Cocos2D;
 
 public class CCRepeat : CCActionInterval
@@ -17,7 +19,7 @@ public class CCRepeat : CCActionInterval
 
     protected CCRepeat(CCRepeat repeat) : base(repeat)
     {
-        var param = repeat.m_pInnerAction.Copy() as CCFiniteTimeAction;
+        var param = (CCFiniteTimeAction) repeat.m_pInnerAction.Copy();
         InitWithAction(param, repeat.m_uTimes);
     }
 
@@ -27,14 +29,16 @@ public class CCRepeat : CCActionInterval
         set { m_pInnerAction = value; }
     }
 
+    [MemberNotNull(nameof(m_pInnerAction))]
     public bool InitWithAction(CCFiniteTimeAction action, uint times)
     {
         float d = action.Duration * times;
 
+        m_pInnerAction = action;
+
         if (base.InitWithDuration(d))
         {
             m_uTimes = times;
-            m_pInnerAction = action;
 
             m_bActionInstant = action is CCActionInstant;
             //an instant action needs to be executed one time less in the update method since it uses startWithTarget to execute the action
@@ -50,22 +54,14 @@ public class CCRepeat : CCActionInterval
         return false;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
-            var ret = zone as CCRepeat;
-            if (ret == null)
-            {
-                return null;
-            }
+            var ret = (CCRepeat) zone;
             base.Copy(zone);
 
-            var param = m_pInnerAction.Copy() as CCFiniteTimeAction;
-            if (param == null)
-            {
-                return null;
-            }
+            var param = (CCFiniteTimeAction) m_pInnerAction.Copy();
             ret.InitWithAction(param, m_uTimes);
 
             return ret;
@@ -94,6 +90,7 @@ public class CCRepeat : CCActionInterval
     // container action like Repeat, Sequence, AccelDeccel, etc..
     public override void Update(float dt)
     {
+        Debug.Assert(m_pTarget != null, "Update only runs while the action is started");
         if (dt >= m_fNextDt)
         {
             while (dt > m_fNextDt && m_uTotal < m_uTimes)
@@ -140,6 +137,6 @@ public class CCRepeat : CCActionInterval
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCRepeat(m_pInnerAction.Reverse(), m_uTimes);
+        return new CCRepeat(m_pInnerAction.ReverseOrThrow(), m_uTimes);
     }
 }

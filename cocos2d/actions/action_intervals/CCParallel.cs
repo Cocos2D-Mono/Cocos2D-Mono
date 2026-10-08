@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +7,8 @@ namespace Cocos2D;
 
 public class CCParallel : CCActionInterval
 {
-    protected CCFiniteTimeAction[] m_pActions;
+    // Empty for a CCParallel made with the parameterless constructor, until Actions is set.
+    protected CCFiniteTimeAction[] m_pActions = Array.Empty<CCFiniteTimeAction>();
     public CCFiniteTimeAction[] Actions { get { return m_pActions; } set { m_pActions = value; } }
 
     public CCParallel()
@@ -58,7 +58,7 @@ public class CCParallel : CCActionInterval
         CCFiniteTimeAction[] cp = new CCFiniteTimeAction[copy.m_pActions.Length];
         for (int i = 0; i < copy.m_pActions.Length; i++)
         {
-            cp[i] = copy.m_pActions[i].Copy() as CCFiniteTimeAction;
+            cp[i] = (CCFiniteTimeAction) copy.m_pActions[i].Copy();
         }
         m_pActions = cp;
     }
@@ -72,7 +72,7 @@ public class CCParallel : CCActionInterval
         CCFiniteTimeAction[] rev = new CCFiniteTimeAction[m_pActions.Length];
         for (int i = 0; i < m_pActions.Length; i++)
         {
-            rev[i] = m_pActions[i].Reverse();
+            rev[i] = m_pActions[i].ReverseOrThrow();
         }
 
         return new CCParallel(rev);
@@ -83,20 +83,20 @@ public class CCParallel : CCActionInterval
     /// </summary>
     /// <param name="zone"></param>
     /// <returns></returns>
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
-        ICCCopyable tmpZone = zone;
+        ICCCopyable? tmpZone = zone;
         CCParallel ret;
 
         if (tmpZone != null && tmpZone != null)
         {
-            ret = zone as CCParallel;
+            ret = (CCParallel) tmpZone;
             base.Copy(zone);
 
             CCFiniteTimeAction[] cp = new CCFiniteTimeAction[m_pActions.Length];
             for (int i = 0; i < m_pActions.Length; i++)
             {
-                cp[i] = m_pActions[i].Copy() as CCFiniteTimeAction;
+                cp[i] = (CCFiniteTimeAction) m_pActions[i].Copy();
             }
             ret.m_pActions = cp;
             return ret;

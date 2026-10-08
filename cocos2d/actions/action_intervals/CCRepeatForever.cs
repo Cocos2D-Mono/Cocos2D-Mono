@@ -1,5 +1,5 @@
-#nullable disable
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -34,10 +34,11 @@ public class CCRepeatForever : CCActionInterval
 
     protected CCRepeatForever(CCRepeatForever repeatForever) : base(repeatForever)
     {
-        var param = repeatForever.m_pInnerAction.Copy() as CCActionInterval;
+        var param = (CCActionInterval) repeatForever.m_pInnerAction.Copy();
         InitWithAction(param);
     }
 
+    [MemberNotNull(nameof(m_pInnerAction))]
     protected bool InitWithAction(CCActionInterval action)
     {
         Debug.Assert(action != null);
@@ -46,6 +47,7 @@ public class CCRepeatForever : CCActionInterval
         return true;
     }
 
+    [MemberNotNull(nameof(m_pInnerAction))]
     protected bool InitWithActions(CCActionInterval[] actions)
     {
         Debug.Assert(actions != null && actions.Length > 0);
@@ -55,22 +57,14 @@ public class CCRepeatForever : CCActionInterval
         return true;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
-            var ret = zone as CCRepeatForever;
-            if (ret == null)
-            {
-                return null;
-            }
+            var ret = (CCRepeatForever) zone;
             base.Copy(zone);
 
-            var param = m_pInnerAction.Copy() as CCActionInterval;
-            if (param == null)
-            {
-                return null;
-            }
+            var param = (CCActionInterval) m_pInnerAction.Copy();
             ret.InitWithAction(param);
 
             return ret;
@@ -89,6 +83,7 @@ public class CCRepeatForever : CCActionInterval
 
     public override void Step(float dt)
     {
+        Debug.Assert(m_pTarget != null, "Step only runs while the action is started");
         m_pInnerAction.Step(dt);
 
         if (m_pInnerAction.IsDone)
@@ -107,6 +102,6 @@ public class CCRepeatForever : CCActionInterval
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCRepeatForever(m_pInnerAction.Reverse() as CCActionInterval);
+        return new CCRepeatForever((CCActionInterval) m_pInnerAction.Reverse());
     }
 }

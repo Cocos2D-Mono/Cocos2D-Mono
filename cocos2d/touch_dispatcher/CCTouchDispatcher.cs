@@ -1,22 +1,23 @@
-#nullable disable
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Cocos2D;
 
 public class CCTouchDispatcher : ICCEGLTouchDelegate
 {
-    private static List<CCTouch> pMutableTouches;
+    private static List<CCTouch>? pMutableTouches;
     private bool _dispatchEvents;
     private bool _locked;
     private bool _toAdd;
     private bool _toQuit;
     private bool _toRemove;
-    private List<CCTouchHandler> _handlersToAdd;
-    private List<object> _handlersToRemove;
-    protected List<CCTouchHandler> m_pStandardHandlers;
-    protected List<CCTouchHandler> m_pTargetedHandlers;
+    // Created here so the dispatcher is usable before Init(), which still resets them.
+    private List<CCTouchHandler> _handlersToAdd = new List<CCTouchHandler>();
+    private List<object> _handlersToRemove = new List<object>();
+    protected List<CCTouchHandler> m_pStandardHandlers = new List<CCTouchHandler>();
+    protected List<CCTouchHandler> m_pTargetedHandlers = new List<CCTouchHandler>();
     private bool _rearrangeTargetedHandlersUponTouch = false;
     private bool _rearrangeStandardHandlersUponTouch = false;
 
@@ -89,7 +90,7 @@ public class CCTouchDispatcher : ICCEGLTouchDelegate
     /// <param name="d"></param>
     public void UpdateGraphPriority(ICCTouchDelegate d)
     {
-        CCTouchHandler h = FindHandler(d);
+        CCTouchHandler? h = FindHandler(d);
         if (h != null)
         {
             h.Priority = d.TouchPriority;
@@ -202,7 +203,8 @@ public class CCTouchDispatcher : ICCEGLTouchDelegate
     /// </summary>
     public void SetPriority(int nPriority, ICCTouchDelegate pDelegate)
     {
-        CCTouchHandler handler = FindHandler(pDelegate);
+        CCTouchHandler? handler = FindHandler(pDelegate);
+        Debug.Assert(handler != null, "SetPriority: the delegate is not registered with the touch dispatcher");
         handler.Priority = nPriority;
 
         RearrangeHandlers(m_pTargetedHandlers);
@@ -459,7 +461,10 @@ public class CCTouchDispatcher : ICCEGLTouchDelegate
         }
     }
 
-    public CCTouchHandler FindHandler(ICCTouchDelegate pDelegate)
+    /// <summary>
+    /// Returns the handler registered for the delegate, or null if it has none.
+    /// </summary>
+    public CCTouchHandler? FindHandler(ICCTouchDelegate pDelegate)
     {
         foreach (CCTouchHandler handler in m_pTargetedHandlers)
         {

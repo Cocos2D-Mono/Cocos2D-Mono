@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public interface ICCKeypadDelegate
@@ -12,9 +11,11 @@ public interface ICCKeypadDelegate
 
 public class CCKeypadHandler 
 {
-    protected ICCKeypadDelegate m_pDelegate;
+    // Null for a handler made with the parameterless constructor until InitWithDelegate;
+    // HandlerWithDelegate always sets it.
+    protected ICCKeypadDelegate? m_pDelegate;
 
-    public ICCKeypadDelegate Delegate
+    public ICCKeypadDelegate? Delegate
     {
         get { return m_pDelegate; }
         set { m_pDelegate = value; }

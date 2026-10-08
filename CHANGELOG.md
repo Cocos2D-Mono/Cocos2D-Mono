@@ -79,6 +79,14 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   none, instead of throwing. Its texture check was inverted.
 - Setting `CCParticleSystemQuad.Texture` to null clears the texture instead of throwing,
   as `CCParticleSystem` already did.
+- `CCLayerMultiplex.SwitchToFirstLayer`, `SwitchToNextLayer` and `SwitchToPreviousLayer`
+  work for a multiplex built from a layer list; they used to return null. They also skip
+  layers released by `SwitchToAndReleaseMe` instead of showing nothing.
+- `CCLayerMultiplex.AddLayer` numbers layers consecutively. A layer added after a tagged
+  one used to get an index one higher than expected.
+- `CCLayerMultiplex.SwitchToAndReleaseMe` releases a tagged layer's tag as well as its
+  index. Releasing the active layer itself now removes it and shows nothing, instead of
+  leaving it on screen and still marked active.
 
 ## 2.6.1 - 2026-10-09
 

@@ -14,7 +14,7 @@ public class CCReverseTime : CCActionInterval
     protected CCReverseTime(CCReverseTime copy)
         : base(copy)
     {
-        m_pOther = copy.m_pOther;
+        m_pOther = (CCFiniteTimeAction) copy.m_pOther.Copy();
     }
 
     public override object Copy(ICCCopyable? zone)
@@ -23,7 +23,7 @@ public class CCReverseTime : CCActionInterval
         {
             var ret = (CCReverseTime) zone;
             base.Copy(zone);
-            m_pOther = (CCFiniteTimeAction) ret.m_pOther; // .Copy() was in here before
+            ret.m_pOther = (CCFiniteTimeAction) m_pOther.Copy();
             return ret;
         }
         else

@@ -40,6 +40,10 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     nullable.
   - Overrides of `CCTransitionScene.InitWithDuration(float, CCScene)` must set the in and
     out scenes, for example by calling the base method; the compiler now checks.
+- **Nullable annotations for particles and grid effects.** The visible changes:
+  - `CCParticleSystem.Texture` and `BatchNode` are nullable: a system has no texture until
+    one is set, and a batch node only while it renders through one.
+  - `CCParticleEmitterLight.OnUpdateParticle` is nullable; it's optional.
 
 ### Fixed
 
@@ -71,6 +75,10 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   removed.
 - `CCLayerMultiplex.SwitchTo` returns null for a layer released by `SwitchToAndReleaseMe`
   instead of throwing, and switching away from a released active layer no longer throws.
+- `CCParticleSystemQuad.SetDisplayFrame` takes the frame's texture on a system that has
+  none, instead of throwing. Its texture check was inverted.
+- Setting `CCParticleSystemQuad.Texture` to null clears the texture instead of throwing,
+  as `CCParticleSystem` already did.
 
 ## 2.6.1 - 2026-10-09
 

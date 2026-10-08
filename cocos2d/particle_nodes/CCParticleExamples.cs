@@ -1,4 +1,3 @@
-#nullable disable
 
 using System.IO;
 using Microsoft.Xna.Framework.Graphics;
@@ -58,7 +57,7 @@ internal static class CCParticleExample
             0x60, 0x82
         };
 
-    private static CCTexture2D _defaultTexture;
+    private static CCTexture2D? _defaultTexture;
 
     public static CCTexture2D DefaultTexture
     {

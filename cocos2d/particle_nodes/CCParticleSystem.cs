@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -91,9 +90,12 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
     protected float m_fStartSpin;
     protected float m_fStartSpinVar;
     protected CCEmitterMode m_nEmitterMode = CCEmitterMode.Gravity;
-    protected CCParticleBatchNode m_pBatchNode;
-    protected CCParticle[] m_pParticles;
-    protected CCTexture2D m_pTexture;
+    // Set while the system renders through a CCParticleBatchNode.
+    protected CCParticleBatchNode? m_pBatchNode;
+    // Allocated by InitWithTotalParticles.
+    protected CCParticle[] m_pParticles = Array.Empty<CCParticle>();
+    // Null until a texture is set. A batched system uses its batch node's texture.
+    protected CCTexture2D? m_pTexture;
     protected CCBlendFunc m_tBlendFunc = CCBlendFunc.AlphaBlend;
 
     protected CCColor4F m_tEndColor;
@@ -290,7 +292,7 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
 
     #region ParticleSystem - methods for batchNode rendering
 
-    public virtual CCParticleBatchNode BatchNode
+    public virtual CCParticleBatchNode? BatchNode
     {
         get { return m_pBatchNode; }
         set
@@ -390,7 +392,7 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
         PlistDocument doc = CCContentManager.SharedContentManager.Load<PlistDocument>(plistFile);
         // Add the directory containing the plist file as a search path
         int idx = plistFile.LastIndexOf('/');
-        string pathToRemove = null;
+        string? pathToRemove = null;
         if(idx > -1) {
             string path = plistFile.Substring(0, idx);
             if (!CCContentManager.SharedContentManager.SearchPaths.Contains(path))
@@ -526,7 +528,7 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
                     // Try to get the texture from the cache
                     string textureName = dictionary["textureFileName"].AsString;
 
-                    CCTexture2D tex = null;
+                    CCTexture2D? tex = null;
 
                     if (!string.IsNullOrEmpty(textureName))
                     {
@@ -599,10 +601,10 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
     /// </summary>
     /// <param name="dataBytes"></param>
     /// <returns></returns>
-    private static byte[] Inflate(byte[] dataBytes)
+    private static byte[]? Inflate(byte[] dataBytes)
     {
 
-        byte[] outputBytes = null;
+        byte[]? outputBytes = null;
         var zipInputStream = new ZipInputStream(new MemoryStream(dataBytes));
 
         if (zipInputStream.CanDecompressEntry) {
@@ -1004,6 +1006,8 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
                         if (m_uParticleCount == 0 && m_bIsAutoRemoveOnFinish)
                         {
                             UnscheduleUpdate();
+                            // Update only runs while the system is running, so it has a parent.
+                            Debug.Assert(m_pParent != null, "A running particle system has a parent");
                             m_pParent.RemoveChild(this, true);
                             return;
                         }
@@ -1040,7 +1044,7 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
 
     #region ParticleSystem - CCTexture protocol
 
-    public virtual CCTexture2D Texture
+    public virtual CCTexture2D? Texture
     {
         get { return m_pTexture; }
         set

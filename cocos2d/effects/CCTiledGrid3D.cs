@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2010 Ricardo Quesada
@@ -31,11 +30,12 @@ namespace Cocos2D;
 public class CCTiledGrid3D : CCGridBase
 {
     private bool _dirty;
-    private CCIndexBuffer<short> _indexBuffer;
-    protected short[] m_pIndices;
-    protected CCQuad3[] m_pOriginalVertices;
-    private CCVertexBuffer<CCV3F_T2F> _vertexBuffer;
-    internal CCV3F_T2F[] m_pVertices;
+    // CalculateVertexPoints creates these, and every constructor reaches it through InitWithSize.
+    private CCIndexBuffer<short> _indexBuffer = null!;
+    protected short[] m_pIndices = null!;
+    protected CCQuad3[] m_pOriginalVertices = null!;
+    private CCVertexBuffer<CCV3F_T2F> _vertexBuffer = null!;
+    internal CCV3F_T2F[] m_pVertices = null!;
 
     /// <summary>
     ///  returns the tile at the given position

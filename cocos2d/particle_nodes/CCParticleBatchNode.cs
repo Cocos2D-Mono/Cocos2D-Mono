@@ -1,4 +1,3 @@
-#nullable disable
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -18,6 +17,17 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
 
     public readonly CCTextureAtlas TextureAtlas = new CCTextureAtlas();
     private CCBlendFunc _blendFunc;
+
+    // InitWithTexture creates the child list ("no lazy alloc in this node"), and nothing
+    // clears it, so a batch node always has one.
+    private CCRawList<CCNode> ChildList
+    {
+        get
+        {
+            Debug.Assert(m_pChildren != null, "InitWithTexture creates the child list");
+            return m_pChildren;
+        }
+    }
 
     #region ICCTextureProtocol Members
 
@@ -138,10 +148,10 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
         Debug.Assert(child != null, "Argument must be non-null");
         Debug.Assert(child is CCParticleSystem, "CCParticleBatchNode only supports CCQuadParticleSystems as children");
         var pChild = (CCParticleSystem) child;
-        Debug.Assert(pChild.Texture.Name == TextureAtlas.Texture.Name, "CCParticleSystem is not using the same texture id");
+        Debug.Assert(pChild.Texture?.Name == TextureAtlas.Texture.Name, "CCParticleSystem is not using the same texture id");
 
         // If this is the 1st children, then copy blending function
-        if (m_pChildren.Count == 0)
+        if (ChildList.Count == 0)
         {
             BlendFunc = pChild.BlendFunc;
         }
@@ -157,7 +167,7 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
 
         if (pos != 0)
         {
-            var p = (CCParticleSystem) m_pChildren[pos - 1];
+            var p = (CCParticleSystem) ChildList[pos - 1];
             atlasIndex = p.AtlasIndex + p.TotalParticles;
         }
         else
@@ -209,7 +219,7 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
         Debug.Assert(child != null, "Child must be non-null");
         Debug.Assert(child is CCParticleSystem,
                      "CCParticleBatchNode only supports CCQuadParticleSystems as children");
-        Debug.Assert(m_pChildren.Contains(child), "Child doesn't belong to batch");
+        Debug.Assert(ChildList.Contains(child), "Child doesn't belong to batch");
 
         var pChild = (CCParticleSystem) (child);
 
@@ -219,7 +229,7 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
         }
 
         // no reordering if only 1 child
-        if (m_pChildren.Count > 1)
+        if (ChildList.Count > 1)
         {
             int newIndex = 0, oldIndex = 0;
 
@@ -228,8 +238,8 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
             if (oldIndex != newIndex)
             {
                 // reorder m_pChildren.array
-                m_pChildren.RemoveAt(oldIndex);
-                m_pChildren.Insert(newIndex, pChild);
+                ChildList.RemoveAt(oldIndex);
+                ChildList.Insert(newIndex, pChild);
 
                 // save old altasIndex
                 int oldAtlasIndex = pChild.AtlasIndex;
@@ -239,9 +249,9 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
 
                 // Find new AtlasIndex
                 int newAtlasIndex = 0;
-                for (int i = 0; i < m_pChildren.count; i++)
+                for (int i = 0; i < ChildList.count; i++)
                 {
-                    var node = (CCParticleSystem) m_pChildren.Elements[i];
+                    var node = (CCParticleSystem) ChildList.Elements[i];
                     if (node == pChild)
                     {
                         newAtlasIndex = pChild.AtlasIndex;
@@ -265,11 +275,11 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
         bool foundNewIdx = false;
 
         int minusOne = 0;
-        int count = m_pChildren.count;
+        int count = ChildList.count;
 
         for (int i = 0; i < count; i++)
         {
-            CCNode node = m_pChildren.Elements[i];
+            CCNode node = ChildList.Elements[i];
 
             // new index
             if (node.m_nZOrder > z && ! foundNewIdx)
@@ -318,7 +328,7 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
             return (SearchNewPositionInChildrenForZ(start, end, z));
         }
         int mid = (start + end) / 2;
-        CCNode child = m_pChildren.Elements[mid];
+        CCNode child = ChildList.Elements[mid];
         if (child.m_nZOrder > z)
         {
             return BinarySearchNewPositionInChildrenForZ(start, mid, z);
@@ -333,7 +343,7 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
     /// <returns></returns>
     private int SearchNewPositionInChildrenForZ(int z)
     {
-        int count = m_pChildren.count;
+        int count = ChildList.count;
         if (count > kBinarySearchTrigger)
         {
             return (BinarySearchNewPositionInChildrenForZ(0, count, z));
@@ -351,11 +361,11 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
     /// <returns>The index on [start,end)</returns>
     private int SearchNewPositionInChildrenForZ(int start, int end, int z)
     {
-        int count = m_pChildren.count;
+        int count = ChildList.count;
 
         for (int i = 0; i < count; i++)
         {
-            CCNode child = m_pChildren.Elements[i];
+            CCNode child = ChildList.Elements[i];
             if (child.m_nZOrder > z)
             {
                 return i;
@@ -375,7 +385,7 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
 
         Debug.Assert(child is CCParticleSystem,
                      "CCParticleBatchNode only supports CCQuadParticleSystems as children");
-        Debug.Assert(m_pChildren.Contains(child), "CCParticleBatchNode doesn't contain the sprite. Can't remove it");
+        Debug.Assert(ChildList.Contains(child), "CCParticleBatchNode doesn't contain the sprite. Can't remove it");
 
         var pChild = (CCParticleSystem) child;
         base.RemoveChild(pChild, cleanup);
@@ -394,14 +404,14 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
 
     public void RemoveChildAtIndex(int index, bool doCleanup)
     {
-        RemoveChild(m_pChildren[index], doCleanup);
+        RemoveChild(ChildList[index], doCleanup);
     }
 
     public override void RemoveAllChildren(bool doCleanup = true)
     {
-        for (int i = 0; i < m_pChildren.count; i++)
+        for (int i = 0; i < ChildList.count; i++)
         {
-            ((CCParticleSystem) m_pChildren.Elements[i]).BatchNode = null;
+            ((CCParticleSystem) ChildList.Elements[i]).BatchNode = null;
         }
 
         base.RemoveAllChildren(doCleanup);
@@ -481,9 +491,9 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
     {
         int index = 0;
 
-        for (int i = 0; i < m_pChildren.count; i++)
+        for (int i = 0; i < ChildList.count; i++)
         {
-            var child = (CCParticleSystem) m_pChildren.Elements[i];
+            var child = (CCParticleSystem) ChildList.Elements[i];
             child.AtlasIndex = index;
             index += child.TotalParticles;
         }

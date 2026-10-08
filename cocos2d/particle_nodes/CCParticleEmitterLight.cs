@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using Microsoft.Xna.Framework;
 
@@ -50,7 +49,7 @@ public class CCParticleEmitterLight : CCDrawNode
     /// Custom update callback. Called for each active particle every frame.
     /// If null, default behavior is applied (linear velocity, linear alpha fade).
     /// </summary>
-    public ParticleUpdateDelegate OnUpdateParticle { get; set; }
+    public ParticleUpdateDelegate? OnUpdateParticle { get; set; }
 
     /// <summary>
     /// Default drag applied to particle velocity each frame (0 = no drag, 1 = full stop).

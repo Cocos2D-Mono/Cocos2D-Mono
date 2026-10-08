@@ -85,6 +85,14 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     creates the cache on first use.
   - A `CCSpriteFrameCache` or `CCAnimationCache` made with `new` works before `Init`, which
     now only clears it. Both used to throw `NullReferenceException` until then.
+- **Nullable annotations for sprites and sprite batch nodes.** The visible changes:
+  - `CCSprite.Texture` and `BatchNode` are nullable, and so is the texture
+    `InitWithTexture(texture, rect)` takes: a sprite can be made without a texture, and only
+    a batched sprite has a batch node.
+  - `ICCTextureProtocol.Texture` can read as null, as a sprite's or particle system's
+    texture already could, but can't be set to null through the interface.
+  - `CCMaskedSprite.CollisionMask` is nullable: a masked sprite made with the parameterless
+    constructor has no mask.
 
 ### Fixed
 
@@ -162,6 +170,13 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - `CCSpriteFrameCache.RemoveSpriteFramesFromTexture` skips frames that have no texture, and
   `CCParticleSystemQuad.SetDisplayFrame` with such a frame clears the system's texture.
   Both used to throw `NullReferenceException`.
+- `CCSprite.SortAllChildren` on a sprite with no children yet, `RemoveAllChildren` on a
+  batched sprite with no children, and `IsSpriteFrameDisplayed` with no textures no longer
+  throw `NullReferenceException`.
+- `CCSpriteBatchNode.Compare` accepts null arguments, ordering them first as
+  `CCNode.Compare` does, instead of throwing.
+- `CCAnimate.Stop` no longer throws when the animation's `RestoreOriginalFrame` was turned on
+  after the action started; there's no original frame to restore.
 
 ## 2.6.1 - 2026-10-09
 

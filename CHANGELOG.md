@@ -57,6 +57,14 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - `CCLightningTrack.GetPoint`'s fallback interpolates on the segment that contains the
   requested position. It used to skip that segment, returning a point on the next one or
   the end of the bolt.
+- `CCTouchDispatcher.SetPriority` works during a touch dispatch. For a delegate added in
+  the same dispatch, such as a popup menu opened from a menu callback, it no longer
+  throws, and the priority applies when the delegate joins. Called from `TouchBegan` for
+  a registered delegate, it no longer throws `InvalidOperationException`; the new order
+  applies from the next touch. `UpdateGraphPriority` also reaches a delegate added in the
+  same dispatch.
+- `CCTouchDispatcher.SetPriority` throws `ArgumentException` for a delegate that isn't
+  registered, instead of `NullReferenceException`.
 - A `CCTouchDispatcher` used before `Init()` no longer throws when delegates are added or
   removed.
 - `CCLayerMultiplex.SwitchTo` returns null for a layer released by `SwitchToAndReleaseMe`

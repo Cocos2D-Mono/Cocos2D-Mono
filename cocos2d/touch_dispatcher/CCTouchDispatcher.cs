@@ -1,6 +1,6 @@
 
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace Cocos2D;
@@ -95,6 +95,14 @@ public class CCTouchDispatcher : ICCEGLTouchDelegate
         {
             h.Priority = d.TouchPriority;
             RearrangeAllHandlersUponTouch();
+        }
+
+        // A delegate added during the current touch dispatch is still queued. Update that
+        // handler too, so it's inserted with this priority when the dispatch ends.
+        CCTouchHandler? queued = FindQueuedHandler(d);
+        if (queued != null)
+        {
+            queued.Priority = d.TouchPriority;
         }
     }
 
@@ -203,12 +211,34 @@ public class CCTouchDispatcher : ICCEGLTouchDelegate
     /// </summary>
     public void SetPriority(int nPriority, ICCTouchDelegate pDelegate)
     {
+        // During a touch dispatch, a delegate added in that dispatch is still queued, and one
+        // removed and added again has a handler in both places, so update both.
         CCTouchHandler? handler = FindHandler(pDelegate);
-        Debug.Assert(handler != null, "SetPriority: the delegate is not registered with the touch dispatcher");
-        handler.Priority = nPriority;
+        CCTouchHandler? queued = FindQueuedHandler(pDelegate);
+        if (handler == null && queued == null)
+        {
+            throw new ArgumentException("The delegate is not registered with the touch dispatcher.", nameof(pDelegate));
+        }
 
-        RearrangeHandlers(m_pTargetedHandlers);
-        RearrangeHandlers(m_pStandardHandlers);
+        if (handler != null)
+        {
+            handler.Priority = nPriority;
+        }
+        if (queued != null)
+        {
+            queued.Priority = nPriority;
+        }
+
+        if (_locked)
+        {
+            // The dispatch loop is iterating the handlers, so sort them before the next touch.
+            RearrangeAllHandlersUponTouch();
+        }
+        else
+        {
+            RearrangeHandlers(m_pTargetedHandlers);
+            RearrangeHandlers(m_pStandardHandlers);
+        }
     }
 
     public void Touches(List<CCTouch> pTouches, CCTouchType touchType)
@@ -475,6 +505,20 @@ public class CCTouchDispatcher : ICCEGLTouchDelegate
         }
 
         foreach (CCTouchHandler handler in m_pStandardHandlers)
+        {
+            if (handler.Delegate == pDelegate)
+            {
+                return handler;
+            }
+        }
+
+        return null;
+    }
+
+    // Handlers added during a touch dispatch wait here until it ends.
+    private CCTouchHandler? FindQueuedHandler(ICCTouchDelegate pDelegate)
+    {
+        foreach (CCTouchHandler handler in _handlersToAdd)
         {
             if (handler.Delegate == pDelegate)
             {

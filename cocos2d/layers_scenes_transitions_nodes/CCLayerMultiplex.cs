@@ -90,6 +90,7 @@ public class CCLayerMultiplex : CCLayerRGBA
         for (int i = 0; i < layer.Length; i++)
         {
             m_pLayers[i] = layer[i];
+            _LayersInOrder.Add(i);
             if (layer[i].Tag != CCNode.kCCNodeTagInvalid)
             {
                 m_pLayers[layer[i].Tag + kTagOffsetForUniqueness] = layer[i];
@@ -132,7 +133,7 @@ public class CCLayerMultiplex : CCLayerRGBA
         {
             return (null);
         }
-        return (SwitchTo(_LayersInOrder[0]));
+        return (SwitchTo(_LayersInOrder[SkipReleased(0, 1)]));
     }
 
     /// <summary>
@@ -175,7 +176,7 @@ public class CCLayerMultiplex : CCLayerRGBA
         {
             idx = 0;
         }
-        return(SwitchTo(_LayersInOrder[idx]));
+        return(SwitchTo(_LayersInOrder[SkipReleased(idx, 1)]));
     }
 
     /// <summary>
@@ -214,12 +215,31 @@ public class CCLayerMultiplex : CCLayerRGBA
             {
                 idx = _LayersInOrder.Count - 1;
             }
+            idx = SkipReleased(idx, -1);
         }
         else
         {
-            idx = 0;
+            idx = SkipReleased(0, 1);
         }
         return(SwitchTo(_LayersInOrder[idx]));
+    }
+
+    /// <summary>
+    /// Steps through the layer order from position 'from', wrapping around in direction 'step',
+    /// to the first layer that SwitchToAndReleaseMe hasn't released. Returns 'from' if every
+    /// layer has been released.
+    /// </summary>
+    private int SkipReleased(int from, int step)
+    {
+        int count = _LayersInOrder.Count;
+        for (int i = 0, pos = from; i < count; i++, pos = (pos + step + count) % count)
+        {
+            if (m_pLayers[_LayersInOrder[pos]] != null)
+            {
+                return pos;
+            }
+        }
+        return from;
     }
 
     /// <summary>
@@ -235,7 +255,9 @@ public class CCLayerMultiplex : CCLayerRGBA
         }
         else
         {
-            int ix = m_pLayers.Count;
+            // The next index is the number of layers added so far. m_pLayers.Count would also
+            // count the tag aliases.
+            int ix = _LayersInOrder.Count;
             m_pLayers[ix] = layer;
             _LayersInOrder.Add(ix);
             if (layer.Tag != CCNode.kCCNodeTagInvalid)
@@ -269,7 +291,8 @@ public class CCLayerMultiplex : CCLayerRGBA
     {
         if (m_nEnabledLayer == -1 && m_pLayers.Count > 0 && ShowFirstLayerOnEnter)
         {
-            SwitchTo(0);
+            // The first layer that hasn't been released.
+            SwitchToFirstLayer();
         }
         base.OnEnter();
     }
@@ -307,7 +330,8 @@ public class CCLayerMultiplex : CCLayerRGBA
         }
         if (m_nEnabledLayer != -1)
         {
-            // Null if SwitchToAndReleaseMe released the active layer itself.
+            // Released layers have null entries. SwitchToAndReleaseMe clears the marker when it
+            // releases the active layer, so this is a safety net.
             if (m_pLayers.TryGetValue(m_nEnabledLayer, out CCLayer? outLayer) && outLayer != null)
             {
                 if (_outAction != null)
@@ -365,15 +389,36 @@ public class CCLayerMultiplex : CCLayerRGBA
 
 
     /// <summary>
-    /// Switches to the new layer and removes the old layer from management. 
+    /// Switches to the new layer and removes the old layer from management. If n is the
+    /// active layer, that layer is released too and nothing is shown.
     /// </summary>
     /// <param name="n"></param>
     /// <returns></returns>
     public CCLayer? SwitchToAndReleaseMe(int n)
     {
-        var prevLayer = m_nEnabledLayer;
+        m_pLayers.TryGetValue(m_nEnabledLayer, out CCLayer? released);
         CCLayer? l = SwitchTo(n);
-        m_pLayers[prevLayer] = null;
+        if (released == null)
+        {
+            return (l);
+        }
+
+        if (l == released)
+        {
+            // SwitchTo kept the layer being released on screen.
+            RemoveChild(released, true);
+            m_nEnabledLayer = NoLayer;
+            l = null;
+        }
+
+        // Release every key that maps to the layer: its index and its tag alias.
+        foreach (int key in new List<int>(m_pLayers.Keys))
+        {
+            if (m_pLayers[key] == released)
+            {
+                m_pLayers[key] = null;
+            }
+        }
         return (l);
     }
 }

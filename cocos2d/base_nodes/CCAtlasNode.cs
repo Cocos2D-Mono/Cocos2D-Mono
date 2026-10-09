@@ -1,4 +1,5 @@
 
+using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
@@ -160,7 +161,8 @@ public class CCAtlasNode : CCNode, ICCTextureProtocol
     public bool InitWithTileFile(string tile, int tileWidth, int tileHeight, int itemsToRender)
     {
         Debug.Assert(tile != null, "title should not be null");
-        var texture = CCTextureCache.SharedTextureCache.AddImage(tile);
+        var texture = CCTextureCache.SharedTextureCache.AddImage(tile)
+            ?? throw new ArgumentException("The texture '" + tile + "' couldn't be loaded.", nameof(tile));
         return InitWithTexture(texture, tileWidth, tileHeight, itemsToRender);
     }
 

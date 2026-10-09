@@ -569,7 +569,7 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
 
                             try
                             {
-                                CCTexture2D texx = CCTextureCache.SharedTextureCache.AddImage(imageBytes, textureName, SurfaceFormat.Color);
+                                CCTexture2D? texx = CCTextureCache.SharedTextureCache.AddImage(imageBytes, textureName, SurfaceFormat.Color);
                                 if (texx == null && textureName.IndexOf('.') > -1)
                                 {
                                     texx = CCTextureCache.SharedTextureCache.AddImage(imageBytes, textureName.Substring(textureName.LastIndexOf('.')), SurfaceFormat.Color);

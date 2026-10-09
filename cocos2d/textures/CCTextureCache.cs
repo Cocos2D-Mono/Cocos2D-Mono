@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,14 +12,14 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
     struct AsyncStruct
     {
         public string  FileName;
-        public Action<CCTexture2D> Action;
+        public Action<CCTexture2D?>? Action;
     };
 
     private List<AsyncStruct> _asyncLoadedImages = new List<AsyncStruct>();
     private Action _processingAction;
-    private object _task;
+    private object? _task;
 
-    private static CCTextureCache s_sharedTextureCache;
+    private static CCTextureCache? s_sharedTextureCache;
 
     private readonly object _dictLock = new object();
     protected Dictionary<string, CCTexture2D> m_pTextures = new Dictionary<string, CCTexture2D>();
@@ -106,7 +105,7 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
         return m_pTextures.ContainsKey(assetFile);
     }
 
-    public void AddImageAsync(string fileimage, Action<CCTexture2D> action)
+    public void AddImageAsync(string fileimage, Action<CCTexture2D?>? action)
     {
         Debug.Assert(!String.IsNullOrEmpty(fileimage), "TextureCache: fileimage MUST not be NULL");
 
@@ -136,11 +135,11 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
         return (assetName);
     }
 
-    public CCTexture2D AddImage(string fileimage)
+    public CCTexture2D? AddImage(string fileimage)
 		{
 			Debug.Assert (!String.IsNullOrEmpty (fileimage), "TextureCache: fileimage MUST not be NULL");
 
-			CCTexture2D texture = null;
+			CCTexture2D? texture = null;
 
         var assetName = CreateAssetKey(fileimage);
 
@@ -163,11 +162,11 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
 			return texture;
 		}
 
-    public CCTexture2D AddImage(byte[] data, string assetName, SurfaceFormat format)
+    public CCTexture2D? AddImage(byte[] data, string assetName, SurfaceFormat format)
     {
         lock (_dictLock)
         {
-            CCTexture2D texture;
+            CCTexture2D? texture;
 
             if (!m_pTextures.TryGetValue(assetName, out texture))
             {
@@ -186,22 +185,22 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
         }
     }
 
-    public CCTexture2D AddRawImage<T>(T[] data, int width, int height, string assetName, SurfaceFormat format,
+    public CCTexture2D? AddRawImage<T>(T[] data, int width, int height, string assetName, SurfaceFormat format,
                                       bool premultiplied) where T : struct
     {
         return AddRawImage(data, width, height, assetName, format, premultiplied, false, new CCSize(width, height));
     }
 
-    public CCTexture2D AddRawImage<T>(T[] data, int width, int height, string assetName, SurfaceFormat format,
+    public CCTexture2D? AddRawImage<T>(T[] data, int width, int height, string assetName, SurfaceFormat format,
                                       bool premultiplied, bool mipMap) where T : struct
     {
         return AddRawImage(data, width, height, assetName, format, premultiplied, mipMap, new CCSize(width, height));
     }
 
-     public CCTexture2D AddRawImage<T>(T[] data, int width, int height, string assetName, SurfaceFormat format,
+     public CCTexture2D? AddRawImage<T>(T[] data, int width, int height, string assetName, SurfaceFormat format,
                                       bool premultiplied, bool mipMap, CCSize contentSize) where T : struct
     {
-        CCTexture2D texture;
+        CCTexture2D? texture;
 
         lock (_dictLock)
         {
@@ -222,7 +221,7 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
         return texture;
     }
 
-		public CCTexture2D this[string key]
+		public CCTexture2D? this[string key]
 		{
 			get 
 			{
@@ -230,9 +229,9 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
 			}
 		}
 
-    public CCTexture2D TextureForKey(string key)
+    public CCTexture2D? TextureForKey(string key)
     {
-        CCTexture2D texture = null;
+        CCTexture2D? texture = null;
         try
         {
             key = CreateAssetKey(key);
@@ -274,9 +273,8 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
 #endif
             foreach (var pair in tmp)
             {
-                if (pair.Value.IsAlive)
+                if (pair.Value.Target is CCTexture2D tex)
                 {
-                    CCTexture2D tex = (CCTexture2D) pair.Value.Target;
                     m_pTextures.Add(pair.Key, tex);
 #if DEBUG
                     memory += (long)tex.TotalBytes;
@@ -304,7 +302,7 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
             return;
         }
 
-        string key = null;
+        string? key = null;
 
         foreach (var pair in m_pTextures)
         {

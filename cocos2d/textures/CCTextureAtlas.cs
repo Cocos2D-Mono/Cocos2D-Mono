@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2010 Ricardo Quesada
@@ -26,6 +25,7 @@ THE SOFTWARE.
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Cocos2D;
@@ -79,6 +79,15 @@ public class CCTextureAtlas
     {
         get { return m_pTexture; }
         set { m_pTexture = value; }
+    }
+
+    public CCTextureAtlas()
+    {
+        // Callers set these with InitWithTexture or InitWithFile straight after construction,
+        // as CCSpriteBatchNode and the Create methods do.
+        _vertexBuffer = null!;
+        m_pQuads = null!;
+        m_pTexture = null!;
     }
 
 		public bool IsAntialiased
@@ -220,7 +229,7 @@ public class CCTextureAtlas
     /// creates a TextureAtlas with an filename and with an initial capacity for Quads.
     /// The TextureAtlas capacity can be increased in runtime.
     /// </summary>
-    public static CCTextureAtlas Create(string file, int capacity)
+    public static CCTextureAtlas? Create(string file, int capacity)
     {
         var pTextureAtlas = new CCTextureAtlas();
         if (pTextureAtlas.InitWithFile(file, capacity))
@@ -239,7 +248,7 @@ public class CCTextureAtlas
     public bool InitWithFile(string file, int capacity)
     {
         // retained in property
-        CCTexture2D texture = CCTextureCache.SharedTextureCache.AddImage(file);
+        CCTexture2D? texture = CCTextureCache.SharedTextureCache.AddImage(file);
         if (texture != null)
         {
             return InitWithTexture(texture, capacity);
@@ -255,12 +264,8 @@ public class CCTextureAtlas
     public static CCTextureAtlas Create(CCTexture2D texture, int capacity)
     {
         var pTextureAtlas = new CCTextureAtlas();
-        if (pTextureAtlas.InitWithTexture(texture, capacity))
-        {
-            return pTextureAtlas;
-        }
-
-        return null;
+        pTextureAtlas.InitWithTexture(texture, capacity);
+        return pTextureAtlas;
     }
 
     /// <summary>
@@ -269,6 +274,7 @@ public class CCTextureAtlas
     /// The TextureAtlas capacity can be increased in runtime.
     /// WARNING: Do not reinitialize the TextureAtlas because it will leak memory (issue #706)
     /// </summary>
+    [MemberNotNull(nameof(m_pTexture), nameof(_vertexBuffer), nameof(m_pQuads))]
     public bool InitWithTexture(CCTexture2D texture, int capacity)
     {
         //Debug.Assert(texture != null);

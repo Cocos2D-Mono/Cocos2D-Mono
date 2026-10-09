@@ -93,6 +93,13 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     texture already could, but can't be set to null through the interface.
   - `CCMaskedSprite.CollisionMask` is nullable: a masked sprite made with the parameterless
     constructor has no mask.
+- **Nullable annotations for textures.** The visible changes:
+  - `CCTextureCache.AddImage`, `AddRawImage`, `TextureForKey` and its indexer return
+    `CCTexture2D?`. They already returned null for a texture that can't be loaded or isn't
+    cached. `AddImageAsync`'s callback is optional and can receive null for the same reason.
+  - `CCTextureAtlas.Create(file, capacity)` returns null when the file can't be loaded.
+  - `CCTexture2D.XNATexture`, `Name` and `OnReInit` are nullable: a texture that hasn't been
+    created, or couldn't be recreated, has no XNA texture.
 
 ### Fixed
 
@@ -186,6 +193,10 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   `CCNode.Compare` does, instead of throwing.
 - `CCAnimate.Stop` no longer throws when the animation's `RestoreOriginalFrame` was turned on
   after the action started; there's no original frame to restore.
+- `CCAnimation.AddSpriteFrameWithFileName`, `CCAtlasNode.InitWithTileFile`,
+  `CCParticleBatchNode.InitWithFile` and `CCSpriteBatchNode`'s file constructors throw
+  `ArgumentException` naming a texture file that can't be loaded, instead of
+  `NullReferenceException`.
 
 ## 2.6.1 - 2026-10-09
 

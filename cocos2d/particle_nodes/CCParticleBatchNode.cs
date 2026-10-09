@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -97,7 +98,8 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
 
     public bool InitWithFile(string fileImage, int capacity)
     {
-        CCTexture2D tex = CCTextureCache.SharedTextureCache.AddImage(fileImage);
+        CCTexture2D tex = CCTextureCache.SharedTextureCache.AddImage(fileImage)
+            ?? throw new ArgumentException("The texture '" + fileImage + "' couldn't be loaded.", nameof(fileImage));
         return InitWithTexture(tex, capacity);
     }
 

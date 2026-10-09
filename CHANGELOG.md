@@ -100,6 +100,19 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   - `CCTextureAtlas.Create(file, capacity)` returns null when the file can't be loaded.
   - `CCTexture2D.XNATexture`, `Name` and `OnReInit` are nullable: a texture that hasn't been
     created, or couldn't be recreated, has no XNA texture.
+- **Nullable annotations for the core labels** (`CCLabelBMFont`, `CCBMFontConfiguration`,
+  `CCLabelAtlas`, `CCLabelTTF` and `CCPixelLabel`). The visible changes:
+  - `CCBMFontConfiguration.Create` and `CCLabelBMFont.FNTConfigLoadFile` return
+    `CCBMFontConfiguration?`. They already returned null for a font file with no data.
+  - `CCBMFontConfiguration.AtlasName` is nullable: it's null until a font file names its
+    texture.
+  - `CCLabelBMFont.FntFile` is nullable: a label made with the parameterless constructor has
+    no font.
+  - `CCPixelLabel.Text`, its constructors' `text` and `MeasureString` accept null, as they
+    already did.
+
+  Subclasses of `CCLabelBMFont` that override `InitWithString` should declare its text, font
+  file and texture nullable; the compiler now checks it.
 
 ### Fixed
 
@@ -196,6 +209,21 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - `CCAnimation.AddSpriteFrameWithFileName`, `CCAtlasNode.InitWithTileFile`,
   `CCParticleBatchNode.InitWithFile` and `CCSpriteBatchNode`'s file constructors throw
   `ArgumentException` naming a texture file that can't be loaded, instead of
+  `NullReferenceException`.
+- `CCBMFontConfiguration` reads the last line of a font file that doesn't end with a
+  newline. It used to throw `NullReferenceException`.
+- `CCBMFontConfiguration.CharacterSet` is empty, not null, for a font file with no data.
+- `CCLabelBMFont.FNTConfigLoadFile` doesn't cache a font that fails to load, so loading it
+  again under that name can succeed. It used to return null for that name from then on.
+- A `CCLabelBMFont` with no font no longer throws `NullReferenceException` laying out its
+  text once its `Dimensions` have a height.
+- `CCLabelBMFont`'s font file constructors and its `FntFile` setter throw
+  `ArgumentException` naming a font file that doesn't name a texture, or a texture that
+  can't be loaded. They used to throw `NullReferenceException` or `ArgumentNullException`.
+  `FntFile` also throws it for a font file with no data, and now checks the font before
+  changing the label.
+- `CCLabelAtlas.InitWithString(label, fntFile)`, which its two-argument constructor calls,
+  throws `ArgumentException` for a file that isn't a property list dictionary, instead of
   `NullReferenceException`.
 
 ## 2.6.1 - 2026-10-09

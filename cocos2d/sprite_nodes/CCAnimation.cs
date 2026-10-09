@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -135,7 +136,8 @@ public class CCAnimation : ICCCopyable
 
     public void AddSpriteFrameWithFileName(string pszFileName)
     {
-        CCTexture2D pTexture = CCTextureCache.SharedTextureCache.AddImage(pszFileName);
+        CCTexture2D pTexture = CCTextureCache.SharedTextureCache.AddImage(pszFileName)
+            ?? throw new ArgumentException("The texture '" + pszFileName + "' couldn't be loaded.", nameof(pszFileName));
         CCRect rect = CCRect.Zero;
         rect.Size = pTexture.ContentSize;
         CCSpriteFrame pFrame = new CCSpriteFrame(pTexture, rect);

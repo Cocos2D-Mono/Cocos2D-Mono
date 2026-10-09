@@ -724,7 +724,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
             return InitWithSpriteFrame(pFrame);
         }
 
-        CCTexture2D pTexture = CCTextureCache.SharedTextureCache.AddImage(fileName);
+        CCTexture2D? pTexture = CCTextureCache.SharedTextureCache.AddImage(fileName);
 
         if (null != pTexture)
         {
@@ -741,7 +741,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
         Debug.Assert(!String.IsNullOrEmpty(fileName), "Invalid filename for sprite");
 
         _textureFile = fileName;
-        CCTexture2D pTexture = CCTextureCache.SharedTextureCache.AddImage(fileName);
+        CCTexture2D? pTexture = CCTextureCache.SharedTextureCache.AddImage(fileName);
         if (pTexture != null)
         {
             return InitWithTexture(pTexture, rect);

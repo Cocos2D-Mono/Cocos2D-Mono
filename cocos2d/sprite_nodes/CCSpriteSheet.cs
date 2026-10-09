@@ -144,7 +144,7 @@ public class CCSpriteSheet
 
 			plistFilePath = Path.GetDirectoryName (texturePath) ?? string.Empty;
 
-        CCTexture2D pTexture = CCTextureCache.SharedTextureCache.AddImage(texturePath);
+        CCTexture2D? pTexture = CCTextureCache.SharedTextureCache.AddImage(texturePath);
 
         if (pTexture != null)
         {
@@ -160,7 +160,7 @@ public class CCSpriteSheet
     {
         Debug.Assert(textureFileName != null);
         
-        CCTexture2D texture = CCTextureCache.SharedTextureCache.AddImage(textureFileName);
+        CCTexture2D? texture = CCTextureCache.SharedTextureCache.AddImage(textureFileName);
 
         if (texture != null)
         {
@@ -183,7 +183,7 @@ public class CCSpriteSheet
 
     private void InitWithStream(Stream stream, string textureFileName)
     {
-        CCTexture2D texture = CCTextureCache.SharedTextureCache.AddImage(textureFileName);
+        CCTexture2D? texture = CCTextureCache.SharedTextureCache.AddImage(textureFileName);
 
         if (texture != null)
         {
@@ -226,7 +226,7 @@ public class CCSpriteSheet
 
     #region Loaders
 
-    private void LoadAppleDictionary(PlistDictionary dict, CCTexture2D texture)
+    private void LoadAppleDictionary(PlistDictionary dict, CCTexture2D? texture)
 		{
 
 			var version = dict.ContainsKey ("version") ? dict ["version"].AsInt : 0; 

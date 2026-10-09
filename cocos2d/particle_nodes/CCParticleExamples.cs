@@ -59,7 +59,7 @@ internal static class CCParticleExample
 
     private static CCTexture2D? _defaultTexture;
 
-    public static CCTexture2D DefaultTexture
+    public static CCTexture2D? DefaultTexture
     {
         get
         {

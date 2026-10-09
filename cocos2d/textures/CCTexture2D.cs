@@ -1,7 +1,7 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -48,7 +48,7 @@ internal struct CCStringCache
 internal struct CCTextureCacheInfo
 {
     public CCTextureCacheType CacheType;
-    public Object Data;
+    public Object? Data;
 }
 
 public class CCTexture2D : CCGraphicsResource
@@ -60,7 +60,7 @@ public class CCTexture2D : CCGraphicsResource
     public float TextHeightPaddingMultiplier = 3f;
 
     private CCTextureCacheInfo _cacheInfo;
-    private Texture2D _texture2D;
+    private Texture2D? _texture2D;
     private bool _hasMipmaps;
     private bool _hasPremultipliedAlpha;
     private SurfaceFormat _pixelFormat;
@@ -78,7 +78,7 @@ public class CCTexture2D : CCGraphicsResource
     /// </summary>
     public static bool DefaultAntialiased { get; set; } = true;
 
-    public Action OnReInit;
+    public Action? OnReInit;
 
     public CCTexture2D()
     {
@@ -104,12 +104,13 @@ public class CCTexture2D : CCGraphicsResource
         }
     }
 
+    [MemberNotNullWhen(true, nameof(_texture2D))]
     public bool IsTextureDefined
     {
         get { return (_texture2D != null && !_texture2D.IsDisposed); }
     }
 
-    public Texture2D XNATexture
+    public Texture2D? XNATexture
     {
         get
         {
@@ -151,7 +152,7 @@ public class CCTexture2D : CCGraphicsResource
     /// <summary>
     ///     texture name
     /// </summary>
-    public Texture2D Name
+    public Texture2D? Name
     {
         get { return XNATexture; }
     }
@@ -317,7 +318,7 @@ public class CCTexture2D : CCGraphicsResource
             if (IsTextureDefined)
             {
 #if !XNA
-                size *= XNATexture.Format.GetSize();
+                size *= _texture2D.Format.GetSize();
 #else
                 size *= (int)BytesPerPixelForFormat;
 #endif
@@ -430,10 +431,14 @@ public class CCTexture2D : CCGraphicsResource
 
     public bool InitWithStream(Stream stream, SurfaceFormat pixelFormat)
     {
-        Texture2D texture;
+        Texture2D? texture;
         try
         {
             texture = LoadTexture(stream);
+            if (texture == null)
+            {
+                return false;
+            }
 
             InitWithTexture(texture, pixelFormat, false, false);
 
@@ -537,7 +542,7 @@ public class CCTexture2D : CCGraphicsResource
             string[] lineList = text.Split('\n');
 
             StringBuilder next = new StringBuilder();
-            string last = null;
+            string? last = null;
             for (int j = 0; j < lineList.Length; ++j)
             {
                 string[] wordList = lineList[j].Split(' ');
@@ -574,7 +579,7 @@ public class CCTexture2D : CCGraphicsResource
                             textList.Add(nstr);
                         }
                     }
-                    else if(last.Length > 0)
+                    else if(last != null && last.Length > 0)
                     {
                         textList.Add(last);
                     }
@@ -650,7 +655,7 @@ public class CCTexture2D : CCGraphicsResource
             CCDrawManager.graphicsDevice.RasterizerState = RasterizerState.CullNone;
             CCDrawManager.graphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-            CCDrawManager.SetRenderTarget((RenderTarget2D)null);
+            CCDrawManager.SetRenderTarget((RenderTarget2D?)null);
 
             if (InitWithTexture(renderTarget, renderTarget.Format, true, false))
             {
@@ -732,7 +737,7 @@ public class CCTexture2D : CCGraphicsResource
     {
         _managed = false;
 
-        Texture2D texture = null;
+        Texture2D? texture = null;
 
         _cacheInfo.CacheType = CCTextureCacheType.AssetFile;
         _cacheInfo.Data = file;
@@ -746,7 +751,7 @@ public class CCTexture2D : CCGraphicsResource
         // first try to download xnb
         if (Path.HasExtension(loadedFile))
         {
-            loadedFile = Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file));
+            loadedFile = Path.Combine(Path.GetDirectoryName(file) ?? string.Empty, Path.GetFileNameWithoutExtension(file));
         }
 
         // use WeakReference. Link for regular textures are stored in CCTextureCache
@@ -792,7 +797,7 @@ public class CCTexture2D : CCGraphicsResource
             _cacheInfo.CacheType,
 				(_cacheInfo.CacheType == CCTextureCacheType.AssetFile || _cacheInfo.CacheType == CCTextureCacheType.String) ? _cacheInfo.Data : string.Empty);
 
-        Texture2D textureToDispose = null;
+        Texture2D? textureToDispose = null;
         if (_texture2D != null && !_texture2D.IsDisposed && !_managed)
         {
             textureToDispose = _texture2D;
@@ -810,18 +815,24 @@ public class CCTexture2D : CCGraphicsResource
                     return;
 
                 case CCTextureCacheType.AssetFile:
-                    InitWithFile((string)_cacheInfo.Data);
+                    if (_cacheInfo.Data is string file)
+                    {
+                        InitWithFile(file);
+                    }
                     break;
 
                 case CCTextureCacheType.Data:
-                    InitWithData((byte[])_cacheInfo.Data, _pixelFormat, _hasMipmaps);
+                    if (_cacheInfo.Data is byte[] data)
+                    {
+                        InitWithData(data, _pixelFormat, _hasMipmaps);
+                    }
                     break;
 
                 case CCTextureCacheType.RawData:
                     var methodInfo = typeof(CCTexture2D).GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(m => m.Name == "InitWithRawData" && m.IsGenericMethod && m.GetParameters().Length == 7);
-                    if (methodInfo != null)
+                    if (methodInfo != null && _cacheInfo.Data?.GetType().GetElementType() is Type elementType)
                     {
-                        var genericMethod = methodInfo.MakeGenericMethod(_cacheInfo.Data.GetType().GetElementType());
+                        var genericMethod = methodInfo.MakeGenericMethod(elementType);
                         genericMethod.Invoke(this, new object[]
                         {
                         _cacheInfo.Data,
@@ -835,12 +846,14 @@ public class CCTexture2D : CCGraphicsResource
                     break;
 
                 case CCTextureCacheType.String:
-                    var si = (CCStringCache)_cacheInfo.Data;
-                    InitWithString(si.Text, si.Dimensions, si.HAlignment, si.VAlignment, si.FontName, si.FontSize);
-                    if (_hasMipmaps)
+                    if (_cacheInfo.Data is CCStringCache si)
                     {
-                        _hasMipmaps = false;
-                        GenerateMipmap();
+                        InitWithString(si.Text, si.Dimensions, si.HAlignment, si.VAlignment, si.FontName, si.FontSize);
+                        if (_hasMipmaps)
+                        {
+                            _hasMipmaps = false;
+                            GenerateMipmap();
+                        }
                     }
                     break;
 
@@ -866,6 +879,7 @@ public class CCTexture2D : CCGraphicsResource
     {
         if (!_hasMipmaps)
         {
+            Debug.Assert(_texture2D != null, "GenerateMipmap needs the texture to be created");
             var target = new RenderTarget2D(CCDrawManager.GraphicsDevice, PixelsWide, PixelsHigh, true, PixelFormat,
                                             DepthFormat.None, 0, RenderTargetUsage.DiscardContents);
 
@@ -907,7 +921,7 @@ public class CCTexture2D : CCGraphicsResource
         CCDrawManager.spriteBatch.Begin(SpriteSortMode.Immediate, HasPremultipliedAlpha ? BlendState.AlphaBlend : BlendState.NonPremultiplied);
         CCDrawManager.spriteBatch.Draw(texture, new Vector2(0, 0), Color.White);
         CCDrawManager.spriteBatch.End();
-        CCDrawManager.SetRenderTarget((CCTexture2D)null);
+        CCDrawManager.SetRenderTarget((CCTexture2D?)null);
 
         return renderTarget;
     }
@@ -964,7 +978,7 @@ public class CCTexture2D : CCGraphicsResource
         spriteBatch.End();
 
         //Release the GPU back to drawing to the screen
-        CCDrawManager.SetRenderTarget((CCTexture2D) null);
+        CCDrawManager.SetRenderTarget((CCTexture2D?) null);
 
         return result;
     }
@@ -973,7 +987,7 @@ public class CCTexture2D : CCGraphicsResource
 
     #region Loading Texture
 
-    private Texture2D LoadTexture(Stream stream)
+    private Texture2D? LoadTexture(Stream stream)
     {
         return LoadTexture(stream, CCImageFormat.UnKnown);
     }
@@ -985,9 +999,9 @@ public class CCTexture2D : CCGraphicsResource
         return result;
     }
 
-    private Texture2D LoadTexture(Stream stream, CCImageFormat imageFormat)
+    private Texture2D? LoadTexture(Stream stream, CCImageFormat imageFormat)
     {
-        Texture2D result = null;
+        Texture2D? result = null;
 
         if (imageFormat == CCImageFormat.UnKnown)
         {
@@ -1051,7 +1065,7 @@ public class CCTexture2D : CCGraphicsResource
         return CCImageFormat.UnKnown;
     }
 
-    private Texture2D LoadTextureFromTiff(Stream stream)
+    private Texture2D? LoadTextureFromTiff(Stream stream)
     {
 #if WINDOWS
         var tiff = Tiff.ClientOpen("file.tif", "r", stream, new TiffStream());

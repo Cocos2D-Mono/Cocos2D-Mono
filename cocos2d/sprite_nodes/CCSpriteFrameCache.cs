@@ -229,7 +229,7 @@ public class CCSpriteFrameCache
             CCLog.Log("cocos2d: CCSpriteFrameCache: Trying to use file {0} as texture", texturePath);
         }
 
-        CCTexture2D pTexture = CCTextureCache.SharedTextureCache.AddImage(texturePath);
+        CCTexture2D? pTexture = CCTextureCache.SharedTextureCache.AddImage(texturePath);
 
         if (pTexture != null)
         {
@@ -245,7 +245,7 @@ public class CCSpriteFrameCache
     {
         Debug.Assert(textureFileName != null);
         
-        CCTexture2D texture = CCTextureCache.SharedTextureCache.AddImage(textureFileName);
+        CCTexture2D? texture = CCTextureCache.SharedTextureCache.AddImage(textureFileName);
 
         if (texture != null)
         {

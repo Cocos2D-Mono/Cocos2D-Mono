@@ -85,7 +85,8 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
     [MemberNotNull(nameof(m_pobTextureAtlas), nameof(m_pobDescendants))]
     protected virtual bool InitWithFile(string fileImage, int capacity)
     {
-        CCTexture2D pTexture2D = CCTextureCache.SharedTextureCache.AddImage(fileImage);
+        CCTexture2D pTexture2D = CCTextureCache.SharedTextureCache.AddImage(fileImage)
+            ?? throw new ArgumentException("The texture '" + fileImage + "' couldn't be loaded.", nameof(fileImage));
         return InitWithTexture(pTexture2D, capacity);
     }
 

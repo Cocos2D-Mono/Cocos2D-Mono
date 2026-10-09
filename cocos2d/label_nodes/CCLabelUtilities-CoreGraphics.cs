@@ -1,6 +1,6 @@
-#nullable disable
 #if IOS
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
@@ -39,10 +39,11 @@ namespace Cocos2D
 			NSUrl url = NSUrl.FromFilename (fileName);
 
 			// Create an image destination that saves into the imgData 
-            CGImageDestination dest = CGImageDestination.Create (url, typeIdentifier, 1);
+            CGImageDestination dest = CGImageDestination.Create (url, typeIdentifier, 1)
+                ?? throw new InvalidOperationException ("Can't create the image file " + fileName);
 
 			// Add an image to the destination
-            dest.AddImage(bitmap.GetImage(), (NSDictionary)null);
+            dest.AddImage(bitmap.GetImage(), (NSDictionary?)null);
 
 			// Finish the export
 			bool success = dest.Close ();
@@ -52,7 +53,6 @@ namespace Cocos2D
 			//                                Console.WriteLine("did work: " + path);
 
 			dest.Dispose();
-			dest = null;
 
 		}
 		internal static IntPtr bitmapBlock;
@@ -153,6 +153,7 @@ namespace Cocos2D
                     nint count = typesetter.SuggestLineBreak((int)start, (double)boundsWidth);
 
                     var line = typesetter.GetLine (new NSRange(start, count));
+                    Debug.Assert(line != null, "The typesetter breaks lines within the string");
 
 					// Create and initialize some values from the bounds.
 					nfloat ascent;
@@ -175,6 +176,7 @@ namespace Cocos2D
 				//  Example: "This is text \n with a line feed embedded inside it"
                 nint count = typesetter.SuggestLineBreak((int)start, (double)boundsWidth);
 				var line = typesetter.GetLine(new NSRange(start, count));
+				Debug.Assert(line != null, "The typesetter breaks lines within the string");
 
 				// Create and initialize some values from the bounds.
 				nfloat ascent;
@@ -393,7 +395,9 @@ namespace Cocos2D
 					var cgFont = CGFont.CreateFromProvider (dataProvider);
 
 					try {
-						nativeFont = new CTFont(cgFont, dpiSize, null);
+						nativeFont = cgFont != null
+							? new CTFont(cgFont, dpiSize, CGAffineTransform.MakeIdentity())
+							: new CTFont("Helvetica", dpiSize);
 					}
 					catch
 					{
@@ -442,7 +446,7 @@ namespace Cocos2D
 			return nativeFont;
 		}
 
-		internal static float GetHeight(this CTFont font)
+		internal static float GetHeight(this CTFont? font)
 		{
 			float lineHeight = 0;
 

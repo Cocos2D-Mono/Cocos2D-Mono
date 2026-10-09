@@ -331,17 +331,17 @@ public class CCSpriteFrameCache
             return;
         }
 
-        // Is this an alias ?
-        string key = m_pSpriteFramesAliases[pszName];
+        // The name can be an alias of the frame's own name. A frame's own name wins over an alias
+        // with the same name, as in SpriteFrameByName.
+        string frameName = !m_pSpriteFrames.ContainsKey(pszName) && m_pSpriteFramesAliases.TryGetValue(pszName, out string? key)
+            ? key
+            : pszName;
+        m_pSpriteFrames.Remove(frameName);
 
-        if (!string.IsNullOrEmpty(key))
+        // Drop the frame's aliases too, so none of them finds a frame added later under its name.
+        foreach (string alias in m_pSpriteFramesAliases.Where(pair => pair.Value == frameName).Select(pair => pair.Key).ToList())
         {
-            m_pSpriteFrames.Remove(key);
-            m_pSpriteFramesAliases.Remove(key);
-        }
-        else
-        {
-            m_pSpriteFrames.Remove(pszName);
+            m_pSpriteFramesAliases.Remove(alias);
         }
     }
 

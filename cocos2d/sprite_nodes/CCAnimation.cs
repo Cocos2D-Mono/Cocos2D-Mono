@@ -1,6 +1,6 @@
-#nullable disable
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -20,10 +20,10 @@ public class CCAnimation : ICCCopyable
         List<CCSpriteFrame> l = new List<CCSpriteFrame>();
         foreach(string f in frames) 
         {
-            CCSpriteFrame cf = cs[f];
+            CCSpriteFrame? cf = cs[f];
             if (cf != null)
             {
-                l.Add(cs[f]);
+                l.Add(cf);
             }
         }
         InitWithSpriteFrames(l, delay);
@@ -77,17 +77,9 @@ public class CCAnimation : ICCCopyable
         get { return m_fTotalDelayUnits; }
     }
 
+    [MemberNotNull(nameof(m_pFrames))]
     protected virtual bool InitWithSpriteFrames(List<CCSpriteFrame> pFrames, float delay)
     {
-        if (pFrames != null)
-        {/*
-            foreach (object frame in pFrames)
-            {
-                Debug.Assert(frame is CCSpriteFrame, "element type is wrong!");
-            }
-          */
-        }
-
         m_uLoops = 1;
         m_fDelayPerUnit = delay;
         m_pFrames = new List<CCAnimationFrame>();
@@ -108,17 +100,9 @@ public class CCAnimation : ICCCopyable
         return true;
     }
 
+    [MemberNotNull(nameof(m_pFrames))]
     protected virtual bool InitWithAnimationFrames(List<CCAnimationFrame> arrayOfAnimationFrames, float delayPerUnit, uint loops)
     {
-        if (arrayOfAnimationFrames != null)
-        {/*
-            foreach (object frame in arrayOfAnimationFrames)
-            {
-                Debug.Assert(frame is CCAnimationFrame, "element type is wrong!");
-            }
-          */
-        }
-
         m_fDelayPerUnit = delayPerUnit;
         m_uLoops = loops;
 
@@ -169,9 +153,9 @@ public class CCAnimation : ICCCopyable
 			return (CCAnimation)Copy(null);
 		}
 
-    public object Copy(ICCCopyable pZone)
+    public object Copy(ICCCopyable? pZone)
     {
-        CCAnimation pCopy = null;
+        CCAnimation pCopy;
         if (pZone != null)
         {
             //in case of being called at sub class

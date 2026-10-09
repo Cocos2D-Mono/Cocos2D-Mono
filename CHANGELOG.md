@@ -73,6 +73,18 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     before.
   - `CCShuffleTiles` and `CCTurnOffTiles` keep empty tile arrays, not null, until they
     start.
+- **Nullable annotations for sprite frames, animations and their caches.** The visible
+  changes:
+  - `CCSpriteFrame.Texture` and `TextureFilename` are nullable, and so is the texture its
+    constructors take: a frame made with the parameterless constructor has no texture.
+  - `CCSpriteFrameCache.SpriteFrameByName`, `CCSpriteSheet.SpriteFrameByName` and its
+    indexer, `CCSpriteSheetCache.SpriteSheetForKey`, and `CCAnimationCache.AnimationByName`
+    and its indexer return null for an unknown name, as they already did.
+  - `CCAnimationFrame.UserInfo` is nullable.
+  - `CCSpriteFrameCache.pSharedSpriteFrameCache` is nullable. `SharedSpriteFrameCache`
+    creates the cache on first use.
+  - A `CCSpriteFrameCache` or `CCAnimationCache` made with `new` works before `Init`, which
+    now only clears it. Both used to throw `NullReferenceException` until then.
 
 ### Fixed
 
@@ -140,9 +152,16 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   values into the original.
 - Copying a `CCReverseTime` copies its inner action, so the original and the copy can run
   at the same time on different nodes. They used to share it.
+- `CCAccelDeccelAmplitude` updates its inner action, so the grid effect it wraps animates. It
+  only set the effect's amplitude and never updated it, an omission cocos2d-x shares.
 - `CCAccelAmplitude`, `CCAccelDeccelAmplitude` and `CCDeccelAmplitude` throw
   `InvalidCastException` when given an action that isn't an interval action, instead of
   `NullReferenceException` when they start.
+- `CCSpriteFrameCache` and `CCSpriteSheet` load a plist with no frames, or a SpriteKit plist
+  with no images, as empty. They used to throw `NullReferenceException`.
+- `CCSpriteFrameCache.RemoveSpriteFramesFromTexture` skips frames that have no texture, and
+  `CCParticleSystemQuad.SetDisplayFrame` with such a frame clears the system's texture.
+  Both used to throw `NullReferenceException`.
 
 ## 2.6.1 - 2026-10-09
 

@@ -130,9 +130,10 @@ public class CCParticleSystemQuad : CCParticleSystem
                      "QuadParticle only supports SpriteFrames with no offsets");
 
         // update texture before updating texture rect
-        if (m_pTexture == null || spriteFrame.Texture.Name != m_pTexture.Name)
+        CCTexture2D? frameTexture = spriteFrame.Texture;
+        if (m_pTexture == null || frameTexture == null || frameTexture.Name != m_pTexture.Name)
         {
-            Texture = spriteFrame.Texture;
+            Texture = frameTexture;
         }
     }
 

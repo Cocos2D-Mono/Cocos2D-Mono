@@ -1,4 +1,3 @@
-#nullable disable
 // GEN OK
 
 using System;
@@ -16,8 +15,8 @@ public partial class CCSpriteFrame : ICCCopyable
     protected CCSize m_obOriginalSizeInPixels;
     protected CCRect m_obRect;
     protected CCRect m_obRectInPixels;
-    protected CCTexture2D m_pobTexture;
-    protected string m_strTextureFilename;
+    protected CCTexture2D? m_pobTexture;
+    protected string? m_strTextureFilename;
 
     /// <summary>
     /// get or set rect of the frame
@@ -84,13 +83,13 @@ public partial class CCSpriteFrame : ICCCopyable
     /// <summary>
     /// get or set texture of the frame
     /// </summary>
-    public CCTexture2D Texture
+    public CCTexture2D? Texture
     {
         get { return m_pobTexture; }
         set { m_pobTexture = value; }
     }
 
-    public string TextureFilename { get; set; }
+    public string? TextureFilename { get; set; }
 
     #endregion
 
@@ -101,31 +100,31 @@ public partial class CCSpriteFrame : ICCCopyable
 			return (CCSpriteFrame)Copy(null);
 		}
 
-    public object Copy(ICCCopyable pZone)
+    public object Copy(ICCCopyable? pZone)
     {
         var pCopy = new CCSpriteFrame();
         pCopy.InitWithTexture(m_pobTexture, m_obRectInPixels, m_bRotated, m_obOffsetInPixels, m_obOriginalSizeInPixels);
         return pCopy;
     }
 
-    public CCSpriteFrame(CCTexture2D pobTexture, CCRect rect)
+    public CCSpriteFrame(CCTexture2D? pobTexture, CCRect rect)
     {
         InitWithTexture(pobTexture, rect);
     }
 
-    public CCSpriteFrame(CCTexture2D pobTexture, CCRect rect, bool rotated, CCPoint offset,
+    public CCSpriteFrame(CCTexture2D? pobTexture, CCRect rect, bool rotated, CCPoint offset,
                                        CCSize originalSize)
     {
         InitWithTexture(pobTexture, rect, rotated, offset, originalSize);
     }
 
-    protected virtual bool InitWithTexture(CCTexture2D pobTexture, CCRect rect)
+    protected virtual bool InitWithTexture(CCTexture2D? pobTexture, CCRect rect)
     {
         CCRect rectInPixels = rect.PointsToPixels();
         return InitWithTexture(pobTexture, rectInPixels, false, new CCPoint(0, 0), rectInPixels.Size);
     }
 
-    protected virtual bool InitWithTexture(CCTexture2D pobTexture, CCRect rect, bool rotated, CCPoint offset,
+    protected virtual bool InitWithTexture(CCTexture2D? pobTexture, CCRect rect, bool rotated, CCPoint offset,
                                 CCSize originalSize)
     {
         m_pobTexture = pobTexture;

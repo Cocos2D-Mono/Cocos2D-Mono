@@ -1,5 +1,4 @@
-#nullable disable
-
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -7,7 +6,7 @@ public class CCAnimationFrame : ICCCopyable
 {
     private float _delayUnits;
     private CCSpriteFrame _spriteFrame;
-    private PlistDictionary _userInfo;
+    private PlistDictionary? _userInfo;
 
     public CCSpriteFrame SpriteFrame
     {
@@ -19,9 +18,16 @@ public class CCAnimationFrame : ICCCopyable
         get { return _delayUnits; }
     }
 
-    public PlistDictionary UserInfo
+    public PlistDictionary? UserInfo
     {
         get { return _userInfo; }
+    }
+
+    public CCAnimationFrame()
+    {
+        // Callers set the frame with InitWithSpriteFrame straight after construction, as
+        // CCAnimation and CCAnimationCache do.
+        _spriteFrame = null!;
     }
 
 		public CCAnimationFrame Copy()
@@ -29,7 +35,7 @@ public class CCAnimationFrame : ICCCopyable
 			return (CCAnimationFrame)Copy(null);
 		}
 
-    public object Copy(ICCCopyable pZone)
+    public object Copy(ICCCopyable? pZone)
     {
         CCAnimationFrame pCopy;
         if (pZone != null)
@@ -47,7 +53,8 @@ public class CCAnimationFrame : ICCCopyable
         return pCopy;
     }
 
-    public bool InitWithSpriteFrame(CCSpriteFrame spriteFrame, float delayUnits, PlistDictionary userInfo)
+    [MemberNotNull(nameof(_spriteFrame))]
+    public bool InitWithSpriteFrame(CCSpriteFrame spriteFrame, float delayUnits, PlistDictionary? userInfo)
     {
         _spriteFrame = spriteFrame;
         _delayUnits = delayUnits;

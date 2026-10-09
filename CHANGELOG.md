@@ -85,6 +85,14 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     creates the cache on first use.
   - A `CCSpriteFrameCache` or `CCAnimationCache` made with `new` works before `Init`, which
     now only clears it. Both used to throw `NullReferenceException` until then.
+- **Nullable annotations for sprites and sprite batch nodes.** The visible changes:
+  - `CCSprite.Texture` and `BatchNode` are nullable, and so is the texture
+    `InitWithTexture(texture, rect)` takes: a sprite can be made without a texture, and only
+    a batched sprite has a batch node.
+  - `ICCTextureProtocol.Texture` can read as null, as a sprite's or particle system's
+    texture already could, but can't be set to null through the interface.
+  - `CCMaskedSprite.CollisionMask` is nullable: a masked sprite made with the parameterless
+    constructor has no mask.
 
 ### Fixed
 
@@ -147,6 +155,10 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   the node to the spline's absolute points instead of relative to where it started.
 - `Copy(zone)` on an interval action throws `InvalidCastException` for a zone of another
   type, as most already did. Some returned null and others threw `NullReferenceException`.
+- `CCShuffleTiles` and `CCTurnOffTiles` use their seed, so the same seed gives the same tile
+  order. `CCShuffleTiles` replaced the seed with a random number, and `CCTurnOffTiles`
+  ignored it and threw for a negative seed other than -1. A seeded run no longer touches
+  `CCRandom`, and a `CCTurnOffTiles` made without a seed still picks a new order each run.
 - `CCScaleTo.Copy(zone)`, which `CCScaleBy` also uses, `CCReverseTime.Copy(zone)` and
   `CCOrbitCamera.Copy(zone)` fill the zone from the original. They used to copy the zone's
   values into the original.
@@ -161,9 +173,19 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   given. Those overloads used to ignore it and load a plist named after the cache key.
 - `CCSpriteFrameCache` and `CCSpriteSheet` load a plist with no frames, or a SpriteKit plist
   with no images, as empty. They used to throw `NullReferenceException`.
+- `CCSpriteFrameCache.RemoveSpriteFrameByName` removes a frame that has no alias instead of
+  throwing `KeyNotFoundException`. Removing a frame also removes its aliases, so they don't
+  find a frame added later under the same name.
 - `CCSpriteFrameCache.RemoveSpriteFramesFromTexture` skips frames that have no texture, and
   `CCParticleSystemQuad.SetDisplayFrame` with such a frame clears the system's texture.
   Both used to throw `NullReferenceException`.
+- `CCSprite.SortAllChildren` on a sprite with no children yet, `RemoveAllChildren` on a
+  batched sprite with no children, and `IsSpriteFrameDisplayed` with no textures no longer
+  throw `NullReferenceException`.
+- `CCSpriteBatchNode.Compare` accepts null arguments, ordering them first as
+  `CCNode.Compare` does, instead of throwing.
+- `CCAnimate.Stop` no longer throws when the animation's `RestoreOriginalFrame` was turned on
+  after the action started; there's no original frame to restore.
 
 ## 2.6.1 - 2026-10-09
 

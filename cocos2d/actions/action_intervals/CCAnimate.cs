@@ -92,7 +92,7 @@ public class CCAnimate : CCActionInterval
 
     public override void Stop()
     {
-        if (m_pAnimation.RestoreOriginalFrame && m_pTarget != null)
+        if (m_pAnimation.RestoreOriginalFrame && m_pTarget != null && m_pOrigFrame != null)
         {
             ((CCSprite) (m_pTarget)).DisplayFrame = m_pOrigFrame;
         }

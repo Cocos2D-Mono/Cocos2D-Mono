@@ -58,10 +58,16 @@ public class CCShuffleTiles : CCTiledGrid3DAction
 
     public void Shuffle(ref int[] pArray, int nLen)
     {
+        Shuffle(pArray, nLen, null);
+    }
+
+    // Shuffles with the given generator, or with CCRandom when there's none.
+    private static void Shuffle(int[] pArray, int nLen, Random? random)
+    {
         int i;
         for (i = nLen - 1; i >= 0; i--)
         {
-            int j = CCRandom.Next() % (i + 1);
+            int j = (random?.Next() ?? CCRandom.Next()) % (i + 1);
             int v = pArray[i];
             pArray[i] = pArray[j];
             pArray[j] = v;
@@ -105,10 +111,9 @@ public class CCShuffleTiles : CCTiledGrid3DAction
     {
         base.StartWithTarget(target);
 
-        if (m_nSeed != -1)
-        {
-            m_nSeed = CCRandom.Next();
-        }
+        // A seed of -1 means none: shuffle with the shared CCRandom. Any other seed gives the same
+        // order each time, as cocos2d-x's srand(seed) did, without reseeding CCRandom.
+        Random? random = m_nSeed != -1 ? new Random(m_nSeed) : null;
 
         m_nTilesCount = m_sGridSize.X * m_sGridSize.Y;
         m_pTilesOrder = new int[m_nTilesCount];
@@ -124,7 +129,7 @@ public class CCShuffleTiles : CCTiledGrid3DAction
             m_pTilesOrder[k] = k;
         }
 
-        Shuffle(ref m_pTilesOrder, m_nTilesCount);
+        Shuffle(m_pTilesOrder, m_nTilesCount, random);
 
         m_pTiles = new CCTile[m_nTilesCount];
 

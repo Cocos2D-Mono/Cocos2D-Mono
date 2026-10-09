@@ -1,6 +1,6 @@
-#nullable disable
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -56,6 +56,10 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
 
     public CCSpriteBatchNode()
     {
+        // Subclasses using this constructor (CCLabelBMFont, CCTMXLayer) call InitWithTexture
+        // straight after construction, which sets these.
+        m_pobTextureAtlas = null!;
+        m_pobDescendants = null!;
     }
 
     public CCSpriteBatchNode(CCTexture2D tex)
@@ -78,12 +82,14 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
         InitWithFile(fileImage, capacity);
     }
 
+    [MemberNotNull(nameof(m_pobTextureAtlas), nameof(m_pobDescendants))]
     protected virtual bool InitWithFile(string fileImage, int capacity)
     {
         CCTexture2D pTexture2D = CCTextureCache.SharedTextureCache.AddImage(fileImage);
         return InitWithTexture(pTexture2D, capacity);
     }
 
+    [MemberNotNull(nameof(m_pobTextureAtlas), nameof(m_pobDescendants))]
     protected virtual bool InitWithTexture(CCTexture2D tex, int capacity)
     {
         m_blendFunc = CCBlendFunc.AlphaBlend;
@@ -162,7 +168,8 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
         var pSprite = (CCSprite) child;
 
         // check CCSprite is using the same texture id
-        Debug.Assert(pSprite.Texture.Name == m_pobTextureAtlas.Texture.Name, "CCSprite is not using the same texture id");
+        Debug.Assert(pSprite.Texture != null && pSprite.Texture.Name == m_pobTextureAtlas.Texture.Name,
+                     "CCSprite is not using the same texture id");
 
         base.AddChild(child, zOrder, tag);
 
@@ -172,7 +179,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
     public override void ReorderChild(CCNode child, int zOrder)
     {
         Debug.Assert(child != null, "the child should not be null");
-        Debug.Assert(m_pChildren.Contains(child), "Child doesn't belong to Sprite");
+        Debug.Assert(m_pChildren != null && m_pChildren.Contains(child), "Child doesn't belong to Sprite");
 
         if (zOrder == child.m_nZOrder)
         {
@@ -187,7 +194,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
     {
         var pSprite = (CCSprite) child;
 
-        Debug.Assert(m_pChildren.Contains(pSprite), "sprite batch node should contain the child");
+        Debug.Assert(m_pChildren != null && m_pChildren.Contains(pSprite), "sprite batch node should contain the child");
 
         // cleanup before removing
         RemoveSpriteFromAtlas(pSprite);
@@ -197,6 +204,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
 
     public void RemoveChildAtIndex(int index, bool doCleanup)
     {
+        Debug.Assert(m_pChildren != null, "InitWithTexture creates the child list");
         RemoveChild((m_pChildren[index]), doCleanup);
     }
 
@@ -216,8 +224,22 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
         m_pobTextureAtlas.RemoveAllQuads();
     }
 
-    public override int Compare(CCNode n1, CCNode n2)
+    public override int Compare(CCNode? n1, CCNode? n2)
     {
+        // IComparer<T> allows nulls; order them first, as CCNode.Compare does.
+        if (ReferenceEquals(n1, n2))
+        {
+            return 0;
+        }
+        if (n1 is null)
+        {
+            return -1;
+        }
+        if (n2 is null)
+        {
+            return 1;
+        }
+
         CCSprite s1 = (CCSprite)n1;
         CCSprite s2 = (CCSprite)n2;
         if (n1.m_nZOrder < n2.m_nZOrder || (s1.m_nZOrder == s2.m_nZOrder && s1.AtlasIndex < s2.AtlasIndex))
@@ -238,6 +260,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
     {
         if (m_bReorderChildDirty)
         {
+            Debug.Assert(m_pChildren != null, "InitWithTexture creates the child list");
             int count = m_pChildren.count;
             CCNode[] elements = m_pChildren.Elements;
 
@@ -269,7 +292,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
     private void UpdateAtlasIndex(CCSprite sprite, ref int curIndex)
     {
         int count = 0;
-        CCRawList<CCNode> pArray = sprite.Children;
+        CCRawList<CCNode>? pArray = sprite.Children;
 
         if (pArray != null)
         {
@@ -278,7 +301,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
 
         int oldIndex = 0;
 
-        if (count == 0)
+        if (pArray == null || count == 0)
         {
             oldIndex = sprite.AtlasIndex;
             sprite.AtlasIndex = curIndex;
@@ -412,7 +435,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
 
     public int RebuildIndexInOrder(CCSprite pobParent, int uIndex)
     {
-        CCRawList<CCNode> pChildren = pobParent.Children;
+        CCRawList<CCNode>? pChildren = pobParent.Children;
 
         if (pChildren != null && pChildren.count > 0)
         {
@@ -450,7 +473,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
 
     public int HighestAtlasIndexInChild(CCSprite pSprite)
     {
-        CCRawList<CCNode> pChildren = pSprite.Children;
+        CCRawList<CCNode>? pChildren = pSprite.Children;
 
         if (pChildren == null || pChildren.count == 0)
         {
@@ -464,7 +487,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
 
     public int LowestAtlasIndexInChild(CCSprite pSprite)
     {
-        CCRawList<CCNode> pChildren = pSprite.Children;
+        CCRawList<CCNode>? pChildren = pSprite.Children;
 
         if (pChildren == null || pChildren.count == 0)
         {
@@ -478,6 +501,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
 
     public int AtlasIndexForChild(CCSprite pobSprite, int nZ)
     {
+        Debug.Assert(pobSprite.Parent?.Children != null, "AtlasIndexForChild is for a sprite that has a parent");
         CCRawList<CCNode> pBrothers = pobSprite.Parent.Children;
 
         int uChildIndex = pBrothers.IndexOf(pobSprite);
@@ -485,7 +509,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
         // ignore parent Z if parent is spriteSheet
         bool bIgnoreParent = (pobSprite.Parent == this);
 
-        CCSprite pPrevious = null;
+        CCSprite? pPrevious = null;
 
         if (uChildIndex > 0)
         {
@@ -500,6 +524,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
                 return 0;
             }
 
+            Debug.Assert(pPrevious != null, "A child after the first has a previous sibling");
             return HighestAtlasIndexInChild(pPrevious) + 1;
         }
 
@@ -523,6 +548,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
         else
         {
             // previous & sprite belong to the same branch
+            Debug.Assert(pPrevious != null, "A child after the first has a previous sibling");
             if ((pPrevious.ZOrder < 0 && nZ < 0) || (pPrevious.ZOrder >= 0 && nZ >= 0))
             {
                 return HighestAtlasIndexInChild(pPrevious) + 1;
@@ -557,7 +583,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
         }
 
         // add children recursively
-        CCRawList<CCNode> pChildren = pobSprite.Children;
+        CCRawList<CCNode>? pChildren = pobSprite.Children;
 
         if (pChildren != null && pChildren.count > 0)
         {
@@ -592,7 +618,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
         m_pobTextureAtlas.InsertQuad(ref sprite.m_sQuad, index);
 
         // add children recursively
-        CCRawList<CCNode> children = sprite.Children;
+        CCRawList<CCNode>? children = sprite.Children;
         if (children != null && children.count > 0)
         {
             CCNode[] elements = children.Elements;
@@ -629,7 +655,7 @@ public class CCSpriteBatchNode : CCNode, ICCTextureProtocol
         }
 
         // remove children recursively
-        CCRawList<CCNode> pChildren = pobSprite.Children;
+        CCRawList<CCNode>? pChildren = pobSprite.Children;
 
         if (pChildren != null && pChildren.count > 0)
         {

@@ -46,6 +46,7 @@ public class CCAccelDeccelAmplitude : CCActionInterval
         }
 
         ((m_pOther)).AmplitudeRate = (float) Math.Pow(f, m_fRate);
+        m_pOther.Update(time);
     }
 
     public override CCFiniteTimeAction Reverse()

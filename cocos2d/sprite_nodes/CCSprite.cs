@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -21,12 +20,12 @@ public class CCSprite : CCNode, ICCTextureProtocol
 
     protected CCRect m_obRect;
     protected CCPoint m_obUnflippedOffsetPositionFromCenter;
-    protected CCSpriteBatchNode m_pobBatchNode; // Used batch node (weak reference)
-    protected CCTexture2D m_pobTexture; // Texture used to render the sprite
-    protected CCTextureAtlas m_pobTextureAtlas; // Sprite Sheet texture atlas (weak reference)
+    protected CCSpriteBatchNode? m_pobBatchNode; // Used batch node (weak reference)
+    protected CCTexture2D? m_pobTexture; // Texture used to render the sprite
+    protected CCTextureAtlas? m_pobTextureAtlas; // Sprite Sheet texture atlas (weak reference)
     protected CCBlendFunc m_sBlendFunc; // Needed for the texture protocol
 
-    private string _textureFile;
+    private string? _textureFile;
 
     internal CCV3F_C4B_T2F_Quad m_sQuad;
     protected CCAffineTransform m_transformToBatch; //
@@ -56,7 +55,8 @@ public class CCSprite : CCNode, ICCTextureProtocol
             base.Deserialize(stream);
             using (StreamReader sr = new StreamReader(stream))
             {
-                _textureFile = sr.ReadLine();
+                _textureFile = sr.ReadLine()
+                    ?? throw new InvalidDataException("Serialized sprite data ended before the texture file name.");
                 if (_textureFile == "null")
                 {
                     _textureFile = null;
@@ -382,7 +382,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
             float currentScale = Scale;
             m_obUnflippedOffsetPositionFromCenter = value.Offset;
 
-            CCTexture2D pNewTexture = value.Texture;
+            CCTexture2D? pNewTexture = value.Texture;
             // update texture before updating texture rect
             if (pNewTexture != m_pobTexture)
             {
@@ -410,7 +410,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
         }
     }
 
-    public CCSpriteBatchNode BatchNode
+    public CCSpriteBatchNode? BatchNode
     {
         get { return m_pobBatchNode; }
         set
@@ -438,7 +438,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
             {
                 // using batch
                 m_transformToBatch = CCAffineTransform.Identity;
-                m_pobTextureAtlas = m_pobBatchNode.TextureAtlas; // weak ref
+                m_pobTextureAtlas = value.TextureAtlas; // weak ref
             }
         }
     }
@@ -453,8 +453,16 @@ public class CCSprite : CCNode, ICCTextureProtocol
         get { return Texture != null && Texture.IsAntialiased; }
         set { if (Texture != null) Texture.IsAntialiased = value; }
 #else
-        get { return Texture.IsAntialiased; }
-        set { Texture.IsAntialiased = value; }
+        get
+        {
+            Debug.Assert(Texture != null, "IsAntialiased needs a texture");
+            return Texture.IsAntialiased;
+        }
+        set
+        {
+            Debug.Assert(Texture != null, "IsAntialiased needs a texture");
+            Texture.IsAntialiased = value;
+        }
 #endif
     }
 
@@ -481,6 +489,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
         {
             if (m_uAtlasIndex != CCMacros.CCSpriteIndexNotInitialized)
             {
+                Debug.Assert(m_pobTextureAtlas != null, "BatchNode sets the atlas along with the batch node");
                 m_pobTextureAtlas.UpdateQuad(ref m_sQuad, m_uAtlasIndex);
             }
             else
@@ -550,13 +559,13 @@ public class CCSprite : CCNode, ICCTextureProtocol
         set { m_sBlendFunc = value; }
     }
 
-    public virtual CCTexture2D Texture
+    public virtual CCTexture2D? Texture
     {
         get { return m_pobTexture; }
         set
         {
             // If batchnode, then texture id should be the same
-            Debug.Assert(m_pobBatchNode == null || value.Name == m_pobBatchNode.Texture.Name,
+            Debug.Assert(m_pobBatchNode == null || (value != null && value.Name == m_pobBatchNode.Texture.Name),
                          "CCSprite: Batched sprites should use the same texture as the batchnode");
 
             if (m_pobBatchNode == null && m_pobTexture != value)
@@ -643,7 +652,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
         return InitWithTexture(null, new CCRect());
     }
 
-    public bool InitWithTexture(CCTexture2D pTexture, CCRect rect, bool rotated)
+    public bool InitWithTexture(CCTexture2D? pTexture, CCRect rect, bool rotated)
     {
         base.Init();
 
@@ -689,7 +698,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
         return true;
     }
 
-    public virtual bool InitWithTexture(CCTexture2D texture, CCRect rect)
+    public virtual bool InitWithTexture(CCTexture2D? texture, CCRect rect)
     {
         return InitWithTexture(texture, rect, false);
     }
@@ -709,7 +718,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
         Debug.Assert(!String.IsNullOrEmpty(fileName), "Invalid filename for sprite");
 
         _textureFile = fileName;
-        CCSpriteFrame pFrame = CCSpriteFrameCache.SharedSpriteFrameCache.SpriteFrameByName(fileName);
+        CCSpriteFrame? pFrame = CCSpriteFrameCache.SharedSpriteFrameCache.SpriteFrameByName(fileName);
         if (pFrame != null)
         {
             return InitWithSpriteFrame(pFrame);
@@ -813,7 +822,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
     {
         rect = rect.PointsToPixels();
 
-        CCTexture2D tex = m_pobBatchNode != null ? m_pobTextureAtlas.Texture : m_pobTexture;
+        CCTexture2D? tex = m_pobBatchNode != null ? m_pobTextureAtlas?.Texture : m_pobTexture;
         if (tex == null)
         {
             return;
@@ -896,6 +905,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
     {
         Debug.Assert(m_pobBatchNode != null,
                      "updateTransform is only valid when CCSprite is being rendered using an CCSpriteBatchNode");
+        Debug.Assert(m_pobTextureAtlas != null, "BatchNode sets the atlas along with the batch node");
 
         // recaculate matrix only if it is dirty
         if (Dirty)
@@ -969,6 +979,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
         // recursively iterate over children
         if (m_bHasChildren)
         {
+            Debug.Assert(m_pChildren != null, "m_bHasChildren is set once a child is added");
             CCNode[] elements = m_pChildren.Elements;
             if (m_pobBatchNode != null)
             {
@@ -1009,7 +1020,8 @@ public class CCSprite : CCNode, ICCTextureProtocol
             var sprite = child as CCSprite;
 
             Debug.Assert(sprite != null, "CCSprite only supports CCSprites as children when using CCSpriteBatchNode");
-            Debug.Assert(sprite.Texture.Name == m_pobTextureAtlas.Texture.Name);
+            Debug.Assert(sprite.Texture != null && m_pobTextureAtlas != null &&
+                         sprite.Texture.Name == m_pobTextureAtlas.Texture.Name);
 
             m_pobBatchNode.AppendChild(sprite);
 
@@ -1026,7 +1038,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
     public override void ReorderChild(CCNode child, int zOrder)
     {
         Debug.Assert(child != null);
-        Debug.Assert(m_pChildren.Contains(child));
+        Debug.Assert(m_pChildren != null && m_pChildren.Contains(child));
 
         if (zOrder == child.ZOrder)
         {
@@ -1054,7 +1066,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
 
     public override void RemoveAllChildren(bool cleanup = true)
     {
-        if (m_pobBatchNode != null)
+        if (m_pobBatchNode != null && m_pChildren != null)
         {
             CCSpriteBatchNode batch = m_pobBatchNode;
             CCNode[] elements = m_pChildren.Elements;
@@ -1073,16 +1085,20 @@ public class CCSprite : CCNode, ICCTextureProtocol
     {
         if (m_bReorderChildDirty)
         {
-            var elements = m_pChildren.Elements;
-            int count = m_pChildren.count;
-
-            Array.Sort(elements, 0, count, this);
-
-            if (m_pobBatchNode != null)
+            // The flag can be set before the first child is added, so check, as CCNode does.
+            if (m_pChildren != null)
             {
-                for (int i = 0; i < count; i++)
+                var elements = m_pChildren.Elements;
+                int count = m_pChildren.count;
+
+                Array.Sort(elements, 0, count, this);
+
+                if (m_pobBatchNode != null)
                 {
-                    elements[i].SortAllChildren();
+                    for (int i = 0; i < count; i++)
+                    {
+                        elements[i].SortAllChildren();
+                    }
                 }
             }
 
@@ -1096,7 +1112,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
         if (!m_bReorderChildDirty)
         {
             m_bReorderChildDirty = true;
-            CCNode node = m_pParent;
+            CCNode? node = m_pParent;
             while (node != null && node != m_pobBatchNode)
             {
                 ((CCSprite)node).SetReorderChildDirtyRecursively();
@@ -1112,6 +1128,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
         // recursively set dirty
         if (m_bHasChildren)
         {
+            Debug.Assert(m_pChildren != null, "m_bHasChildren is set once a child is added");
             CCNode[] elements = m_pChildren.Elements;
             for (int i = 0, count = m_pChildren.count; i < count; i++)
             {
@@ -1141,7 +1158,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
         Debug.Assert(!String.IsNullOrEmpty(animationName),
                      "CCSprite#setDisplayFrameWithAnimationName. animationName must not be NULL");
 
-        CCAnimation a = CCAnimationCache.SharedAnimationCache.AnimationByName(animationName);
+        CCAnimation? a = CCAnimationCache.SharedAnimationCache.AnimationByName(animationName);
 
         Debug.Assert(a != null, "CCSprite#setDisplayFrameWithAnimationName: Frame not found");
 
@@ -1158,7 +1175,7 @@ public class CCSprite : CCNode, ICCTextureProtocol
 
         return (
                    CCRect.Equal(ref r, ref m_obRect) &&
-                   frame.Texture.Name == m_pobTexture.Name &&
+                   frame.Texture?.Name == m_pobTexture?.Name &&
                    frame.Offset.Equals(m_obUnflippedOffsetPositionFromCenter)
                );
     }

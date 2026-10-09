@@ -105,6 +105,20 @@ public class CCSpriteFrameCacheTests
         Assert.Null(cache.SpriteFrameByName("alias-a"));
     }
 
+    [Fact]
+    public void SpriteFrameCache_RemoveByName_AlsoRemovesTheFramesAliases()
+    {
+        // Removing a frame by its own name left its aliases, which then found a frame added
+        // later under that name (C2D-287).
+        var cache = new CCSpriteFrameCache();
+        cache.AddSpriteFramesWithDictionary(Format3SheetWithAlias(), new CCTexture2D());
+
+        cache.RemoveSpriteFrameByName("a.png");
+        cache.AddSpriteFrame(new CCSpriteFrame(new CCTexture2D(), new CCRect(0, 0, 1, 1)), "a.png");
+
+        Assert.Null(cache.SpriteFrameByName("alias-a"));
+    }
+
     // A format-3 sprite sheet plist with one frame, "a.png", whose alias is "alias-a".
     private static PlistDictionary Format3SheetWithAlias()
     {

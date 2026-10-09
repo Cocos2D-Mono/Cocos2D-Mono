@@ -160,7 +160,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - `CCSpriteFrameCache` and `CCSpriteSheet` load a plist with no frames, or a SpriteKit plist
   with no images, as empty. They used to throw `NullReferenceException`.
 - `CCSpriteFrameCache.RemoveSpriteFrameByName` removes a frame that has no alias instead of
-  throwing `KeyNotFoundException`. Removing a frame by its alias also removes the alias.
+  throwing `KeyNotFoundException`. Removing a frame also removes its aliases, so they don't
+  find a frame added later under the same name.
 - `CCSpriteFrameCache.RemoveSpriteFramesFromTexture` skips frames that have no texture, and
   `CCParticleSystemQuad.SetDisplayFrame` with such a frame clears the system's texture.
   Both used to throw `NullReferenceException`.

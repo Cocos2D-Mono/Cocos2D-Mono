@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,13 +17,13 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
     protected bool m_bLineBreakWithoutSpaces;
     protected CCTextAlignment m_pHAlignment = CCTextAlignment.Center;
     protected CCVerticalTextAlignment m_pVAlignment = CCVerticalTextAlignment.Top;
-    protected CCBMFontConfiguration m_pConfiguration;
-    protected string m_sFntFile;
-    protected string m_sInitialString;
+    protected CCBMFontConfiguration? m_pConfiguration;
+    protected string? m_sFntFile;
+    protected string m_sInitialString = "";
     protected string m_sString = "";
     protected CCPoint m_tImageOffset;
     protected CCSize m_tDimensions;
-    protected CCSprite m_pReusedChar;
+    protected CCSprite? m_pReusedChar;
     protected bool m_bLabelDirty;
     protected CCTextLineBreakMode m_pLineBreakMode = CCTextLineBreakMode.SmartBreak;
 
@@ -142,22 +141,25 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
         }
     }   
 
-    public string FntFile
+    public string? FntFile
     {
         get { return m_sFntFile; }
         set
         {
             if (value != null && m_sFntFile != value)
             {
-                CCBMFontConfiguration newConf = FNTConfigLoadFile(value);
-
-                Debug.Assert(newConf != null, "CCLabelBMFont: Impossible to create font. Please check file");
+                CCBMFontConfiguration newConf = FNTConfigLoadFile(value)
+                    ?? throw new ArgumentException("The font '" + value + "' couldn't be loaded.", nameof(value));
+                string atlasName = newConf.AtlasName
+                    ?? throw new ArgumentException("The font '" + value + "' doesn't name a texture.", nameof(value));
+                CCTexture2D texture = CCTextureCache.SharedTextureCache.AddImage(atlasName)
+                    ?? throw new ArgumentException("The texture '" + atlasName + "' couldn't be loaded.", nameof(value));
 
                 m_sFntFile = value;
 
                 m_pConfiguration = newConf;
 
-                Texture = CCTextureCache.SharedTextureCache.AddImage(m_pConfiguration.AtlasName);
+                Texture = texture;
 
                 m_bLabelDirty = true;
             }
@@ -351,15 +353,15 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
         return InitWithString(null, null, new CCSize(kCCLabelAutomaticWidth, 0), CCTextAlignment.Left, CCVerticalTextAlignment.Top, CCPoint.Zero, null);
     }
 
-    protected virtual bool InitWithString(string text, string fntFile, CCSize dimensions, CCTextAlignment hAlignment, CCVerticalTextAlignment vAlignment,
-                                          CCPoint imageOffset, CCTexture2D texture, CCBMFontConfiguration configuration)
+    protected virtual bool InitWithString(string? text, string? fntFile, CCSize dimensions, CCTextAlignment hAlignment, CCVerticalTextAlignment vAlignment,
+                                          CCPoint imageOffset, CCTexture2D? texture, CCBMFontConfiguration configuration)
     {
         m_pConfiguration = configuration;
         return InitWithString(text, fntFile, dimensions, hAlignment, vAlignment, CCPoint.Zero, texture);
     }
 
-    protected virtual bool InitWithString(string theString, string fntFile, CCSize dimentions, CCTextAlignment hAlignment, CCVerticalTextAlignment vAlignment,
-                                          CCPoint imageOffset, CCTexture2D texture)
+    protected virtual bool InitWithString(string? theString, string? fntFile, CCSize dimentions, CCTextAlignment hAlignment, CCVerticalTextAlignment vAlignment,
+                                          CCPoint imageOffset, CCTexture2D? texture)
     {
         Debug.Assert(m_pConfiguration == null, "re-init is no longer supported");
         Debug.Assert((theString == null && fntFile == null) || (theString != null && fntFile != null),
@@ -367,7 +369,7 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
 
         if (!String.IsNullOrEmpty(fntFile))
         {
-            CCBMFontConfiguration newConf = FNTConfigLoadFile(fntFile);
+            CCBMFontConfiguration? newConf = FNTConfigLoadFile(fntFile);
             if (newConf == null)
             {
                 CCLog.Log("CCLabelBMFont: Impossible to create font. Please check file: '{0}'", fntFile);
@@ -380,9 +382,12 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
 
             if (texture == null)
             {
+                string atlasName = m_pConfiguration.AtlasName
+                    ?? throw new ArgumentException("The font '" + fntFile + "' doesn't name a texture.", nameof(fntFile));
+
                 try
                 {
-                    texture = CCTextureCache.SharedTextureCache.AddImage(m_pConfiguration.AtlasName);
+                    texture = CCTextureCache.SharedTextureCache.AddImage(atlasName);
                 }
                 catch (Exception)
                 {
@@ -390,18 +395,21 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
                     try
                     {
                         texture =
-                            CCTextureCache.SharedTextureCache.AddImage(System.IO.Path.Combine("images",
-                                                                                              m_pConfiguration
-                                                                                                  .AtlasName));
+                            CCTextureCache.SharedTextureCache.AddImage(System.IO.Path.Combine("images", atlasName));
                     }
                     catch (Exception)
                     {
                         // Lastly, try <font_path>/images/<font_name>
-                        string dir = System.IO.Path.GetDirectoryName(m_pConfiguration.AtlasName);
-                        string fname = System.IO.Path.GetFileName(m_pConfiguration.AtlasName);
+                        string dir = System.IO.Path.GetDirectoryName(atlasName) ?? string.Empty;
+                        string fname = System.IO.Path.GetFileName(atlasName);
                         string newName = System.IO.Path.Combine(System.IO.Path.Combine(dir, "images"), fname);
                         texture = CCTextureCache.SharedTextureCache.AddImage(newName);
                     }
+                }
+
+                if (texture == null)
+                {
+                    throw new ArgumentException("The texture '" + atlasName + "' couldn't be loaded.", nameof(fntFile));
                 }
             }
         }
@@ -453,6 +461,7 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
 
     private int KerningAmountForFirst(int first, int second)
     {
+        Debug.Assert(m_pConfiguration != null, "CreateFontChars only asks for kerning once the font is loaded");
         int ret = 0;
         int key = (first << 16) | (second & 0xffff);
 
@@ -515,7 +524,7 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
             nextFontPositionY = 0 -
                                 (m_pConfiguration.m_nCommonHeight - m_pConfiguration.m_nCommonHeight * quantityOfLines);
 
-            CCBMFontConfiguration.CCBMFontDef fontDef = null;
+            CCBMFontConfiguration.CCBMFontDef? fontDef = null;
             CCRect rect;
 
             for (int i = 0; i < stringLen; i++)
@@ -568,10 +577,10 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
                 rect.Origin.X += m_tImageOffset.X;
                 rect.Origin.Y += m_tImageOffset.Y;
 
-                CCSprite fontChar;
+                CCSprite? fontChar;
 
                 //bool hasSprite = true;
-                fontChar = (CCSprite)(GetChildByTag(i));
+                fontChar = (CCSprite?)(GetChildByTag(i));
                 if (fontChar != null)
                 {
                     // Reusing previous Sprite
@@ -686,7 +695,8 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
     {
         SetString(m_sInitialString, false);
 
-        if (m_sString == null)
+        // Without a font, CreateFontChars made no characters to lay out.
+        if (m_sString == null || m_pConfiguration == null)
         {
             return;
         }
@@ -703,13 +713,14 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
             float startOfLine = -1, startOfWord = -1;
             int skip = 0;
 
+            Debug.Assert(m_pChildren != null, "InitWithTexture creates the child list");
             CCRawList<CCNode> children = m_pChildren;
             for (int j = 0; j < children.count; j++)
             {
-                CCSprite characterSprite;
+                CCSprite? characterSprite;
                 int justSkipped = 0;
 
-                while ((characterSprite = (CCSprite)GetChildByTag(j + skip + justSkipped)) == null)
+                while ((characterSprite = (CCSprite?)GetChildByTag(j + skip + justSkipped)) == null)
                 {
                     justSkipped++;
                 }
@@ -812,7 +823,7 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
                             }
 
                             int previousCharacterIndex = 1;
-                            var characterSprite2 = (CCSprite)GetChildByTag(j - skip - justSkipped - previousCharacterIndex);
+                            var characterSprite2 = (CCSprite?)GetChildByTag(j - skip - justSkipped - previousCharacterIndex);
                             bool applyCharacterBreak = false;
                             while (characterSprite2 != null && GetLetterPosXRight(characterSprite2) - startOfLine > m_tDimensions.Width && last_word.Length > 1)
                             {
@@ -824,7 +835,7 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
                                 //multiline_string.Remove(len - 1, 1);
 
                                 previousCharacterIndex++;
-                                characterSprite2 = (CCSprite)GetChildByTag(j - skip - justSkipped - previousCharacterIndex);
+                                characterSprite2 = (CCSprite?)GetChildByTag(j - skip - justSkipped - previousCharacterIndex);
                                 i++;
                             }
 
@@ -973,7 +984,7 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
                     int index = i + line_length - 1 + lineNumber;
                     if (index < 0) continue;
 
-                    var lastChar = (CCSprite) GetChildByTag(index);
+                    var lastChar = (CCSprite?) GetChildByTag(index);
                     if (lastChar == null)
                         continue;
 
@@ -999,7 +1010,7 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
                             index = i + j + lineNumber;
                             if (index < 0) continue;
 
-                            var characterSprite = (CCSprite) GetChildByTag(index);
+                            var characterSprite = (CCSprite?) GetChildByTag(index);
                             if (characterSprite != null)
                             {
                                 characterSprite.Position = characterSprite.Position + new CCPoint(shift, 0.0f);
@@ -1063,27 +1074,33 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
     }
 
 
-    public static CCBMFontConfiguration FNTConfigLoadFile(string file)
+    public static CCBMFontConfiguration? FNTConfigLoadFile(string file)
     {
-        CCBMFontConfiguration pRet;
+        CCBMFontConfiguration? pRet;
 
         if (!s_pConfigurations.TryGetValue(file, out pRet))
         {
             pRet = CCBMFontConfiguration.Create(file);
-            s_pConfigurations.Add(file, pRet);
+            if (pRet != null)
+            {
+                s_pConfigurations.Add(file, pRet);
+            }
         }
 
         return pRet;
     }
 
-    public static CCBMFontConfiguration FNTConfigLoadFile(string fntName, Stream src)
+    public static CCBMFontConfiguration? FNTConfigLoadFile(string fntName, Stream src)
     {
-        CCBMFontConfiguration pRet;
+        CCBMFontConfiguration? pRet;
 
         if (!s_pConfigurations.TryGetValue(fntName, out pRet))
         {
             pRet = CCBMFontConfiguration.Create(src, fntName);
-            s_pConfigurations.Add(fntName, pRet);
+            if (pRet != null)
+            {
+                s_pConfigurations.Add(fntName, pRet);
+            }
         }
 
         return pRet;

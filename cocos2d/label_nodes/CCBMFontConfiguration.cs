@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,14 +22,14 @@ public class CCBMFontConfiguration
     internal Dictionary<int, CCKerningHashElement> m_pKerningDictionary = new Dictionary<int, CCKerningHashElement>();
 
     [ContentSerializer]
-    internal string m_sAtlasName;
+    internal string? m_sAtlasName;
 
     [ContentSerializer]
     internal CCBMFontPadding m_tPadding;
 
     private List<int> _characterSet = new List<int>();
 
-    public string AtlasName
+    public string? AtlasName
     {
         get { return m_sAtlasName; }
         set { m_sAtlasName = value; }
@@ -59,7 +58,7 @@ public class CCBMFontConfiguration
     /// </summary>
     /// <param name="fntFile"></param>
     /// <returns></returns>
-    public static CCBMFontConfiguration Create(string fntFile)
+    public static CCBMFontConfiguration? Create(string fntFile)
     {
         try
         {
@@ -76,7 +75,7 @@ public class CCBMFontConfiguration
         return null;
     }
 
-    public static CCBMFontConfiguration Create(Stream fntFile, string fntFileName)
+    public static CCBMFontConfiguration? Create(Stream fntFile, string fntFileName)
     {
         var pRet = new CCBMFontConfiguration();
         using (StreamReader sr = new StreamReader(fntFile))
@@ -101,16 +100,18 @@ public class CCBMFontConfiguration
         m_pKerningDictionary.Clear();
         m_pFontDefDictionary.Clear();
 
-        _characterSet = ParseConfigFile(data, fntFile);
-
-        if (_characterSet == null)
+        List<int>? characterSet = ParseConfigFile(data, fntFile);
+        if (characterSet == null)
         {
+            _characterSet = new List<int>();
             return false;
         }
+
+        _characterSet = characterSet;
         return true;
     }
 
-    private List<int> ParseConfigFile(string pBuffer, string fntFile)
+    private List<int>? ParseConfigFile(string pBuffer, string fntFile)
     {
         long nBufSize = pBuffer.Length;
 
@@ -140,7 +141,7 @@ public class CCBMFontConfiguration
             {
                 // get the left data
                 line = strLeft;
-                strLeft = null;
+                strLeft = string.Empty;
             }
 
             if (line.StartsWith("info face"))
@@ -197,8 +198,8 @@ public class CCBMFontConfiguration
         //////////////////////////////////////////////////////////////////////////
 
         StringBuilder sbuf = new StringBuilder();
-        string token = null;
-        string value = null;
+        string? token = null;
+        string? value = null;
         int mode = 0; // 0 = token, 1 = value, 2 = munger
         for (int i = 0; i < line.Length; i++)
         {

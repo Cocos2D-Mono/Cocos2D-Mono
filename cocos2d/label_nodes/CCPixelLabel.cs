@@ -1,6 +1,6 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 namespace Cocos2D;
@@ -40,6 +40,7 @@ public class CCPixelLabel : CCNode
     /// Gets or sets the displayed text. Changing this repositions existing
     /// glyph sprites without regenerating any textures.
     /// </summary>
+    [AllowNull]
     public string Text
     {
         get { return _text; }
@@ -135,7 +136,7 @@ public class CCPixelLabel : CCNode
 
             // Switch to a separate texture cache for this filtering mode
             // so shared textures are not mutated across labels
-            Dictionary<char, CCTexture2D> textures;
+            Dictionary<char, CCTexture2D>? textures;
             if (!s_fontCache.TryGetValue(_cacheKey, out textures))
             {
                 textures = new Dictionary<char, CCTexture2D>();
@@ -180,7 +181,7 @@ public class CCPixelLabel : CCNode
     /// <param name="alignment">Text alignment.</param>
     /// <param name="antialiased">Whether to use antialiased filtering.</param>
     /// <param name="maxChars">Maximum number of visible characters. Pre-allocates this many sprites.</param>
-    public CCPixelLabel(string text, string fontName, float fontSize,
+    public CCPixelLabel(string? text, string fontName, float fontSize,
         CCTextAlignment alignment = CCTextAlignment.Left,
         bool antialiased = false, int maxChars = 32)
     {
@@ -191,7 +192,7 @@ public class CCPixelLabel : CCNode
         _maxChars = maxChars;
         _cacheKey = BuildCacheKey(fontName, fontSize, antialiased);
 
-        Dictionary<char, CCTexture2D> textures;
+        Dictionary<char, CCTexture2D>? textures;
         if (!s_fontCache.TryGetValue(_cacheKey, out textures))
         {
             textures = new Dictionary<char, CCTexture2D>();
@@ -239,7 +240,7 @@ public class CCPixelLabel : CCNode
     /// <param name="text">Initial text to display.</param>
     /// <param name="fontName">System font name.</param>
     /// <param name="fontSize">Font size in points.</param>
-    public CCPixelLabel(string text, string fontName, float fontSize)
+    public CCPixelLabel(string? text, string fontName, float fontSize)
         : this(text, fontName, fontSize, CCTextAlignment.Left, false, 32)
     {
     }
@@ -294,7 +295,7 @@ public class CCPixelLabel : CCNode
     /// <summary>
     /// Measures the width of a string in points without rendering it.
     /// </summary>
-    public float MeasureString(string text)
+    public float MeasureString(string? text)
     {
         if (text == null) return 0f;
 
@@ -328,6 +329,7 @@ public class CCPixelLabel : CCNode
             + (antialiased ? "_aa" : "_px");
     }
 
+    [MemberNotNull(nameof(_glyphs))]
     private void AllocateGlyphs(int count)
     {
         _glyphs = new CCSprite[count];

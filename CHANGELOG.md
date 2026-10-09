@@ -147,6 +147,10 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   the node to the spline's absolute points instead of relative to where it started.
 - `Copy(zone)` on an interval action throws `InvalidCastException` for a zone of another
   type, as most already did. Some returned null and others threw `NullReferenceException`.
+- `CCShuffleTiles` and `CCTurnOffTiles` use their seed, so the same seed gives the same tile
+  order. `CCShuffleTiles` replaced the seed with a random number, and `CCTurnOffTiles`
+  ignored it and threw for a negative seed other than -1. A seeded run no longer touches
+  `CCRandom`, and a `CCTurnOffTiles` made without a seed still picks a new order each run.
 - `CCScaleTo.Copy(zone)`, which `CCScaleBy` also uses, `CCReverseTime.Copy(zone)` and
   `CCOrbitCamera.Copy(zone)` fill the zone from the original. They used to copy the zone's
   values into the original.

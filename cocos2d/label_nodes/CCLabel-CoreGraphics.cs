@@ -1,7 +1,8 @@
-#nullable disable
 #if IOS
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
@@ -28,8 +29,8 @@ namespace Cocos2D;
 	public partial class CCLabel
 	{
 
-		private static CTFont _font;
-		private static CGBitmapContext _bitmap;
+		private static CTFont? _font;
+		private static CGBitmapContext? _bitmap;
 		private static IntPtr _bitmapData;
 		private static CCColor4B _brush;
 		private static Dictionary<char, KerningInfo> _abcValues = new Dictionary<char, KerningInfo>();
@@ -59,6 +60,7 @@ namespace Cocos2D;
 
 		private CCSize GetMeasureString(string text)
 		{
+			Debug.Assert(_font != null, "CreateFont sets the font first");
 			return CCLabelUtilities.MeasureString(text, _font);
 		}
 
@@ -67,6 +69,7 @@ namespace Cocos2D;
 			return _abcValues[ch];
 		}
 
+		[MemberNotNull(nameof(_bitmap))]
 		private void CreateBitmap(int width, int height)
 		{
 //			if (_bitmap == null || (_bitmap.Width < width || _bitmap.Height < height))
@@ -91,6 +94,7 @@ namespace Cocos2D;
 
 			CreateBitmap(w, h);
 
+			Debug.Assert(_font != null, "CreateFont sets the font first");
 			CCLabelUtilities.NativeDrawString(_bitmap, s, _font, _brush, new CGRect(0,0,w,h));
 			_bitmapData = _bitmap.Data;
 

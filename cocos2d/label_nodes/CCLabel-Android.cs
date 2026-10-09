@@ -1,6 +1,7 @@
-﻿#nullable disable
-#if ANDROID
+﻿#if ANDROID
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Android.App;
 using Android.Graphics;
@@ -11,21 +12,21 @@ namespace Cocos2D;
 
 public partial class CCLabel
 {
-    private static Paint _paint;
-		private static Bitmap _bitmap;
-    private static Canvas _canvas;
-    private static int[] _data;
+    private static Paint? _paint;
+		private static Bitmap? _bitmap;
+    private static Canvas? _canvas;
+    private static int[]? _data;
     private static GCHandle _dataHandle;
-    private static Paint.FontMetrics _fontMetrix;
+    private static Paint.FontMetrics? _fontMetrix;
     private static float _fontScaleFactor;
 
     private void CreateFont(string fontName, float fontSize, CCRawList<char> charset)
     {
         if (_paint == null)
         {
-            var display = Game.Activity.WindowManager.DefaultDisplay;
+            var display = Game.Activity.WindowManager?.DefaultDisplay;
             var metrics = new DisplayMetrics();
-            display.GetMetrics(metrics);
+            display?.GetMetrics(metrics);
 
             _fontScaleFactor = metrics.ScaledDensity;
 
@@ -73,11 +74,14 @@ public partial class CCLabel
         _fontMetrix = _paint.GetFontMetrics();
     }
 
+    [MemberNotNull(nameof(_bitmap), nameof(_canvas), nameof(_data))]
     private void CreateBitmap(int width, int height)
     {
         //if (_bitmap == null || _bitmap.Width < width || _bitmap.Height < height)
         //{
-            _bitmap = Bitmap.CreateBitmap(width, height, Bitmap.Config.Argb8888);
+            var config = Bitmap.Config.Argb8888;
+            Debug.Assert(config != null, "ARGB_8888 is a standard bitmap config");
+            _bitmap = Bitmap.CreateBitmap(width, height, config);
             _canvas = new Canvas(_bitmap);
             _data = new int[width * height];
         //}
@@ -85,6 +89,7 @@ public partial class CCLabel
 
     private float GetFontHeight()
     {
+        Debug.Assert(_fontMetrix != null && _paint != null, "CreateFont sets the paint and its metrics first");
         return (_fontMetrix.Bottom - _fontMetrix.Top) + _paint.Descent();
     }
 
@@ -93,6 +98,7 @@ public partial class CCLabel
         //var bounds = new Rect();
         //_paint.GetTextBounds(text, 0, text.Length, bounds);
         //return new CCSize(bounds.Width(), bounds.Height());
+        Debug.Assert(_paint != null, "CreateFont sets the paint first");
         return new CCSize(_paint.MeasureText(text), GetFontHeight());
     }
 
@@ -100,6 +106,7 @@ public partial class CCLabel
     {
         float[] widths = new float[1];
 
+        Debug.Assert(_paint != null, "CreateFont sets the paint first");
         _paint.GetTextWidths(new char[] {ch}, 0, 1, widths);
         //var bounds = new Rect();
         //var s = ch.ToString();
@@ -129,6 +136,7 @@ public partial class CCLabel
 
         _canvas.DrawColor(Android.Graphics.Color.Black);
 
+        Debug.Assert(_paint != null && _fontMetrix != null, "CreateFont sets the paint and its metrics first");
         _paint.TextAlign = Paint.Align.Left;
 
         // Get bounding rectangle - we need its attribute and method values

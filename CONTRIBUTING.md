@@ -93,6 +93,13 @@ directory at a time. A file that starts with `#nullable disable` hasn't been con
 - To convert a file, remove that line, fix its warnings, and mark what can really be null
   (`?`, `[NotNullWhen]`, `[MemberNotNull]`) rather than silencing warnings with `!`.
   Convert a directory at a time, in small PRs.
+- Where code relies on a member being set by that point, such as an action's target in
+  `Update`, say so with `Debug.Assert(x != null, "reason")` rather than `!`.
+- cocos2d's two-phase init (a constructor, then an `InitWith…` method) leaves members null
+  in between. When callers always run the init method straight after construction, keep
+  the member non-nullable: set it to `null!` in that constructor, with a comment naming
+  the init method, and mark the init method `[MemberNotNull]`. A member that can still be
+  null after init is nullable.
 - Converting a file changes the nullability its public API reports to consumers, so note
   the converted area in the CHANGELOG.
 - If a warning turns out to be a real null bug, the [unrelated-bug rule](#when-you-find-an-unrelated-bug)

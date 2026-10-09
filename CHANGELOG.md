@@ -113,6 +113,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 
   Subclasses of `CCLabelBMFont` that override `InitWithString` should declare its text, font
   file and texture nullable; the compiler now checks it.
+- **Nullable annotations for `CCLabel`.** `CCLabel.m_pTexture` and `m_pData`, the atlas the
+  TTF labels share, are nullable: they're null until a label is given text or a font, and
+  `CCLabelBMFont.FNTConfigRemoveCache` clears them.
 
 ### Fixed
 
@@ -225,6 +228,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - `CCLabelAtlas.InitWithString(label, fntFile)`, which its two-argument constructor calls,
   throws `ArgumentException` for a file that isn't a property list dictionary, instead of
   `NullReferenceException`.
+- A `CCLabel` drawn before any label has been given text or a font no longer throws
+  `NullReferenceException`; there's no shared atlas to upload yet.
 
 ## 2.6.1 - 2026-10-09
 

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Text;
 using Cocos2D;
@@ -96,7 +97,7 @@ public class CCSpriteFrameCacheTests
         // Removing by alias removed the frame, then an alias keyed by the frame's name instead
         // of the alias, so the alias found a frame added later under that name (C2D-287).
         var cache = new CCSpriteFrameCache();
-        cache.AddSpriteFramesWithDictionary(Format3SheetWithAlias(), new CCTexture2D());
+        cache.AddSpriteFramesWithDictionary(Format3Sheet(("a.png", new[] { "alias-a" })), new CCTexture2D());
         Assert.NotNull(cache.SpriteFrameByName("alias-a"));
 
         cache.RemoveSpriteFrameByName("alias-a");
@@ -111,7 +112,7 @@ public class CCSpriteFrameCacheTests
         // Removing a frame by its own name left its aliases, which then found a frame added
         // later under that name (C2D-287).
         var cache = new CCSpriteFrameCache();
-        cache.AddSpriteFramesWithDictionary(Format3SheetWithAlias(), new CCTexture2D());
+        cache.AddSpriteFramesWithDictionary(Format3Sheet(("a.png", new[] { "alias-a" })), new CCTexture2D());
 
         cache.RemoveSpriteFrameByName("a.png");
         cache.AddSpriteFrame(new CCSpriteFrame(new CCTexture2D(), new CCRect(0, 0, 1, 1)), "a.png");
@@ -119,21 +120,41 @@ public class CCSpriteFrameCacheTests
         Assert.Null(cache.SpriteFrameByName("alias-a"));
     }
 
-    // A format-3 sprite sheet plist with one frame, "a.png", whose alias is "alias-a".
-    private static PlistDictionary Format3SheetWithAlias()
+    [Fact]
+    public void SpriteFrameCache_RemoveByName_PrefersAFrameOverAnAliasWithTheSameName()
     {
-        var aliases = new PlistArray();
-        aliases.Add(new PlistString("alias-a"));
+        // "b.png" names a frame and is also an alias of "a.png". SpriteFrameByName finds the
+        // frame "b.png", so removing "b.png" has to remove that frame, not "a.png" (C2D-287).
+        var cache = new CCSpriteFrameCache();
+        cache.AddSpriteFramesWithDictionary(
+            Format3Sheet(("a.png", new[] { "b.png" }), ("b.png", Array.Empty<string>())), new CCTexture2D());
 
-        var frame = new PlistDictionary();
-        frame.Add("spriteSize", new PlistString("{1,1}"));
-        frame.Add("spriteOffset", new PlistString("{0,0}"));
-        frame.Add("spriteSourceSize", new PlistString("{1,1}"));
-        frame.Add("textureRect", new PlistString("{{0,0},{1,1}}"));
-        frame.Add("aliases", aliases);
+        cache.RemoveSpriteFrameByName("b.png");
 
+        Assert.NotNull(cache.SpriteFrameByName("a.png"));
+    }
+
+    // A format-3 sprite sheet plist with 1x1 frames that have the given names and aliases.
+    private static PlistDictionary Format3Sheet(params (string Name, string[] Aliases)[] sheetFrames)
+    {
         var frames = new PlistDictionary();
-        frames.Add("a.png", frame);
+        foreach (var (name, frameAliases) in sheetFrames)
+        {
+            var aliases = new PlistArray();
+            foreach (string alias in frameAliases)
+            {
+                aliases.Add(new PlistString(alias));
+            }
+
+            var frame = new PlistDictionary();
+            frame.Add("spriteSize", new PlistString("{1,1}"));
+            frame.Add("spriteOffset", new PlistString("{0,0}"));
+            frame.Add("spriteSourceSize", new PlistString("{1,1}"));
+            frame.Add("textureRect", new PlistString("{{0,0},{1,1}}"));
+            frame.Add("aliases", aliases);
+            frames.Add(name, frame);
+        }
+
         var metadata = new PlistDictionary();
         metadata.Add("format", new PlistInteger(3));
 

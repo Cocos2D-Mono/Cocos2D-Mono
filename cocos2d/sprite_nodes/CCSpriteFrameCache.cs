@@ -331,8 +331,11 @@ public class CCSpriteFrameCache
             return;
         }
 
-        // The name can be an alias of the frame's own name.
-        string frameName = m_pSpriteFramesAliases.TryGetValue(pszName, out string? key) ? key : pszName;
+        // The name can be an alias of the frame's own name. A frame's own name wins over an alias
+        // with the same name, as in SpriteFrameByName.
+        string frameName = !m_pSpriteFrames.ContainsKey(pszName) && m_pSpriteFramesAliases.TryGetValue(pszName, out string? key)
+            ? key
+            : pszName;
         m_pSpriteFrames.Remove(frameName);
 
         // Drop the frame's aliases too, so none of them finds a frame added later under its name.

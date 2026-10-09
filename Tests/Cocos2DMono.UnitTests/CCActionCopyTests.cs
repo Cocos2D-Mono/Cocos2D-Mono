@@ -97,9 +97,10 @@ public class CCActionCopyTests : System.IDisposable
     {
         // Copy(zone) set the original's orbit from the zone instead of the other way round
         // (C2D-281), as CCScaleTo's did.
-        var original = new CCOrbitCamera(1, 2, 0, 90, 0, 0, 0);
-        var zone = new CCOrbitCamera(1, 10, 0, 90, 0, 0, 0);
-        float expected = EyeXAtEnd(new CCOrbitCamera(1, 2, 0, 90, 0, 0, 0));
+        // Every orbit parameter differs, so a copy that drops any of them fails too.
+        var original = new CCOrbitCamera(1, 2, 1, 45, 10, 20, 5);
+        var zone = new CCOrbitCamera(1, 10, -3, 70, -7, 60, -11);
+        float expected = EyeXAtEnd(new CCOrbitCamera(1, 2, 1, 45, 10, 20, 5));
 
         original.Copy(zone);
 
@@ -127,7 +128,7 @@ public class CCActionCopyTests : System.IDisposable
     }
 
     // Runs the camera action on a fresh node and returns the camera's eye X at the action's end,
-    // which scales with the orbit's radius.
+    // which depends on every orbit parameter.
     private static float EyeXAtEnd(CCOrbitCamera action)
     {
         var node = new CCNode();

@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Diagnostics;
 
@@ -55,7 +54,8 @@ public class CCLabelAtlas : CCAtlasNode, ICCLabelProtocol
         string data = CCFileUtils.GetFileData(fntFile);
 
         PlistDocument doc = new PlistDocument(data);
-        var dict = doc.Root as PlistDictionary;
+        var dict = doc.Root as PlistDictionary
+            ?? throw new ArgumentException("The character map '" + fntFile + "' isn't a property list dictionary.", nameof(fntFile));
 
         Debug.Assert(dict["version"].AsInt == 1, "Unsupported version. Upgrade cocos2d version");
 

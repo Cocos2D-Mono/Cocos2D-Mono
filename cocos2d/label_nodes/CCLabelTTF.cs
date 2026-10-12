@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -8,7 +7,7 @@ public class CCLabelTTF : CCSprite, ICCLabelProtocol
 {
     private float _fontSize;
     private CCTextAlignment _hAlignment;
-    private string _fontName;
+    private string _fontName = string.Empty;
     protected string m_pString = String.Empty;
     private CCSize _dimensions;
     private CCVerticalTextAlignment _vAlignment;
@@ -243,7 +242,7 @@ public class CCLabelTTF : CCSprite, ICCLabelProtocol
             Texture.IsAntialiased = wasAntialiased;
 
             CCRect rect = CCRect.Zero;
-            rect.Size = m_pobTexture.ContentSize;
+            rect.Size = Texture.ContentSize;
             SetTextureRect(rect);
         }
         else

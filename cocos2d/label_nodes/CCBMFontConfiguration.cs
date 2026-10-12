@@ -212,6 +212,12 @@ public class CCBMFontConfiguration
             }
             else if ((char.IsWhiteSpace(c) || i == (line.Length-1)) && mode == 1)
             {
+                // A value can run to the end of the line; keep its last character.
+                if (!char.IsWhiteSpace(c))
+                {
+                    sbuf.Append(c);
+                }
+
                 // End of value, save it
                 value = sbuf.ToString();
                 sbuf.Length = 0;

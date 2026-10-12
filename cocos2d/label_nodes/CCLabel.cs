@@ -1,7 +1,7 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -31,7 +31,7 @@ public partial class CCLabel : CCLabelBMFont
         public float C;
     }
 
-    public static CCTexture2D m_pTexture;
+    public static CCTexture2D? m_pTexture;
     private static CCSize _atlasTextureSize = new CCSize(0, 0);
     
     protected static bool m_bTextureDirty = true;
@@ -104,6 +104,7 @@ public partial class CCLabel : CCLabelBMFont
         }
     }
 
+    [MemberNotNull(nameof(m_pTexture), nameof(m_pData))]
     public static void InitializeTTFAtlas(int width, int height)
     {
         _width = width;
@@ -213,6 +214,7 @@ public partial class CCLabel : CCLabelBMFont
 
         if (Texture.IsDisposed && retry)
         {
+            Debug.Assert(m_pTexture != null, "InitializeTTFAtlas creates the texture along with the data");
             Texture = m_pTexture;
         }
 
@@ -224,7 +226,7 @@ public partial class CCLabel : CCLabelBMFont
 
         var chars = new CCRawList<char>();
 
-        CCBMFontConfiguration fontConfig;
+        CCBMFontConfiguration? fontConfig;
 
         if (!s_pConfigurations.TryGetValue(fontKey, out fontConfig))
         {
@@ -255,7 +257,7 @@ public partial class CCLabel : CCLabelBMFont
 
         fontConfig.m_nCommonHeight = (int)Math.Ceiling(GetFontHeight());
 
-        int[] data = null;
+        int[]? data = null;
 
         for (int i = 0; i < chars.Count; i++)
         {
@@ -377,7 +379,8 @@ public partial class CCLabel : CCLabelBMFont
             UpdateLabel();
         }
 
-        if (m_bTextureDirty)
+        // There's no atlas to upload until a label sets its font.
+        if (m_bTextureDirty && m_pTexture != null && m_pData != null)
         {
             m_pTexture.InitWithRawData(m_pData, SurfaceFormat.Color, _width, _height, true);
 
@@ -415,7 +418,7 @@ public partial class CCLabel : CCLabelBMFont
     private static int _width;
     private static int _height;
     private static int _depth;
-    public static int[] m_pData;
+    public static int[]? m_pData;
 
     private int Fit(int index, int width, int height)
     {
@@ -552,6 +555,7 @@ public partial class CCLabel : CCLabelBMFont
         var width = region.width;
         var height = region.height;
 
+        Debug.Assert(m_pData != null, "InitializeTTFAtlas creates the atlas data");
         Debug.Assert(x > 0);
         Debug.Assert(y > 0);
         Debug.Assert(x < (_width - 1));

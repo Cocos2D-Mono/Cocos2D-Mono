@@ -1,7 +1,7 @@
-﻿#nullable disable
-#if WINDOWS
+﻿#if WINDOWS
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -33,27 +33,28 @@ public partial class CCLabel
         public float abcfC;
     }
 
-    private static Factory Factory2D { get; set; }
-    private static FactoryWrite FactoryDWrite { get; set; }
-    private static FactoryImaging FactoryImaging { get; set; }
-    private SolidColorBrush _brush;
+    private static Factory? Factory2D { get; set; }
+    private static FactoryWrite? FactoryDWrite { get; set; }
+    private static FactoryImaging? FactoryImaging { get; set; }
+    private SolidColorBrush? _brush;
 
-    private SharpDX.WIC.Bitmap _bitmap;
-    private WicRenderTarget _renderTarget;
-    private static Font _defaultFont;
-    private static Font _currentFont;
+    private SharpDX.WIC.Bitmap? _bitmap;
+    private WicRenderTarget? _renderTarget;
+    private static Font? _defaultFont;
+    private static Font? _currentFont;
     private static float _currentDIP;
     private static float _currentFontSizeEm;
     private static Size2F dpi;
     private static Dictionary<string, FontFamily> _fontFamilyCache = new Dictionary<string, FontFamily>();
-    private static TextFormat textFormat;
+    private static TextFormat? textFormat;
     static float dpiScale = 96f / 72f;  // default but will be recalculated below
     
     // This should be a FontCollection
     //private static PrivateFontCollection _loadedFonts = new PrivateFontCollection();
 
-    private static FontFamily GetFontFamily (string familyName)
+    private static FontFamily? GetFontFamily (string familyName)
     {
+        Debug.Assert(FactoryDWrite != null, "CreateFont creates the factories first");
         var fontList = FactoryDWrite.GetSystemFontCollection(true);
         int fontIndex = 0;
         fontList.FindFamilyName(familyName, out fontIndex);
@@ -66,8 +67,9 @@ public partial class CCLabel
 
     private static Font GenericSanSerif()
     {
+        Debug.Assert(FactoryDWrite != null, "CreateFont creates the factories first");
         var sanserifs = new string[] {"Microsoft San Serif", "Arial", "Tahoma"};
-        FontFamily _fontFamily = null;
+        FontFamily? _fontFamily = null;
 
         foreach (var family in sanserifs)
         {
@@ -99,7 +101,7 @@ public partial class CCLabel
         return font;
     }
 
-    private string CreateFont(string fontName, float fontSize, CCRawList<char> charset)
+    private string? CreateFont(string fontName, float fontSize, CCRawList<char> charset)
     {
 
         if (Factory2D == null)
@@ -118,7 +120,7 @@ public partial class CCLabel
             //_defaultDIP = ConvertPointSizeToDIP(_defaultFontSizeEm);
         }
 
-        FontFamily fontFamily = GetFontFamily(fontName);
+        FontFamily? fontFamily = GetFontFamily(fontName);
 
 
         if (!_fontFamilyCache.TryGetValue(fontName, out fontFamily))
@@ -189,6 +191,7 @@ public partial class CCLabel
 
     private static void GetKerningInfo(CCRawList<char> charset)
     {
+        Debug.Assert(_currentFont != null, "CreateFont sets the font first");
         _abcValues.Clear();
 
         var fontFace = new FontFace(_currentFont);
@@ -263,6 +266,7 @@ public partial class CCLabel
 
     private float GetFontHeight()
     {
+        Debug.Assert(_currentFont != null, "CreateFont sets the font first");
         return _currentDIP * (float)(_currentFont.Metrics.Ascent + _currentFont.Metrics.Descent + _currentFont.Metrics.LineGap) / _currentFont.Metrics.DesignUnitsPerEm;
     }
 
@@ -321,10 +325,10 @@ public partial class CCLabel
 
     protected void ReleaseResources()
     {
-        _bitmap.Dispose();
+        _bitmap?.Dispose();
         _bitmap = null;
 
-        _renderTarget.Dispose();
+        _renderTarget?.Dispose();
         _renderTarget = null;
 
     }
@@ -350,6 +354,8 @@ public partial class CCLabel
         var h = (int)(Math.Ceiling(size.Height += 2));
 
         CreateBitmap(w, h);
+        Debug.Assert(_renderTarget != null && _bitmap != null && textFormat != null,
+            "CreateFont creates the text format, and CreateBitmap the render target");
 
         _renderTarget.BeginDraw();
 
@@ -385,6 +391,7 @@ public partial class CCLabel
     // Used for debugging purposes
     private void SaveToFile(string fileName)
     {
+        Debug.Assert(_renderTarget != null && _bitmap != null, "SaveToFile runs while GetBitmapData has a bitmap");
 
         using (var pStream = new WICStream(FactoryImaging, fileName, SharpDX.IO.NativeFileAccess.Write))
         {

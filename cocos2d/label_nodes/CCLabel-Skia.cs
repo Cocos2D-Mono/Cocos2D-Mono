@@ -1,7 +1,7 @@
-﻿#nullable disable
-#if DESKTOPGL 
+﻿#if DESKTOPGL 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using SkiaSharp;
 
@@ -10,12 +10,12 @@ namespace Cocos2D;
 
 public partial class CCLabel
 {
-    private static SKTypeface _defaultTypeface;
-    private static SKTypeface _currentTypeface;
+    private static SKTypeface? _defaultTypeface;
+    private static SKTypeface? _currentTypeface;
     private static float _currentFontSize;
 
-    private static SKBitmap _bitmapSkia;
-    private static SKCanvas _canvas;
+    private static SKBitmap? _bitmapSkia;
+    private static SKCanvas? _canvas;
     private static Dictionary<char, KerningInfo> _kerningInfo = new Dictionary<char, KerningInfo>();
     private static Dictionary<string, SKTypeface> _typefaceCache = new Dictionary<string, SKTypeface>();
 
@@ -147,9 +147,10 @@ public partial class CCLabel
         return new CCSize(bounds.Width, bounds.Height);
     }
 
+    [MemberNotNull(nameof(_bitmapSkia), nameof(_canvas))]
     private void CreateBitmapSkia(int width, int height)
     {
-        if (_bitmapSkia == null || (_bitmapSkia.Width < width || _bitmapSkia.Height < height))
+        if (_bitmapSkia == null || _canvas == null || (_bitmapSkia.Width < width || _bitmapSkia.Height < height))
         {
             _canvas?.Dispose();
             _bitmapSkia?.Dispose();

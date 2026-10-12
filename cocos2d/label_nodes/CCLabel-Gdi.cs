@@ -1,7 +1,7 @@
-﻿#nullable disable
-#if DESKTOPGL && WINDOWSGL
+﻿#if DESKTOPGL && WINDOWSGL
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -28,13 +28,13 @@ public partial class CCLabel
         public float abcfC;
     }
 
-    private static Font _defaultFont;
-    private static Font _currentFont;
+    private static Font? _defaultFont;
+    private static Font? _currentFont;
 
-    private static Graphics _graphics;
-    private static Bitmap _bitmap;
-    private static BitmapData _bitmapData;
-    private static Brush _brush;
+    private static Graphics? _graphics;
+    private static Bitmap? _bitmap;
+    private static BitmapData? _bitmapData;
+    private static Brush? _brush;
     private static Dictionary<char, KerningInfo> _abcValues = new Dictionary<char, KerningInfo>();
     private static Dictionary<string, FontFamily> _fontFamilyCache = new Dictionary<string, FontFamily>();
     private static PrivateFontCollection _loadedFonts = new PrivateFontCollection();
@@ -67,7 +67,7 @@ public partial class CCLabel
             _defaultFont = new Font(FontFamily.GenericSansSerif, 12);
         }
 
-        FontFamily fontFamily;
+        FontFamily? fontFamily;
 
         if (!_fontFamilyCache.TryGetValue(fontName, out fontFamily))
         {
@@ -130,6 +130,7 @@ public partial class CCLabel
 
         var hDC = CreateCompatibleDC(IntPtr.Zero);
 
+        Debug.Assert(_currentFont != null, "CreateFont sets the font first");
         var hFont = _currentFont.ToHfont();
         SelectObject(hDC, hFont);
 
@@ -163,6 +164,7 @@ public partial class CCLabel
         {
             return GetFontHeightSkia();
         }
+        Debug.Assert(_currentFont != null, "CreateFont sets the font first");
         return _currentFont.GetHeight();
     }
 
@@ -174,6 +176,7 @@ public partial class CCLabel
             return GetMeasureStringSkia(text);
         }
 
+        Debug.Assert(_graphics != null && _currentFont != null, "CreateFont sets the font and creates the bitmap first");
         var size = _graphics.MeasureString(text, _currentFont);
         return new CCSize(size.Width, size.Height);
     }
@@ -209,6 +212,7 @@ public partial class CCLabel
     {
         if (_bitmapData != null)
         {
+            Debug.Assert(_bitmap != null, "The bitmap data was locked from the bitmap");
             _bitmap.UnlockBits(_bitmapData);
             _bitmapData = null;
         }
@@ -240,6 +244,8 @@ public partial class CCLabel
         var h = (int)(Math.Ceiling(size.Height += 2));
 
         CreateBitmap(w, h);
+        Debug.Assert(_graphics != null && _bitmap != null && _brush != null && _currentFont != null,
+            "CreateFont sets the font, and CreateBitmap creates the bitmap");
 
         _graphics.Clear(System.Drawing.Color.Transparent);
         _graphics.DrawString(s, _currentFont, _brush, 0, 0);

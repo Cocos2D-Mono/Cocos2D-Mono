@@ -212,6 +212,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   `NullReferenceException`.
 - `CCBMFontConfiguration` reads the last line of a font file that doesn't end with a
   newline. It used to throw `NullReferenceException`.
+- `CCBMFontConfiguration` keeps the last character of a value that ends its line. It used
+  to drop it when nothing followed, not even a carriage return: a line of just `char id=65`
+  read as character 6.
 - `CCBMFontConfiguration.CharacterSet` is empty, not null, for a font file with no data.
 - `CCLabelBMFont.FNTConfigLoadFile` doesn't cache a font that fails to load, so loading it
   again under that name can succeed. It used to return null for that name from then on.

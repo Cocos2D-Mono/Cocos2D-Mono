@@ -4,7 +4,27 @@ All notable changes to Cocos2D-Mono are recorded here. This file was introduced 
 2.5.10; earlier releases are described in their GitHub release notes / git history.
 The project follows [Semantic Versioning](https://semver.org/) where practical.
 
-## Unreleased
+## 2.6.2 - 2026-10-16
+
+The first round of nullable reference type annotations: nodes, actions, sprites, textures,
+labels, layers, particles and input. Projects that enable nullable now see which engine
+members can be null. It only adds warnings, and only in those projects; nothing stops
+compiling. Converting the code also turned up bugs, mostly crashes in edge cases, and
+they're fixed below.
+
+A few failures now throw an exception that names the problem, such as `ArgumentException`
+or `NotSupportedException`, instead of `NullReferenceException`. Code that caught
+`NullReferenceException` in those places should catch the new type. Otherwise there's
+nothing to migrate: bump the package reference to 2.6.2.
+
+### Added
+
+- **Mac Catalyst and tvOS targets** (`net10.0-maccatalyst26.0` and `net10.0-tvos26.0`), for
+  building the engine from source. MonoGame publishes no package for either platform, so
+  both build against the project's MonoGame fork and aren't in the NuGet packages. The
+  README's Platform support section has the build steps. On tvOS the engine runs the iOS
+  code without a touch screen or accelerometer; the Siri Remote's selection arrives as
+  gamepad input.
 
 ### Changed
 
@@ -234,7 +254,30 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - A `CCLabel` drawn before any label has been given text or a font no longer throws
   `NullReferenceException`; there's no shared atlas to upload yet.
 
-## 2.6.1 - 2026-10-09
+### Documentation
+
+- The README describes platform support in three tiers: the platforms in the NuGet
+  packages, the source-only Mac Catalyst and tvOS targets, and consoles for registered
+  developers.
+- The roadmap records the platform plan after the modernization: follow MonoGame's graphics
+  backends, and move a platform into the packages once its MonoGame dependency can be
+  restored from nuget.org and CI builds it. A new versioning section says baseline moves
+  ship in minor releases and 3.0 will be an API-cleanup release.
+- `CONTRIBUTING.md` describes how a release is tagged and published, and the rule that a
+  package only carries a platform whose MonoGame dependency is on nuget.org.
+
+### Changed (internal)
+
+- Packages are published to nuget.org from a `v`-prefixed release tag, starting with
+  `v2.6.2`, through nuget.org Trusted Publishing once a maintainer approves. Earlier
+  releases keep their unprefixed tags.
+- `dotnet pack` leaves out the source-only Mac Catalyst and tvOS targets, even on a Mac
+  that builds them.
+- Removed internal label code that nothing called: `CCLabelUtilities`' Skia and GDI paths.
+- Nullable reference types are on for the whole engine, with each existing file opted out
+  until it's converted. New code is annotated from the start.
+
+## 2.6.1 - 2026-10-06
 
 A small patch release: two changes to how `CCLabel` draws text on Linux and macOS. No API
 changes and nothing to migrate — bump the package reference to 2.6.1.

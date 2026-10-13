@@ -4,7 +4,7 @@ All notable changes to Cocos2D-Mono are recorded here. This file was introduced 
 2.5.10; earlier releases are described in their GitHub release notes / git history.
 The project follows [Semantic Versioning](https://semver.org/) where practical.
 
-## 2.6.2 - 2026-10-16
+## 2.6.2 - 2026-10-13
 
 A small release with no API changes and nothing to migrate: bump the package reference to
 2.6.2. The packaged platforms behave as in 2.6.1, and Mac Catalyst and tvOS can now be

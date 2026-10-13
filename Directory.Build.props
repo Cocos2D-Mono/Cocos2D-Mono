@@ -2,7 +2,7 @@
   <PropertyGroup>
     <!-- Single source of truth for the package version (and assembly version only for projects
          that generate assembly info). Bump here for a release; all packages inherit it. -->
-    <Version>2.6.1</Version>
+    <Version>2.6.2</Version>
 
     <!-- Centralized MonoGame version for all projects -->
     <MonoGameVersion>3.8.5</MonoGameVersion>
@@ -14,6 +14,15 @@
          CS0579 duplicate-attribute errors. Excluding obj/bin explicitly covers every
          custom layout and makes configuration switches safe in one working tree. -->
     <DefaultItemExcludes>$(DefaultItemExcludes);obj/**;bin/**</DefaultItemExcludes>
+
+    <!-- The WindowsDX TFM (net10.0-windows7.0) cannot even be restored on macOS or Linux
+         without this: NETSDK1100 stops the whole multi-target restore, and a consumer's
+         project reference (a game's Catalyst head, say) cannot narrow the TFM list
+         because NuGet restore ignores reference metadata. Enabling Windows targeting off
+         Windows restores and builds the WinForms-based TFM against reference assemblies;
+         the one-time cost is the WindowsDesktop reference pack download. CI still narrows
+         each cell to its own TFM and is unaffected. -->
+    <EnableWindowsTargeting Condition="'$([MSBuild]::IsOSPlatform(`Windows`))' != 'true'">true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <!--
@@ -43,6 +52,70 @@
     <Cocos2DWindowsTfm Condition="'$(Cocos2DWindowsTfm)' == ''">net10.0-windows7.0</Cocos2DWindowsTfm>
     <Cocos2DAndroidTfm Condition="'$(Cocos2DAndroidTfm)' == ''">net10.0-android36.0</Cocos2DAndroidTfm>
     <Cocos2DIosTfm Condition="'$(Cocos2DIosTfm)' == ''">net10.0-ios26.0</Cocos2DIosTfm>
-    <Cocos2DTargetFrameworks Condition="'$(Cocos2DTargetFrameworks)' == ''">$(Cocos2DBaseTfm);$(Cocos2DWindowsTfm);$(Cocos2DAndroidTfm);$(Cocos2DIosTfm)</Cocos2DTargetFrameworks>
+    <Cocos2DMacCatalystTfm Condition="'$(Cocos2DMacCatalystTfm)' == ''">net10.0-maccatalyst26.0</Cocos2DMacCatalystTfm>
+    <Cocos2DTvosTfm Condition="'$(Cocos2DTvosTfm)' == ''">net10.0-tvos26.0</Cocos2DTvosTfm>
+  </PropertyGroup>
+
+  <!--
+    ============ Mac Catalyst (C2D-238) and tvOS (C2D-239): fork-built MonoGame ============
+
+    MonoGame publishes no maccatalyst or tvos package (still true at 3.8.5), so those
+    TFMs build against the MonoGame.Framework assemblies produced by our fork:
+      https://github.com/Cocos2D-Mono/MonoGame   (branch feature/mac-catalyst-support)
+      dotnet build MonoGame.Framework/MonoGame.Framework.MacCatalyst.csproj -c <Configuration>
+      dotnet build MonoGame.Framework/MonoGame.Framework.tvOS.csproj -c <Configuration>
+    which write Artifacts/MonoGame.Framework/{MacCatalyst,tvOS}/<Configuration>/MonoGame.Framework.dll.
+    $(MonoGameForkArtifactsRoot) points at that Artifacts/MonoGame.Framework folder; the
+    default is a checkout of the fork beside this repo, and an override may be given with
+    or without a trailing separator. Each platform's folder can also be overridden on its
+    own ($(MonoGameMacCatalystArtifactsRoot), $(MonoGameTvosArtifactsRoot)).
+
+    The maccatalyst and tvos workloads exist only on macOS, and each reference only
+    resolves when the fork has been built for that platform, so each TFM joins the
+    default list only when both hold. Every other host, and every checkout without the
+    fork, builds the four shipped TFMs unchanged. Force either one with
+    -p:Cocos2DIncludeMacCatalyst=true|false and -p:Cocos2DIncludeTvos=true|false.
+
+    Packing never auto-includes them (C2D-259). A published package only carries a TFM
+    whose MonoGame dependency can be restored from nuget.org (C2D-246), and these two
+    reference the fork by HintPath: NuGet records no dependency for that and the fork's
+    DLL is not packed, so a Catalyst or tvOS TFM in a .nupkg would fail for every
+    consumer. `dotnet pack` sets _IsPacking=true as a global property, so the probes
+    below skip that case and a pack on a Mac with the fork built still produces the four
+    shipped TFMs. An explicit -p:Cocos2DInclude...=true still forces one in, for anyone
+    deliberately experimenting. (Invoking the Pack target through msbuild directly does
+    not set _IsPacking; releases go through `dotnet pack` in pack.yml.)
+  -->
+  <PropertyGroup>
+    <MonoGameForkArtifactsRoot Condition="'$(MonoGameForkArtifactsRoot)' == ''">$(MSBuildThisFileDirectory)..\MonoGame\Artifacts\MonoGame.Framework</MonoGameForkArtifactsRoot>
+    <MonoGameMacCatalystArtifactsRoot Condition="'$(MonoGameMacCatalystArtifactsRoot)' == ''">$([System.IO.Path]::Combine('$(MonoGameForkArtifactsRoot)', 'MacCatalyst'))</MonoGameMacCatalystArtifactsRoot>
+    <MonoGameTvosArtifactsRoot Condition="'$(MonoGameTvosArtifactsRoot)' == ''">$([System.IO.Path]::Combine('$(MonoGameForkArtifactsRoot)', 'tvOS'))</MonoGameTvosArtifactsRoot>
+
+    <!-- Resolve which of the fork's configuration folders this build references, per
+         platform. $(Configuration) is only set this early when it was passed in (-c, or a
+         referencing project); otherwise the SDK defaults it to Debug later, so Debug is
+         assumed in that case. A configuration the fork has not been built for (a
+         consumer's AppStore configuration, say) falls back to Release, then Debug, so the
+         reference binds to an artifact that exists. The csprojs use the resolved value
+         for their HintPaths, so the opt-in probe and the reference always agree. -->
+    <MonoGameMacCatalystAssemblyConfiguration Condition="'$(MonoGameMacCatalystAssemblyConfiguration)' == ''">$(Configuration)</MonoGameMacCatalystAssemblyConfiguration>
+    <MonoGameMacCatalystAssemblyConfiguration Condition="'$(MonoGameMacCatalystAssemblyConfiguration)' == ''">Debug</MonoGameMacCatalystAssemblyConfiguration>
+    <MonoGameMacCatalystAssemblyConfiguration Condition="!Exists('$([System.IO.Path]::Combine(`$(MonoGameMacCatalystArtifactsRoot)`, `$(MonoGameMacCatalystAssemblyConfiguration)`, `MonoGame.Framework.dll`))') and Exists('$([System.IO.Path]::Combine(`$(MonoGameMacCatalystArtifactsRoot)`, `Release`, `MonoGame.Framework.dll`))')">Release</MonoGameMacCatalystAssemblyConfiguration>
+    <MonoGameMacCatalystAssemblyConfiguration Condition="!Exists('$([System.IO.Path]::Combine(`$(MonoGameMacCatalystArtifactsRoot)`, `$(MonoGameMacCatalystAssemblyConfiguration)`, `MonoGame.Framework.dll`))') and Exists('$([System.IO.Path]::Combine(`$(MonoGameMacCatalystArtifactsRoot)`, `Debug`, `MonoGame.Framework.dll`))')">Debug</MonoGameMacCatalystAssemblyConfiguration>
+    <MonoGameMacCatalystAssembly>$([System.IO.Path]::Combine('$(MonoGameMacCatalystArtifactsRoot)', '$(MonoGameMacCatalystAssemblyConfiguration)', 'MonoGame.Framework.dll'))</MonoGameMacCatalystAssembly>
+    <Cocos2DIncludeMacCatalyst Condition="'$(Cocos2DIncludeMacCatalyst)' == '' and '$(_IsPacking)' != 'true' and '$([MSBuild]::IsOSPlatform(`OSX`))' == 'true' and Exists('$(MonoGameMacCatalystAssembly)')">true</Cocos2DIncludeMacCatalyst>
+
+    <MonoGameTvosAssemblyConfiguration Condition="'$(MonoGameTvosAssemblyConfiguration)' == ''">$(Configuration)</MonoGameTvosAssemblyConfiguration>
+    <MonoGameTvosAssemblyConfiguration Condition="'$(MonoGameTvosAssemblyConfiguration)' == ''">Debug</MonoGameTvosAssemblyConfiguration>
+    <MonoGameTvosAssemblyConfiguration Condition="!Exists('$([System.IO.Path]::Combine(`$(MonoGameTvosArtifactsRoot)`, `$(MonoGameTvosAssemblyConfiguration)`, `MonoGame.Framework.dll`))') and Exists('$([System.IO.Path]::Combine(`$(MonoGameTvosArtifactsRoot)`, `Release`, `MonoGame.Framework.dll`))')">Release</MonoGameTvosAssemblyConfiguration>
+    <MonoGameTvosAssemblyConfiguration Condition="!Exists('$([System.IO.Path]::Combine(`$(MonoGameTvosArtifactsRoot)`, `$(MonoGameTvosAssemblyConfiguration)`, `MonoGame.Framework.dll`))') and Exists('$([System.IO.Path]::Combine(`$(MonoGameTvosArtifactsRoot)`, `Debug`, `MonoGame.Framework.dll`))')">Debug</MonoGameTvosAssemblyConfiguration>
+    <MonoGameTvosAssembly>$([System.IO.Path]::Combine('$(MonoGameTvosArtifactsRoot)', '$(MonoGameTvosAssemblyConfiguration)', 'MonoGame.Framework.dll'))</MonoGameTvosAssembly>
+    <Cocos2DIncludeTvos Condition="'$(Cocos2DIncludeTvos)' == '' and '$(_IsPacking)' != 'true' and '$([MSBuild]::IsOSPlatform(`OSX`))' == 'true' and Exists('$(MonoGameTvosAssembly)')">true</Cocos2DIncludeTvos>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Cocos2DTargetFrameworks)' == ''">
+    <Cocos2DTargetFrameworks>$(Cocos2DBaseTfm);$(Cocos2DWindowsTfm);$(Cocos2DAndroidTfm);$(Cocos2DIosTfm)</Cocos2DTargetFrameworks>
+    <Cocos2DTargetFrameworks Condition="'$(Cocos2DIncludeMacCatalyst)' == 'true'">$(Cocos2DTargetFrameworks);$(Cocos2DMacCatalystTfm)</Cocos2DTargetFrameworks>
+    <Cocos2DTargetFrameworks Condition="'$(Cocos2DIncludeTvos)' == 'true'">$(Cocos2DTargetFrameworks);$(Cocos2DTvosTfm)</Cocos2DTargetFrameworks>
   </PropertyGroup>
 </Project>

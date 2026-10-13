@@ -1,14 +1,20 @@
 name: pack (consolidated packages)
 
-# Packs the NEW consolidated packages (Cocos2D-Mono, Cocos2D-Mono.Box2D,
-# Cocos2D-Mono.Core) introduced in Stage C3/C5 and uploads the .nupkg/.snupkg set
-# as a downloadable artifact. Uploading to nuget.org stays a manual, human step.
+# Packs the consolidated packages (Cocos2D-Mono, Cocos2D-Mono.Box2D,
+# Cocos2D-Mono.Core) and uploads the .nupkg/.snupkg set as a downloadable artifact.
 #
 # Runs automatically on every push to a release/** branch (release staging), so the
-# packages are always freshly built and ready to download for publish - and still
-# available on demand via workflow_dispatch. Because push events use the workflow
-# definition from the pushed ref, this triggers on release branches even before it
-# reaches the default branch.
+# packages are always freshly built and ready to inspect - and still available on
+# demand via workflow_dispatch. Because push events use the workflow definition from
+# the pushed ref, this triggers on release branches even before it reaches the
+# default branch.
+#
+# A version tag (v2.6.2 onward) packs the tagged commit and publishes it to nuget.org
+# through the `publish` job below (C2D-264). That job runs in the protected `nuget`
+# environment, which waits for a maintainer's approval before anything is pushed,
+# and authenticates with nuget.org Trusted Publishing instead of a stored API key.
+# To re-run a publish, dispatch this workflow on the tag. Releases up to 2.6.1 used
+# unprefixed tags and were pushed by hand.
 #
 # The legacy 12-package line (Cocos2D-Mono.{Platform} / .Core.{Platform})
 # ended with 2.5.10; these consolidated packages replace it (Stage C4).
@@ -16,7 +22,11 @@ name: pack (consolidated packages)
 on:
   push:
     branches: ["release/**"]
+    tags: ["v[0-9]*"]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   pack:
@@ -61,9 +71,114 @@ jobs:
       - name: Pack Cocos2D-Mono.Core (metapackage)
         run: dotnet pack src/Cocos2DMono.Core/Cocos2DMono.Core.csproj -c Release --no-restore --no-build -o artifacts
 
+      # On a version tag the packages must carry the tag's version, so a tag on the
+      # wrong commit (or a missed version bump) fails here instead of publishing.
+      - name: Check the packages match the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          for id in Cocos2D-Mono.Box2D Cocos2D-Mono Cocos2D-Mono.Core; do
+            if [ ! -f "artifacts/$id.$version.nupkg" ]; then
+              echo "::error::Tag $GITHUB_REF_NAME needs artifacts/$id.$version.nupkg, but packing produced:"
+              ls artifacts
+              exit 1
+            fi
+          done
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: nuget-packages
           path: |
             artifacts/*.nupkg
             artifacts/*.snupkg
+
+  # GitHub creates a missing environment, with no protection rules, the first time a
+  # job uses it. So before anything references `nuget`, check it exists and requires a
+  # reviewer. A version tag fails here if not; any other run only warns, which keeps
+  # this check exercised on every release-branch run.
+  environment-guard:
+    name: Check the nuget environment is protected
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    steps:
+      - name: Require a reviewer on the nuget environment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ENFORCE: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        run: |
+          if rules=$(gh api "repos/$GITHUB_REPOSITORY/environments/nuget" --jq '[.protection_rules[].type] | join(",")' 2>err.txt); then
+            case ",$rules," in
+              *,required_reviewers,*) echo "nuget environment protection rules: $rules"; exit 0 ;;
+              *) problem="The nuget environment has no required reviewer (rules: ${rules:-none})." ;;
+            esac
+          else
+            problem="Could not read the nuget environment: $(cat err.txt)"
+          fi
+          if [ "$ENFORCE" = "true" ]; then
+            echo "::error::$problem Publishing needs it, with a required reviewer; see CONTRIBUTING.md."
+            exit 1
+          fi
+          echo "::warning::$problem A version tag would stop here until it is set up; see CONTRIBUTING.md."
+
+  publish:
+    name: Publish to nuget.org
+    needs: [pack, environment-guard]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    # nuget.org Trusted Publishing: no API key is stored anywhere. The job exchanges a
+    # GitHub OIDC token for a one-hour key, and the nuget.org policy only accepts
+    # tokens from this workflow running in the protected `nuget` environment, which
+    # also waits for a maintainer's approval before the job starts (C2D-264).
+    environment: nuget
+    permissions:
+      id-token: write
+    concurrency:
+      group: nuget-publish
+      cancel-in-progress: false
+    steps:
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: "10.0.x"
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: nuget-packages
+          path: artifacts
+
+      # NUGET_USER, a secret of the `nuget` environment, is the nuget.org profile name
+      # of whoever created the Trusted Publishing policy: not the organization that
+      # owns it, and not an email address. NuGet/login rejects anything else.
+      - name: Check NUGET_USER is set
+        env:
+          NUGET_USER: ${{ secrets.NUGET_USER }}
+        run: |
+          if [ -z "$NUGET_USER" ]; then
+            echo "::error::The nuget environment needs a NUGET_USER secret: the nuget.org profile name of whoever created the Trusted Publishing policy."
+            exit 1
+          fi
+
+      # Requested right before the push: the key it returns lives for one hour.
+      - name: Get a short-lived nuget.org API key
+        id: login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      # Dependency order: Cocos2D-Mono depends on Box2D, and the Core metapackage
+      # pins Cocos2D-Mono at exactly this version. Each push also sends the matching
+      # .snupkg. --skip-duplicate lets a re-run finish a partial publish.
+      - name: Push to nuget.org
+        shell: bash
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          for id in Cocos2D-Mono.Box2D Cocos2D-Mono Cocos2D-Mono.Core; do
+            dotnet nuget push "artifacts/$id.$version.nupkg" \
+              --api-key "$NUGET_API_KEY" \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          done

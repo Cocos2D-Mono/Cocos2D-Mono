@@ -11,7 +11,18 @@
       transition; this csproj globs it. The legacy per-platform test csprojs are
       deleted at the Stage C4 cutover.
     -->
-    <TargetFrameworks>$(Cocos2DTargetFrameworks)</TargetFrameworks>
+    <!-- The test host has no Mac Catalyst or tvOS head yet (C2D-238 and C2D-239 prove
+         the engine on those platforms through a real title), so those TFMs are filtered
+         out of the shared list wherever they sit: appended by the repo-root
+         Directory.Build.props on a macOS host with the fork, or placed anywhere by a -p:
+         override. The list is wrapped in separators so first, middle, last and
+         only-entry all match; a list left empty falls back to the desktop host. -->
+    <_Cocos2DTestHostTfms>;$(Cocos2DTargetFrameworks);</_Cocos2DTestHostTfms>
+    <_Cocos2DTestHostTfms>$(_Cocos2DTestHostTfms.Replace(';$(Cocos2DMacCatalystTfm);', ';'))</_Cocos2DTestHostTfms>
+    <_Cocos2DTestHostTfms>$(_Cocos2DTestHostTfms.Replace(';$(Cocos2DTvosTfm);', ';'))</_Cocos2DTestHostTfms>
+    <_Cocos2DTestHostTfms>$(_Cocos2DTestHostTfms.Trim(';'))</_Cocos2DTestHostTfms>
+    <TargetFrameworks>$(_Cocos2DTestHostTfms)</TargetFrameworks>
+    <TargetFrameworks Condition="'$(TargetFrameworks)' == ''">$(Cocos2DBaseTfm)</TargetFrameworks>
     <RootNamespace>tests</RootNamespace>
     <AssemblyName>Cocos2DMono.IntegrationTests</AssemblyName>
     <IsPackable>false</IsPackable>

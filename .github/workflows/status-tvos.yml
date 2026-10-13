@@ -1,0 +1,43 @@
+name: tvOS
+
+# Status reflector for the tvOS (net10.0-tvos26.0) matrix cells.
+# See status-desktopgl.yml for how these shims work.
+
+on:
+  workflow_run:
+    workflows: ["build (matrix)"]
+    types: [completed]
+
+permissions:
+  actions: read
+
+jobs:
+  status:
+    name: Reflect tvOS matrix cells
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mirror tvOS matrix-cell conclusions
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const runId = context.payload.workflow_run.id;
+            const { data } = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId,
+              per_page: 100,
+            });
+            // Matches the "tvOS" matrix target label in build.yml.
+            const matching = data.jobs.filter(j => j.name.startsWith('tvOS ('));
+            core.info(`Matched ${matching.length} tvOS cell(s):`);
+            for (const j of matching) core.info(`  - ${j.name}: ${j.conclusion}`);
+            if (matching.length === 0) {
+              core.setFailed(`No tvOS cells found in upstream run ${runId}`);
+              return;
+            }
+            const bad = matching.filter(j => j.conclusion !== 'success');
+            if (bad.length > 0) {
+              core.setFailed(`tvOS cell(s) not successful: ${bad.map(j => `${j.name}=${j.conclusion}`).join(', ')}`);
+              return;
+            }
+            core.info('All tvOS cells passed.');

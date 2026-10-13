@@ -8,7 +8,7 @@ namespace Cocos2D;
 
 public class CCAccelerometer
 {
-#if ANDROID || IOS
+#if (ANDROID || IOS) && !TVOS
     // the accelerometer sensor on the device
     private static MonoGame.Framework.Devices.Sensors.Accelerometer accelerometer = null;
 #endif
@@ -22,7 +22,7 @@ public class CCAccelerometer
 
     static CCAccelerometer()
     {
-#if ANDROID || IOS
+#if (ANDROID || IOS) && !TVOS
         try
         {
             if (MonoGame.Framework.Devices.Sensors.Accelerometer.IsSupported)
@@ -56,7 +56,7 @@ public class CCAccelerometer
 
         if (pDelegate != null && !_active)
         {
-#if ANDROID || IOS
+#if (ANDROID || IOS) && !TVOS
                 try
             {
                 if (accelerometer != null && MonoGame.Framework.Devices.Sensors.Accelerometer.IsSupported)
@@ -90,7 +90,7 @@ public class CCAccelerometer
         {
             if (_active && !_emulation)
             {
-#if ANDROID || IOS
+#if (ANDROID || IOS) && !TVOS
                 if (accelerometer != null)
                 {
                     try
@@ -114,7 +114,7 @@ public class CCAccelerometer
     }
 
 
-#if ANDROID || IOS
+#if (ANDROID || IOS) && !TVOS
     private void accelerometer_CurrentValueChanged(object sender, MonoGame.Framework.Devices.Sensors.SensorReadingEventArgs<MonoGame.Framework.Devices.Sensors.AccelerometerReading> e)
     {
 

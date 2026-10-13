@@ -13,6 +13,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Mac Catalyst and tvOS build against the MonoGame.Framework assemblies from our
+  # fork (MonoGame publishes no maccatalyst or tvos package; see
+  # Directory.Build.props). Those cells clone the fork at exactly this commit, so a
+  # push to the fork's branch cannot break this workflow. Bump it deliberately, once
+  # the fork's own "Catalyst platform" workflow is green on the new commit.
+  MONOGAME_FORK_REF: 36d2a915e756db3c544c19747e65f3042f2d3c28 # Cocos2D-Mono/MonoGame feature/mac-catalyst-support, 2026-09-09
+
 jobs:
   build:
     # The label-based job name ("DesktopGL Linux (Debug)", "iOS (Release)", ...)
@@ -40,6 +48,11 @@ jobs:
           - { label: Android, os: ubuntu-latest, tfm: net10.0-android36.0, workloads: android }
           # iOS requires a macOS host (Apple toolchain).
           - { label: iOS, os: macos-latest, tfm: net10.0-ios26.0, workloads: ios }
+          # Mac Catalyst: macOS host plus the fork-built MonoGame assembly (see the
+          # clone step below and MONOGAME_FORK_REF above).
+          - { label: Mac Catalyst, os: macos-latest, tfm: net10.0-maccatalyst26.0, workloads: maccatalyst }
+          # tvOS: same arrangement as Mac Catalyst, with the fork's tvOS assembly.
+          - { label: tvOS, os: macos-latest, tfm: net10.0-tvos26.0, workloads: tvos }
 
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -62,11 +75,53 @@ jobs:
         if: matrix.target.workloads != ''
         run: dotnet workload install ${{ matrix.target.workloads }} --ignore-failed-sources
 
-      # Build per-TFM so non-Windows hosts never evaluate the Windows TFM
-      # (restoring the full <TargetFrameworks> on macOS/Linux raises NETSDK1100
-      # for net10.0-windows7.0). -p:TargetFrameworks=<tfm> narrows each project
-      # to the single TFM being built. Box2D builds first so Cocos2DMono's
-      # ProjectReference resolves from a populated cache.
+      # Mac Catalyst and tvOS only: clone the MonoGame fork beside the repo, where
+      # the engine's default $(MonoGameForkArtifactsRoot) expects it, pinned to
+      # MONOGAME_FORK_REF, and build the cell's platform assembly for this
+      # configuration. actions/checkout cannot place a repository outside the
+      # workspace, and a clone inside it would fall under this repo's central
+      # package management, so plain git does the clone. Only the two source
+      # submodules those projects compile are fetched.
+      - name: Clone and build the MonoGame fork (Mac Catalyst and tvOS only)
+        if: matrix.target.workloads == 'maccatalyst' || matrix.target.workloads == 'tvos'
+        run: |
+          FORK="$GITHUB_WORKSPACE/../MonoGame"
+          git init -q "$FORK"
+          cd "$FORK"
+          git remote add origin https://github.com/Cocos2D-Mono/MonoGame.git
+          git fetch -q --depth 1 origin "$MONOGAME_FORK_REF"
+          git checkout -q --detach FETCH_HEAD
+          git submodule update --init --depth 1 ThirdParty/StbImageSharp ThirdParty/StbImageWriteSharp
+          case "${{ matrix.target.workloads }}" in
+            tvos) FORK_PROJECT=MonoGame.Framework.tvOS.csproj ;;
+            *)    FORK_PROJECT=MonoGame.Framework.MacCatalyst.csproj ;;
+          esac
+          dotnet build "MonoGame.Framework/$FORK_PROJECT" -c ${{ matrix.configuration }}
+
+      # C2D-259: a published package must never carry a fork-dependent TFM (C2D-246).
+      # With the fork built beside the repo, an ordinary build auto-includes this
+      # cell's TFM; under `dotnet pack` (_IsPacking=true) it must not. This is the one
+      # host where the rule can actually be broken, so check it here on every run.
+      - name: Packing excludes fork TFMs (Mac Catalyst and tvOS only)
+        if: matrix.target.workloads == 'maccatalyst' || matrix.target.workloads == 'tvos'
+        run: |
+          tfms() { dotnet msbuild src/Cocos2DMono/Cocos2DMono.csproj -nologo -getProperty:Cocos2DTargetFrameworks -p:Configuration=${{ matrix.configuration }} "$@"; }
+          building=$(tfms)
+          packing=$(tfms -p:_IsPacking=true)
+          echo "building: $building"
+          echo "packing:  $packing"
+          case "$building" in
+            *"${{ matrix.target.tfm }}"*) ;;
+            *) echo "::error::${{ matrix.target.tfm }} was not auto-included with the fork built, so this check proves nothing"; exit 1 ;;
+          esac
+          case "$packing" in
+            *maccatalyst*|*tvos*) echo "::error::a fork-dependent TFM would be packed: $packing"; exit 1 ;;
+          esac
+
+      # Build per-TFM: -p:TargetFrameworks=<tfm> narrows each project to the single
+      # TFM the cell validates, so a cell never needs the other cells' workloads
+      # (and never spends time on their targets). Box2D builds first so
+      # Cocos2DMono's ProjectReference resolves from a populated cache.
       - name: Build Box2D
         run: dotnet build src/Box2D/Box2D.csproj -c ${{ matrix.configuration }} -f ${{ matrix.target.tfm }} -p:TargetFrameworks=${{ matrix.target.tfm }}
 

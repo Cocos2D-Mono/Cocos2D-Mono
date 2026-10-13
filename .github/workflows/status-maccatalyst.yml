@@ -1,0 +1,43 @@
+name: Mac Catalyst
+
+# Status reflector for the Mac Catalyst (net10.0-maccatalyst26.0) matrix cells.
+# See status-desktopgl.yml for how these shims work.
+
+on:
+  workflow_run:
+    workflows: ["build (matrix)"]
+    types: [completed]
+
+permissions:
+  actions: read
+
+jobs:
+  status:
+    name: Reflect Mac Catalyst matrix cells
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mirror Mac Catalyst matrix-cell conclusions
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const runId = context.payload.workflow_run.id;
+            const { data } = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId,
+              per_page: 100,
+            });
+            // Matches the "Mac Catalyst" matrix target label in build.yml.
+            const matching = data.jobs.filter(j => j.name.startsWith('Mac Catalyst ('));
+            core.info(`Matched ${matching.length} Mac Catalyst cell(s):`);
+            for (const j of matching) core.info(`  - ${j.name}: ${j.conclusion}`);
+            if (matching.length === 0) {
+              core.setFailed(`No Mac Catalyst cells found in upstream run ${runId}`);
+              return;
+            }
+            const bad = matching.filter(j => j.conclusion !== 'success');
+            if (bad.length > 0) {
+              core.setFailed(`Mac Catalyst cell(s) not successful: ${bad.map(j => `${j.name}=${j.conclusion}`).join(', ')}`);
+              return;
+            }
+            core.info('All Mac Catalyst cells passed.');

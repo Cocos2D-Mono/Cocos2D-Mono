@@ -4,7 +4,42 @@ All notable changes to Cocos2D-Mono are recorded here. This file was introduced 
 2.5.10; earlier releases are described in their GitHub release notes / git history.
 The project follows [Semantic Versioning](https://semver.org/) where practical.
 
-## Unreleased
+## 2.7.0 - 2026-10-16
+
+The first nullable reference type annotations. The base nodes, input, layers and scenes,
+actions, particles, sprites, textures and labels now say which of their members can be null,
+so a project with nullable enabled is warned where it uses one without a check. Converting
+them also turned up the long-standing bugs fixed below. The rest, including menus, tile
+maps, the director and scheduler, the platform code, the extensions and Box2D, follows in
+later 2.x releases.
+
+### ⚠️ Upgrading
+
+Bump the package reference to 2.7.0. Nothing stops compiling: apart from nullability, no
+public API changed or went away since 2.6.2. Three things can still affect a game:
+
+- **New warnings in projects that enable nullable.** Using a member that can be null without
+  a check, such as `CCNode.Parent` or the result of `CCNode.GetChildByTag`, now raises a
+  nullable warning (CS86xx). A build with `TreatWarningsAsErrors` fails on them until the
+  code checks for null; `<WarningsNotAsErrors>nullable</WarningsNotAsErrors>` keeps them as
+  warnings in the meantime. Projects without nullable don't get these warnings.
+- **Some failures throw a more specific exception.** For example, several methods given a
+  texture or font file that can't be loaded throw `ArgumentException`, and reversing an
+  action that has no reverse throws `NotSupportedException`; both used to end in
+  `NullReferenceException`. `CCEaseElastic.Reverse()` and `CCGridAction.Grid` throw
+  `NotSupportedException` instead of returning null. Code that catches
+  `NullReferenceException` from the engine, or checks for those nulls, should handle the new
+  exceptions; Changed and Fixed list each one.
+- **Some fixes change what existing code does.** Check code that worked around the old
+  behavior:
+  - `CCShuffleTiles` and `CCTurnOffTiles` follow their seed.
+  - `CCMoveFrom` and `CCColorBlendAnimation` change their node, and `CCAccelDeccelAmplitude`
+    animates the effect it wraps; none of them did before.
+  - `Copy(zone)` on `CCScaleTo`, `CCScaleBy`, `CCReverseTime` and `CCOrbitCamera` fills the
+    copy instead of overwriting the original, and a copied `CCCardinalSplineBy`,
+    `CCCatmullRomTo` or `CCCatmullRomBy` keeps its type.
+  - `CCLayerMultiplex` numbers a layer added after a tagged one consecutively.
+  - `CCSpriteSheetCache.AddSpriteSheet` uses the stream or dictionary it's given.
 
 ### Changed
 
@@ -233,6 +268,12 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   `NullReferenceException`.
 - A `CCLabel` drawn before any label has been given text or a font no longer throws
   `NullReferenceException`; there's no shared atlas to upload yet.
+
+### Documentation
+
+- `CONTRIBUTING.md` describes how the engine moves to nullable reference types: a file that
+  starts with `#nullable disable` hasn't been converted yet, and converting one marks what
+  can really be null instead of silencing warnings.
 
 ## 2.6.2 - 2026-10-13
 

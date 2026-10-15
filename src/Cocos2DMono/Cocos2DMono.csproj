@@ -43,8 +43,8 @@
     <Product>Cocos2D-Mono</Product>
     <Description>Cocos2D-Mono is a managed C# port of cocos2d-x built on MonoGame. This single package multi-targets DesktopGL (Windows-GL, Linux, macOS), WindowsDX, Android, and iOS.</Description>
     <PackageReleaseNotes>
+2.7.0 - The first nullable reference type annotations (nodes, input, layers and scenes, actions, particles, sprites, textures and labels): projects with nullable enabled now see which members can be null. Apart from nullability, no public API changed. It also fixes bugs found while converting; some failures now throw ArgumentException or NotSupportedException instead of NullReferenceException, and a few fixes change behavior. Read the CHANGELOG's Upgrading notes before updating.
 2.6.2 - No API changes and nothing to migrate; the packaged platforms behave as in 2.6.1. Mac Catalyst and tvOS can now be built from source against the project's MonoGame fork (they aren't in these packages). Also removes unused internal label code.
-2.6.1 - Linux/macOS label fixes: CCLabel now disposes the native Skia canvas and font it creates on each redraw, and its SkiaSharp backend moved off deprecated text APIs (no rendering change). No API changes.
 - See https://github.com/Cocos2D-Mono/cocos2d-mono for the full changelog.
     </PackageReleaseNotes>
     <PackageTags>mono monogame cocos2d game gamedev 2d mgcb content-pipeline</PackageTags>

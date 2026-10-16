@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Trigger cocos2d-mono-docs workflow
+      - name: Trigger the Cocos2D-Mono.Docs rebuild
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.DOCS_REPO_PAT }}
-          repository: Cocos2D-Mono/cocos2d-mono-docs
+          repository: Cocos2D-Mono/Cocos2D-Mono.Docs
           event-type: update-docs
           client-payload: '{"source":"Cocos2D-Mono/cocos2d-mono", "ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'

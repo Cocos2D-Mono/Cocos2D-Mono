@@ -1,3 +1,4 @@
+#nullable disable
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Cocos2D;

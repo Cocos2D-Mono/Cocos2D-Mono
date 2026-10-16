@@ -21,15 +21,15 @@ public class CCEaseBackIn : CCActionEase
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCEaseBackOut((CCActionInterval) m_pInner.Reverse());
+        return new CCEaseBackOut((CCActionInterval) m_pInner.ReverseOrThrow());
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
             //in case of being called at sub class
-            var pCopy = pZone as CCEaseBackIn;
+            var pCopy = (CCEaseBackIn) pZone;
             pCopy.InitWithAction((CCActionInterval) (m_pInner.Copy()));
 
             return pCopy;

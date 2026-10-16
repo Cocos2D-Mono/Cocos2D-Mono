@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Cocos2D;
@@ -29,13 +30,15 @@ public class CCCardinalSplineTo : CCActionInterval
         InitWithDuration(cardinalSplineTo.m_fDuration, cardinalSplineTo.m_pPoints, cardinalSplineTo.m_fTension);
     }
 
+    [MemberNotNull(nameof(m_pPoints))]
     public bool InitWithDuration(float duration, List<CCPoint> points, float tension)
     {
         Debug.Assert(points.Count > 0, "Invalid configuration. It must at least have one control point");
 
+        m_pPoints = points;
+
         if (base.InitWithDuration(duration))
         {
-            Points = points;
             m_fTension = tension;
 
             return true;
@@ -44,7 +47,7 @@ public class CCCardinalSplineTo : CCActionInterval
         return false;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null) //in case of being called at sub class
         {
@@ -70,6 +73,7 @@ public class CCCardinalSplineTo : CCActionInterval
 
     public override void Update(float time)
     {
+        Debug.Assert(m_pTarget != null, "Update only runs while the action is started");
         int p;
         float lt;
 
@@ -119,6 +123,7 @@ public class CCCardinalSplineTo : CCActionInterval
 
     public virtual void UpdatePosition(CCPoint newPos)
     {
+        Debug.Assert(m_pTarget != null, "UpdatePosition only runs while the action is started");
         m_pTarget.Position = newPos;
         m_previousPosition = newPos;
     }
@@ -131,6 +136,23 @@ public class CCCardinalSplineBy : CCCardinalSplineTo
     public CCCardinalSplineBy(float duration, List<CCPoint> points, float tension) : base(duration, points, tension)
     {
         InitWithDuration(duration, points, tension);
+    }
+
+    protected CCCardinalSplineBy(CCCardinalSplineBy cardinalSplineBy) : base(cardinalSplineBy)
+    {
+    }
+
+    public override object Copy(ICCCopyable? pZone)
+    {
+        if (pZone != null)
+        {
+            //in case of being called at sub class
+            var pCopy = (CCCardinalSplineBy) pZone;
+            base.Copy(pCopy);
+
+            return pCopy;
+        }
+        return new CCCardinalSplineBy(this);
     }
 
     protected internal override void StartWithTarget(CCNode target)
@@ -183,6 +205,7 @@ public class CCCardinalSplineBy : CCCardinalSplineTo
 
     public override void UpdatePosition(CCPoint newPos)
     {
+        Debug.Assert(m_pTarget != null, "UpdatePosition only runs while the action is started");
         m_pTarget.Position = newPos + m_startPosition;
         m_previousPosition = m_pTarget.Position;
     }
@@ -193,6 +216,23 @@ public class CCCatmullRomTo : CCCardinalSplineTo
     public CCCatmullRomTo(float dt, List<CCPoint> points) : base(dt, points, 0.5f)
     {
         InitWithDuration(dt, points);
+    }
+
+    protected CCCatmullRomTo(CCCatmullRomTo catmullRomTo) : base(catmullRomTo)
+    {
+    }
+
+    public override object Copy(ICCCopyable? pZone)
+    {
+        if (pZone != null)
+        {
+            //in case of being called at sub class
+            var pCopy = (CCCatmullRomTo) pZone;
+            base.Copy(pCopy);
+
+            return pCopy;
+        }
+        return new CCCatmullRomTo(this);
     }
 
     public bool InitWithDuration(float dt, List<CCPoint> points)
@@ -210,6 +250,23 @@ public class CCCatmullRomBy : CCCardinalSplineBy
     public CCCatmullRomBy(float dt, List<CCPoint> points) : base(dt, points, 0.5f)
     {
         InitWithDuration(dt, points);
+    }
+
+    protected CCCatmullRomBy(CCCatmullRomBy catmullRomBy) : base(catmullRomBy)
+    {
+    }
+
+    public override object Copy(ICCCopyable? pZone)
+    {
+        if (pZone != null)
+        {
+            //in case of being called at sub class
+            var pCopy = (CCCatmullRomBy) pZone;
+            base.Copy(pCopy);
+
+            return pCopy;
+        }
+        return new CCCatmullRomBy(this);
     }
 
     public bool InitWithDuration(float dt, List<CCPoint> points)

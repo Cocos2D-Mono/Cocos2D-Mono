@@ -39,7 +39,7 @@ public class CCWaves : CCGrid3DAction
         return false;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCWaves pCopy;
         if (pZone != null)

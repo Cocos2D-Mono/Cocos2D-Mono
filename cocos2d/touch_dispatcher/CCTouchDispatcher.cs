@@ -1,4 +1,5 @@
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,16 +7,17 @@ namespace Cocos2D;
 
 public class CCTouchDispatcher : ICCEGLTouchDelegate
 {
-    private static List<CCTouch> pMutableTouches;
+    private static List<CCTouch>? pMutableTouches;
     private bool _dispatchEvents;
     private bool _locked;
     private bool _toAdd;
     private bool _toQuit;
     private bool _toRemove;
-    private List<CCTouchHandler> _handlersToAdd;
-    private List<object> _handlersToRemove;
-    protected List<CCTouchHandler> m_pStandardHandlers;
-    protected List<CCTouchHandler> m_pTargetedHandlers;
+    // Created here so the dispatcher is usable before Init(), which still resets them.
+    private List<CCTouchHandler> _handlersToAdd = new List<CCTouchHandler>();
+    private List<object> _handlersToRemove = new List<object>();
+    protected List<CCTouchHandler> m_pStandardHandlers = new List<CCTouchHandler>();
+    protected List<CCTouchHandler> m_pTargetedHandlers = new List<CCTouchHandler>();
     private bool _rearrangeTargetedHandlersUponTouch = false;
     private bool _rearrangeStandardHandlersUponTouch = false;
 
@@ -88,10 +90,8 @@ public class CCTouchDispatcher : ICCEGLTouchDelegate
     /// <param name="d"></param>
     public void UpdateGraphPriority(ICCTouchDelegate d)
     {
-        CCTouchHandler h = FindHandler(d);
-        if (h != null)
+        if (SetHandlerPriorities(d, d.TouchPriority))
         {
-            h.Priority = d.TouchPriority;
             RearrangeAllHandlersUponTouch();
         }
     }
@@ -201,11 +201,21 @@ public class CCTouchDispatcher : ICCEGLTouchDelegate
     /// </summary>
     public void SetPriority(int nPriority, ICCTouchDelegate pDelegate)
     {
-        CCTouchHandler handler = FindHandler(pDelegate);
-        handler.Priority = nPriority;
+        if (!SetHandlerPriorities(pDelegate, nPriority))
+        {
+            throw new ArgumentException("The delegate is not registered with the touch dispatcher.", nameof(pDelegate));
+        }
 
-        RearrangeHandlers(m_pTargetedHandlers);
-        RearrangeHandlers(m_pStandardHandlers);
+        if (_locked)
+        {
+            // The dispatch loop is iterating the handlers, so sort them before the next touch.
+            RearrangeAllHandlersUponTouch();
+        }
+        else
+        {
+            RearrangeHandlers(m_pTargetedHandlers);
+            RearrangeHandlers(m_pStandardHandlers);
+        }
     }
 
     public void Touches(List<CCTouch> pTouches, CCTouchType touchType)
@@ -458,7 +468,10 @@ public class CCTouchDispatcher : ICCEGLTouchDelegate
         }
     }
 
-    public CCTouchHandler FindHandler(ICCTouchDelegate pDelegate)
+    /// <summary>
+    /// Returns the handler registered for the delegate, or null if it has none.
+    /// </summary>
+    public CCTouchHandler? FindHandler(ICCTouchDelegate pDelegate)
     {
         foreach (CCTouchHandler handler in m_pTargetedHandlers)
         {
@@ -477,6 +490,32 @@ public class CCTouchDispatcher : ICCEGLTouchDelegate
         }
 
         return null;
+    }
+
+    // Updates every handler the delegate has: a targeted and a standard one if it registered
+    // both ways, and any added during the current touch dispatch, which wait in _handlersToAdd
+    // until it ends. Returns whether the delegate had any.
+    private bool SetHandlerPriorities(ICCTouchDelegate pDelegate, int nPriority)
+    {
+        bool found = SetPrioritiesIn(m_pTargetedHandlers, pDelegate, nPriority);
+        found |= SetPrioritiesIn(m_pStandardHandlers, pDelegate, nPriority);
+        found |= SetPrioritiesIn(_handlersToAdd, pDelegate, nPriority);
+        return found;
+    }
+
+    private static bool SetPrioritiesIn(List<CCTouchHandler> handlers, ICCTouchDelegate pDelegate, int nPriority)
+    {
+        bool found = false;
+        foreach (CCTouchHandler handler in handlers)
+        {
+            if (handler.Delegate == pDelegate)
+            {
+                handler.Priority = nPriority;
+                found = true;
+            }
+        }
+
+        return found;
     }
 
     protected void ForceRemoveDelegate(ICCTouchDelegate pDelegate)

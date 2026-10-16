@@ -1027,7 +1027,7 @@ public struct CCBlendFunc
         return b1.Source != b2.Source || b1.Destination != b2.Destination;
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (obj is CCBlendFunc)
         {

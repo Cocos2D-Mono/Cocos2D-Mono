@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework;
 
 namespace Cocos2D;
@@ -44,6 +45,7 @@ public class CCFollow : CCAction
         set { m_bBoundarySet = value; }
     }
 
+    [MemberNotNull(nameof(m_pobFollowedNode))]
     private bool InitWithTarget(CCNode pFollowedNode, CCRect rect)
     {
         Debug.Assert(pFollowedNode != null);
@@ -93,7 +95,7 @@ public class CCFollow : CCAction
         return true;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
@@ -110,6 +112,7 @@ public class CCFollow : CCAction
 
     public override void Step(float dt)
     {
+        Debug.Assert(m_pTarget != null, "Step only runs while the action is started");
         if (m_bBoundarySet)
         {
             // whole map fits inside a single screen, no need to modify the position - unless map boundaries are increased

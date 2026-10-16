@@ -1,3 +1,4 @@
+#nullable disable
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="Crc32.cs" company="XamlNinja">
 //   2011 Richard Griffin and Ollie Riches

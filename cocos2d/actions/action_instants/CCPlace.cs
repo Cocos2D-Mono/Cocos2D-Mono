@@ -24,7 +24,7 @@ public class CCPlace : CCActionInstant
         return true;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
@@ -39,6 +39,6 @@ public class CCPlace : CCActionInstant
     protected internal override void StartWithTarget(CCNode target)
     {
         base.StartWithTarget(target);
-        m_pTarget.Position = _position;
+        target.Position = _position;
     }
 }

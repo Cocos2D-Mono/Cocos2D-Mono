@@ -10,7 +10,7 @@ public class CCActionInstant : CCFiniteTimeAction
     {
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {

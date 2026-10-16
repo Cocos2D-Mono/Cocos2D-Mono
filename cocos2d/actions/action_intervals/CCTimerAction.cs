@@ -5,7 +5,7 @@ namespace cocos2d.actions.action_intervals;
 public class CCTimerAction : CCFiniteTimeAction
 {
     readonly float _duration;
-    ITimerActionListener _castedActionTarget;
+    ITimerActionListener? _castedActionTarget;
 
     public CCTimerAction(float duration) : base(duration)
     {
@@ -19,6 +19,7 @@ public class CCTimerAction : CCFiniteTimeAction
 
     protected internal override void StartWithTarget(CCNode target)
     {
+        base.StartWithTarget(target);
         _castedActionTarget = target as ITimerActionListener;
     }
 

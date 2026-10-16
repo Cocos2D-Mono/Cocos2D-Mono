@@ -19,12 +19,12 @@ public class CCEaseExponentialInOut : CCActionEase
         m_pInner.Update(CCEaseMath.ExponentialInOut(time));
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
             //in case of being called at sub class
-            var pCopy = pZone as CCEaseExponentialInOut;
+            var pCopy = (CCEaseExponentialInOut) pZone;
             pCopy.InitWithAction((CCActionInterval) (m_pInner.Copy()));
 
             return pCopy;
@@ -34,6 +34,6 @@ public class CCEaseExponentialInOut : CCActionEase
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCEaseExponentialInOut((CCActionInterval) m_pInner.Reverse());
+        return new CCEaseExponentialInOut((CCActionInterval) m_pInner.ReverseOrThrow());
     }
 }

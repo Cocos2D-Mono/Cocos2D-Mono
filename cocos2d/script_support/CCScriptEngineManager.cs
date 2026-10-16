@@ -32,7 +32,7 @@ public class CCScriptEngineManager
 {
     //private CCScriptEngineProtocol m_pScriptEngine;
 
-    public CCScriptEngineProtocol ScriptEngine { get; set; }
+    public CCScriptEngineProtocol? ScriptEngine { get; set; }
 
     public static CCScriptEngineManager SharedScriptEngineManager
     {

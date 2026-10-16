@@ -36,7 +36,7 @@ public class CCEaseRateAction : CCActionEase
         return false;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
@@ -51,6 +51,6 @@ public class CCEaseRateAction : CCActionEase
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCEaseRateAction((CCActionInterval) m_pInner.Reverse(), 1 / m_fRate);
+        return new CCEaseRateAction((CCActionInterval) m_pInner.ReverseOrThrow(), 1 / m_fRate);
     }
 }

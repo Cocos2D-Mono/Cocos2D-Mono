@@ -40,7 +40,7 @@ public class CCSplitRows : CCTiledGrid3DAction
         return base.InitWithDuration(duration, new CCGridSize(1, nRows));
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCSplitRows pCopy;
         if (pZone != null)

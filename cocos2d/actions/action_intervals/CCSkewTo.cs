@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Cocos2D;
 
 public class CCSkewTo : CCActionInterval
@@ -36,7 +38,7 @@ public class CCSkewTo : CCActionInterval
         return bRet;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
@@ -102,6 +104,7 @@ public class CCSkewTo : CCActionInterval
 
     public override void Update(float time)
     {
+        Debug.Assert(m_pTarget != null, "Update only runs while the action is started");
         m_pTarget.SkewX = m_fStartSkewX + m_fDeltaX * time;
         m_pTarget.SkewY = m_fStartSkewY + m_fDeltaY * time;
     }

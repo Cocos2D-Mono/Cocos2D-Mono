@@ -1,3 +1,4 @@
+#nullable disable
 namespace Cocos2D;
 
 internal class CCScale9SpriteLoader : CCNodeLoader

@@ -70,7 +70,7 @@ public class CCWavesTiles3D : CCTiledGrid3DAction
         return false;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCWavesTiles3D pCopy;
         if (pZone != null)

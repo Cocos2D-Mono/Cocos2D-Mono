@@ -26,15 +26,11 @@ public class CCTintTo : CCActionInterval
         return false;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null && zone != null)
         {
-            var ret = zone as CCTintTo;
-            if (ret == null)
-            {
-                return null;
-            }
+            var ret = (CCTintTo) zone;
 
             base.Copy(zone);
 

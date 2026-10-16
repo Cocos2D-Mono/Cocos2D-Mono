@@ -1,3 +1,4 @@
+#nullable disable
 #if IOS || __IOS__
 using System;
 using System.ComponentModel;

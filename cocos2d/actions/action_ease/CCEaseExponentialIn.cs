@@ -21,15 +21,15 @@ public class CCEaseExponentialIn : CCActionEase
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCEaseExponentialOut((CCActionInterval) m_pInner.Reverse());
+        return new CCEaseExponentialOut((CCActionInterval) m_pInner.ReverseOrThrow());
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
             //in case of being called at sub class
-            var pCopy = pZone as CCEaseExponentialIn;
+            var pCopy = (CCEaseExponentialIn) pZone;
             pCopy.InitWithAction((CCActionInterval) (m_pInner.Copy()));
 
             return pCopy;

@@ -4,6 +4,277 @@ All notable changes to Cocos2D-Mono are recorded here. This file was introduced 
 2.5.10; earlier releases are described in their GitHub release notes / git history.
 The project follows [Semantic Versioning](https://semver.org/) where practical.
 
+## 2.7.0 - 2026-10-16
+
+The first nullable reference type annotations. The base nodes, input, layers and scenes,
+actions, particles, sprites, textures and labels now say which of their members can be null,
+so a project with nullable enabled is warned where it uses one without a check. Converting
+them also turned up the long-standing bugs fixed below. The rest, including menus, tile
+maps, the director and scheduler, the platform code, the extensions and Box2D, follows in
+later 2.x releases.
+
+### ⚠️ Upgrading
+
+Bump the package reference to 2.7.0. Nothing stops compiling: apart from nullability, no
+public API changed or went away since 2.6.2. Three things can still affect a game:
+
+- **New warnings in projects that enable nullable.** Using a member that can be null without
+  a check, such as `CCNode.Parent` or the result of `CCNode.GetChildByTag`, now raises a
+  nullable warning (CS86xx). A build with `TreatWarningsAsErrors` fails on them until the
+  code checks for null; `<WarningsNotAsErrors>nullable</WarningsNotAsErrors>` keeps them as
+  warnings in the meantime. Projects without nullable don't get these warnings.
+- **Some failures throw a more specific exception.** For example, several methods given a
+  texture or font file that can't be loaded throw `ArgumentException`, and reversing an
+  action that has no reverse throws `NotSupportedException`; both used to end in
+  `NullReferenceException`. `CCEaseElastic.Reverse()` and `CCGridAction.Grid` throw
+  `NotSupportedException` instead of returning null. Code that catches
+  `NullReferenceException` from the engine, or checks for those nulls, should handle the new
+  exceptions; Changed and Fixed list each one.
+- **Some fixes change what existing code does.** Check code that worked around the old
+  behavior:
+  - `CCShuffleTiles` and `CCTurnOffTiles` follow their seed.
+  - `CCMoveFrom` and `CCColorBlendAnimation` change their node, and `CCAccelDeccelAmplitude`
+    animates the effect it wraps; none of them did before.
+  - `Copy(zone)` on `CCScaleTo`, `CCScaleBy`, `CCReverseTime` and `CCOrbitCamera` fills the
+    copy instead of overwriting the original, and a copied `CCCardinalSplineBy`,
+    `CCCatmullRomTo` or `CCCatmullRomBy` keeps its type.
+  - `CCLayerMultiplex` numbers a layer added after a tagged one consecutively.
+  - `CCSpriteSheetCache.AddSpriteSheet` uses the stream or dictionary it's given.
+
+### Changed
+
+- **Nullable annotations for `CCNode`, `CCAtlasNode` and `CCTapNode`.** These are the first
+  types converted to nullable reference types; more follow directory by directory through
+  2.x. Projects with nullable enabled now see which members can be null:
+  - `CCNode.Parent`, `Grid`, `Name`, `UserData`, `UserObject`
+  - `CCNode.Children`, which is null until the first child is added
+  - `CCNode.GetChildByTag`, which returns null for an unknown tag
+  - `CCNode.RunActions`, which returns null when given no actions
+  - `CCTapNode<T>.Data` and its handlers' `data` argument, which are `T?`
+
+  This only adds warnings, and only in projects that enable nullable; nothing stops
+  compiling.
+- **Nullable annotations for the foundation types** (math, geometry, shared types, script
+  support and audio). The visible changes:
+  - `ICCCopyable.Copy` takes a nullable `zone`; the implementations already handle null.
+  - `CCSimpleAudioEngine.PlayEffectHandled` returns `CCSoundHandle?`, as its documentation
+    already said it could.
+  - `CCScriptEngineManager.ScriptEngine` is nullable.
+  - The geometry types' `Equals(object)` overrides accept null.
+- **Nullable annotations for input handling** (the touch, keyboard and keypad dispatchers
+  and the text input node). The visible changes:
+  - `CCTouchDispatcher.FindHandler` returns `CCTouchHandler?`. It already returned null for
+    a delegate that isn't registered.
+  - `CCKeypadHandler.Delegate` is nullable: a handler created with `new` has no delegate
+    until `InitWithDelegate`.
+- **Nullable annotations for layers, scenes and transitions.** The visible changes:
+  - `CCLayerMultiplex`'s `SwitchTo`, `SwitchToFirstLayer`, `SwitchToNextLayer`,
+    `SwitchToPreviousLayer`, `SwitchToAndReleaseMe` and `ActiveLayer` return `CCLayer?`.
+    They already returned null when there was no layer to show.
+  - `CCLayerMultiplex.InAction`, `OutAction` and the constructors' action arguments are
+    nullable.
+  - Overrides of `CCTransitionScene.InitWithDuration(float, CCScene)` must set the in and
+    out scenes, for example by calling the base method; the compiler now checks.
+- **Nullable annotations for particles and grid effects.** The visible changes:
+  - `CCParticleSystem.Texture` and `BatchNode` are nullable: a system has no texture until
+    one is set, and a batch node only while it renders through one.
+  - `CCParticleEmitterLight.OnUpdateParticle` is nullable; it's optional.
+- **Nullable annotations for the core actions** (`CCAction`, `CCActionManager` and the
+  instant actions). The visible changes:
+  - `CCAction.Target` and `OriginalTarget` are nullable: an action has no target until it
+    starts, and `Stop` clears `Target`.
+  - `CCFiniteTimeAction.Reverse()` returns `CCFiniteTimeAction?`, since the base class has
+    no reverse. Every engine action except `CCBRotateTo`, `CCBRotateXTo` and `CCBRotateYTo`
+    overrides it with a non-null result.
+  - `CCActionManager.GetAction` and `CCNode.GetAction` return `CCAction?`; they already
+    returned null for an unknown tag.
+  - `CCCallFuncO`'s callback takes `object?`, since its object can be null.
+
+  Subclasses that override `Copy(ICCCopyable zone)` should declare `zone` nullable; the
+  compiler now checks it.
+- **Nullable annotations for the interval actions.** The visible changes:
+  - `CCActionTween`'s five-argument constructor accepts a null callback, which then works
+    like the four-argument one.
+  - `CCParallel.Actions` is an empty array, not null, for a `CCParallel` made with the
+    parameterless constructor.
+- **Nullable annotations for the ease, camera, spline and progress actions.** The visible
+  change: `CCEaseElastic.Reverse()` throws `NotSupportedException` instead of returning
+  null. The base elastic ease has no curve of its own to reverse; `CCEaseElasticIn`,
+  `CCEaseElasticOut` and `CCEaseElasticInOut` reverse as before.
+- **Nullable annotations for the grid actions.** The visible changes:
+  - `CCGridAction.Grid` throws `NotSupportedException` instead of returning null for a grid
+    action that doesn't create a grid, so running one fails with that instead of
+    `NullReferenceException`. `CCGrid3DAction` and `CCTiledGrid3DAction` create a grid, as
+    before.
+  - `CCShuffleTiles` and `CCTurnOffTiles` keep empty tile arrays, not null, until they
+    start.
+- **Nullable annotations for sprite frames, animations and their caches.** The visible
+  changes:
+  - `CCSpriteFrame.Texture` and `TextureFilename` are nullable, and so is the texture its
+    constructors take: a frame made with the parameterless constructor has no texture.
+  - `CCSpriteFrameCache.SpriteFrameByName`, `CCSpriteSheet.SpriteFrameByName` and its
+    indexer, `CCSpriteSheetCache.SpriteSheetForKey`, and `CCAnimationCache.AnimationByName`
+    and its indexer return null for an unknown name, as they already did.
+  - `CCAnimationFrame.UserInfo` is nullable.
+  - `CCSpriteFrameCache.pSharedSpriteFrameCache` is nullable. `SharedSpriteFrameCache`
+    creates the cache on first use.
+  - A `CCSpriteFrameCache` or `CCAnimationCache` made with `new` works before `Init`, which
+    now only clears it. Both used to throw `NullReferenceException` until then.
+- **Nullable annotations for sprites and sprite batch nodes.** The visible changes:
+  - `CCSprite.Texture` and `BatchNode` are nullable, and so is the texture
+    `InitWithTexture(texture, rect)` takes: a sprite can be made without a texture, and only
+    a batched sprite has a batch node.
+  - `ICCTextureProtocol.Texture` can read as null, as a sprite's or particle system's
+    texture already could, but can't be set to null through the interface.
+  - `CCMaskedSprite.CollisionMask` is nullable: a masked sprite made with the parameterless
+    constructor has no mask.
+- **Nullable annotations for textures.** The visible changes:
+  - `CCTextureCache.AddImage`, `AddRawImage`, `TextureForKey` and its indexer return
+    `CCTexture2D?`. They already returned null for a texture that can't be loaded or isn't
+    cached. `AddImageAsync`'s callback is optional and can receive null for the same reason.
+  - `CCTextureAtlas.Create(file, capacity)` returns null when the file can't be loaded.
+  - `CCTexture2D.XNATexture`, `Name` and `OnReInit` are nullable: a texture that hasn't been
+    created, or couldn't be recreated, has no XNA texture.
+- **Nullable annotations for the core labels** (`CCLabelBMFont`, `CCBMFontConfiguration`,
+  `CCLabelAtlas`, `CCLabelTTF` and `CCPixelLabel`). The visible changes:
+  - `CCBMFontConfiguration.Create` and `CCLabelBMFont.FNTConfigLoadFile` return
+    `CCBMFontConfiguration?`. They already returned null for a font file with no data.
+  - `CCBMFontConfiguration.AtlasName` is nullable: it's null until a font file names its
+    texture.
+  - `CCLabelBMFont.FntFile` is nullable: a label made with the parameterless constructor has
+    no font.
+  - `CCPixelLabel.Text`, its constructors' `text` and `MeasureString` accept null, as they
+    already did.
+
+  Subclasses of `CCLabelBMFont` that override `InitWithString` should declare its text, font
+  file and texture nullable; the compiler now checks it.
+- **Nullable annotations for `CCLabel`.** `CCLabel.m_pTexture` and `m_pData`, the atlas the
+  TTF labels share, are nullable: they're null until a label is given text or a font, and
+  `CCLabelBMFont.FNTConfigRemoveCache` clears them.
+
+### Fixed
+
+- `CCNode.Compare` accepts null arguments, ordering them first as `IComparer<T>` allows,
+  instead of throwing.
+- `CCNode.SortAllChildren` and `UpdateZOrderRange` no longer throw on a node with no
+  children.
+- `CCTapNode.RefreshContentSize` sizes a node with no children to zero instead of throwing.
+- Deserializing malformed node data throws an `InvalidDataException` that names the problem,
+  instead of a null reference error.
+- `CCPoint`, `CCSize` and `CCRect` `Equals(object)` return false for null or a value of
+  another type. They used to throw `NullReferenceException` or `InvalidCastException`.
+- `CCLightningTrack.GetPoint` no longer throws when a subclass overrides `CreateBolt`
+  without calling the base method; it falls back to its older algorithm instead.
+- `CCLightningTrack.GetPoint`'s fallback interpolates on the segment that contains the
+  requested position. It used to skip that segment, returning a point on the next one or
+  the end of the bolt.
+- `CCTouchDispatcher.SetPriority` works during a touch dispatch. For a delegate added in
+  the same dispatch, such as a popup menu opened from a menu callback, it no longer
+  throws, and the priority applies when the delegate joins. Called from `TouchBegan` for
+  a registered delegate, it no longer throws `InvalidOperationException`; the new order
+  applies from the next touch. `UpdateGraphPriority` also reaches a delegate added in the
+  same dispatch.
+- `CCTouchDispatcher.SetPriority` and `UpdateGraphPriority` update both handlers of a
+  delegate registered as both targeted and standard, instead of only the first.
+- `CCTouchDispatcher.SetPriority` throws `ArgumentException` for a delegate that isn't
+  registered, instead of `NullReferenceException`.
+- A `CCTouchDispatcher` used before `Init()` no longer throws when delegates are added or
+  removed.
+- `CCLayerMultiplex.SwitchTo` returns null for a layer released by `SwitchToAndReleaseMe`
+  instead of throwing, and switching away from a released active layer no longer throws.
+- `CCParticleSystemQuad.SetDisplayFrame` takes the frame's texture on a system that has
+  none, instead of throwing. Its texture check was inverted.
+- Setting `CCParticleSystemQuad.Texture` to null clears the texture instead of throwing,
+  as `CCParticleSystem` already did.
+- `CCLayerMultiplex.SwitchToFirstLayer`, `SwitchToNextLayer` and `SwitchToPreviousLayer`
+  work for a multiplex built from a layer list; they used to return null. They also skip
+  layers released by `SwitchToAndReleaseMe` instead of showing nothing, and so does the
+  layer a multiplex shows when it enters a scene.
+- `CCLayerMultiplex.AddLayer` numbers layers consecutively. A layer added after a tagged
+  one used to get an index one higher than expected.
+- `CCLayerMultiplex.SwitchToAndReleaseMe` releases a tagged layer's tag as well as its
+  index. Releasing the active layer itself now removes it and shows nothing, instead of
+  leaving it on screen and still marked active.
+- `CCMoveFrom`, `CCColorBlendAnimation`, `CCRotateAnimation` and `CCTimerAction` now set
+  their target when they start. Before, the first two never changed their node,
+  `CCRotateAnimation` threw `NullReferenceException` as soon as it ran, and the action
+  manager couldn't remove any of them. `CCRotateAnimation` starts from `Rotation` when the
+  node doesn't implement `ICCRotationAnimationGetter`.
+- A `CCRepeat` around a `CCBlink` no longer throws `NullReferenceException` when it
+  finishes. `CCRepeat` stops its inner action twice at the end, and `CCBlink.Stop`
+  dereferenced the target the first stop had cleared.
+- Reversing a `CCSequence`, `CCSpawn`, `CCRepeat`, `CCParallel` or `CCTargetedAction` whose
+  part has no reverse throws `NotSupportedException` naming that action, instead of
+  failing later with `NullReferenceException`.
+- Reversing an ease action whose inner action has no reverse throws `NotSupportedException`
+  naming that action, instead of `NullReferenceException`.
+- Copying a `CCCardinalSplineBy`, `CCCatmullRomTo` or `CCCatmullRomBy` returns an action of
+  the same type. It used to return a `CCCardinalSplineTo`, so a copied spline-by action moved
+  the node to the spline's absolute points instead of relative to where it started.
+- `Copy(zone)` on an interval action throws `InvalidCastException` for a zone of another
+  type, as most already did. Some returned null and others threw `NullReferenceException`.
+- `CCShuffleTiles` and `CCTurnOffTiles` use their seed, so the same seed gives the same tile
+  order. `CCShuffleTiles` replaced the seed with a random number, and `CCTurnOffTiles`
+  ignored it and threw for a negative seed other than -1. A seeded run no longer touches
+  `CCRandom`, and a `CCTurnOffTiles` made without a seed still picks a new order each run.
+- `CCScaleTo.Copy(zone)`, which `CCScaleBy` also uses, `CCReverseTime.Copy(zone)` and
+  `CCOrbitCamera.Copy(zone)` fill the zone from the original. They used to copy the zone's
+  values into the original.
+- Copying a `CCReverseTime` copies its inner action, so the original and the copy can run
+  at the same time on different nodes. They used to share it.
+- `CCAccelDeccelAmplitude` updates its inner action, so the grid effect it wraps animates. It
+  only set the effect's amplitude and never updated it, an omission cocos2d-x shares.
+- `CCAccelAmplitude`, `CCAccelDeccelAmplitude` and `CCDeccelAmplitude` throw
+  `InvalidCastException` when given an action that isn't an interval action, instead of
+  `NullReferenceException` when they start.
+- `CCSpriteSheetCache.AddSpriteSheet` builds the sheet from the stream or dictionary it's
+  given. Those overloads used to ignore it and load a plist named after the cache key.
+- `CCSpriteFrameCache` and `CCSpriteSheet` load a plist with no frames, or a SpriteKit plist
+  with no images, as empty. They used to throw `NullReferenceException`.
+- `CCSpriteFrameCache.RemoveSpriteFrameByName` removes a frame that has no alias instead of
+  throwing `KeyNotFoundException`. Removing a frame also removes its aliases, so they don't
+  find a frame added later under the same name.
+- `CCSpriteFrameCache.RemoveSpriteFramesFromTexture` skips frames that have no texture, and
+  `CCParticleSystemQuad.SetDisplayFrame` with such a frame clears the system's texture.
+  Both used to throw `NullReferenceException`.
+- `CCSprite.SortAllChildren` on a sprite with no children yet, `RemoveAllChildren` on a
+  batched sprite with no children, and `IsSpriteFrameDisplayed` with no textures no longer
+  throw `NullReferenceException`.
+- `CCSpriteBatchNode.Compare` accepts null arguments, ordering them first as
+  `CCNode.Compare` does, instead of throwing.
+- `CCAnimate.Stop` no longer throws when the animation's `RestoreOriginalFrame` was turned on
+  after the action started; there's no original frame to restore.
+- `CCAnimation.AddSpriteFrameWithFileName`, `CCAtlasNode.InitWithTileFile`,
+  `CCParticleBatchNode.InitWithFile` and `CCSpriteBatchNode`'s file constructors throw
+  `ArgumentException` naming a texture file that can't be loaded, instead of
+  `NullReferenceException`.
+- `CCBMFontConfiguration` reads the last line of a font file that doesn't end with a
+  newline. It used to throw `NullReferenceException`.
+- `CCBMFontConfiguration` keeps the last character of a value that ends its line. It used
+  to drop it when nothing followed, not even a carriage return: a line of just `char id=65`
+  read as character 6.
+- `CCBMFontConfiguration.CharacterSet` is empty, not null, for a font file with no data.
+- `CCLabelBMFont.FNTConfigLoadFile` doesn't cache a font that fails to load, so loading it
+  again under that name can succeed. It used to return null for that name from then on.
+- A `CCLabelBMFont` with no font no longer throws `NullReferenceException` laying out its
+  text once its `Dimensions` have a height.
+- `CCLabelBMFont`'s font file constructors and its `FntFile` setter throw
+  `ArgumentException` naming a font file that doesn't name a texture, or a texture that
+  can't be loaded. They used to throw `NullReferenceException` or `ArgumentNullException`.
+  `FntFile` also throws it for a font file with no data, and now checks the font before
+  changing the label.
+- `CCLabelAtlas.InitWithString(label, fntFile)`, which its two-argument constructor calls,
+  throws `ArgumentException` for a file that isn't a property list dictionary, instead of
+  `NullReferenceException`.
+- A `CCLabel` drawn before any label has been given text or a font no longer throws
+  `NullReferenceException`; there's no shared atlas to upload yet.
+
+### Documentation
+
+- `CONTRIBUTING.md` describes how the engine moves to nullable reference types: a file that
+  starts with `#nullable disable` hasn't been converted yet, and converting one marks what
+  can really be null instead of silencing warnings.
+
 ## 2.6.2 - 2026-10-13
 
 A small release with no API changes and nothing to migrate: bump the package reference to

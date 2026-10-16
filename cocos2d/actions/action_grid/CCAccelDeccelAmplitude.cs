@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -13,12 +14,14 @@ public class CCAccelDeccelAmplitude : CCActionInterval
         set { m_fRate = value; }
     }
 
+    [MemberNotNull(nameof(m_pOther))]
     protected virtual bool InitWithAction(CCAction pAction, float duration)
     {
+        m_pOther = (CCActionInterval) pAction;
+
         if (base.InitWithDuration(duration))
         {
             m_fRate = 1.0f;
-            m_pOther = pAction as CCActionInterval;
 
             return true;
         }
@@ -43,6 +46,7 @@ public class CCAccelDeccelAmplitude : CCActionInterval
         }
 
         ((m_pOther)).AmplitudeRate = (float) Math.Pow(f, m_fRate);
+        m_pOther.Update(time);
     }
 
     public override CCFiniteTimeAction Reverse()

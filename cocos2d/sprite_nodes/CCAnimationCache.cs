@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
 public class CCAnimationCache 
 {
-    private static CCAnimationCache s_pSharedAnimationCache;
-    private Dictionary<string, CCAnimation> _animations;
+    private static CCAnimationCache? s_pSharedAnimationCache;
+    private Dictionary<string, CCAnimation> _animations = new Dictionary<string, CCAnimation>();
 
     public static CCAnimationCache SharedAnimationCache
     {
@@ -44,7 +45,8 @@ public class CCAnimationCache
         _animations.Remove(name);
     }
 
-    public CCAnimation this[string index]
+    [DisallowNull]
+    public CCAnimation? this[string index]
     {
         get
         {
@@ -56,9 +58,9 @@ public class CCAnimationCache
         }
     }
 
-    public CCAnimation AnimationByName(string name)
+    public CCAnimation? AnimationByName(string name)
     {
-        CCAnimation retValue;
+        CCAnimation? retValue;
         _animations.TryGetValue(name, out retValue);
         return retValue;
     }
@@ -146,7 +148,7 @@ public class CCAnimationCache
             foreach (PlistObjectBase pObj in frameNames)
             {
                 string frameName = pObj.AsString;
-                CCSpriteFrame spriteFrame = frameCache.SpriteFrameByName(frameName);
+                CCSpriteFrame? spriteFrame = frameCache.SpriteFrameByName(frameName);
 
                 if (spriteFrame == null)
                 {
@@ -211,7 +213,7 @@ public class CCAnimationCache
                 PlistDictionary entry = pObj.AsDictionary;
 
                 string spriteFrameName = entry["spriteframe"].AsString;
-                CCSpriteFrame spriteFrame = frameCache.SpriteFrameByName(spriteFrameName);
+                CCSpriteFrame? spriteFrame = frameCache.SpriteFrameByName(spriteFrameName);
 
                 if (spriteFrame == null)
                 {

@@ -4,8 +4,9 @@ namespace Cocos2D;
 
 public class CCCallFuncO : CCCallFunc
 {
-    private Action<object> _callFuncO;
-    private object _object;
+    // Both null for a CCCallFuncO made with the parameterless constructor.
+    private Action<object?>? _callFuncO;
+    private object? _object;
 
     public CCCallFuncO()
     {
@@ -13,7 +14,7 @@ public class CCCallFuncO : CCCallFunc
         _callFuncO = null;
     }
 
-    public CCCallFuncO(Action<object> selector, object pObject) : this()
+    public CCCallFuncO(Action<object?> selector, object? pObject) : this()
     {
         InitWithTarget(selector, pObject);
     }
@@ -23,7 +24,7 @@ public class CCCallFuncO : CCCallFunc
         InitWithTarget(callFuncO._callFuncO, callFuncO._object);
     }
 
-    public bool InitWithTarget(Action<object> selector, object pObject)
+    public bool InitWithTarget(Action<object?>? selector, object? pObject)
     {
         _object = pObject;
         _callFuncO = selector;
@@ -31,7 +32,7 @@ public class CCCallFuncO : CCCallFunc
     }
 
     // super methods
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
@@ -60,7 +61,7 @@ public class CCCallFuncO : CCCallFunc
         //}
     }
 
-    public object Object
+    public object? Object
     {
         get { return _object; }
         set { _object = value; }

@@ -1,3 +1,4 @@
+#nullable disable
 #if ANDROID
 using System;
 using System.Threading;

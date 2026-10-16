@@ -62,4 +62,15 @@ public class CCRectTests
         var i = new CCRect(0f, 0f, 10f, 10f).Intersection(new CCRect(100f, 100f, 5f, 5f));
         Assert.True(i == CCRect.Zero);
     }
+
+    [Fact]
+    public void Equals_NullOrOtherType_ReturnsFalse()
+    {
+        // Equals(object) used to unbox without checking, so null or another type threw (C2D-268).
+        var r = new CCRect(10f, 20f, 30f, 40f);
+
+        Assert.False(r.Equals(null));
+        Assert.False(r.Equals("10,20,30,40"));
+        Assert.True(r.Equals((object)new CCRect(10f, 20f, 30f, 40f)));
+    }
 }

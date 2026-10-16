@@ -9,9 +9,9 @@ namespace Cocos2D;
 
 public class CCSpriteFrameCache
 {
-    public static CCSpriteFrameCache pSharedSpriteFrameCache = null;
-    protected Dictionary<string, CCSpriteFrame> m_pSpriteFrames;
-    protected Dictionary<string, string> m_pSpriteFramesAliases;
+    public static CCSpriteFrameCache? pSharedSpriteFrameCache = null;
+    protected Dictionary<string, CCSpriteFrame> m_pSpriteFrames = new Dictionary<string, CCSpriteFrame>();
+    protected Dictionary<string, string> m_pSpriteFramesAliases = new Dictionary<string, string>();
     private bool _AllowFrameOverwrite = false;
 
     public bool Init()
@@ -47,13 +47,13 @@ public class CCSpriteFrameCache
         ZWTCoordinatesFormatOptionXML1_2 = 3, // Desktop Version 1.0.2+
         */
 
-        PlistDictionary metadataDict = null;
+        PlistDictionary? metadataDict = null;
         if (pobDictionary.ContainsKey("metadata"))
         {
             metadataDict = pobDictionary["metadata"].AsDictionary;
         }
 
-        PlistDictionary framesDict = null;
+        PlistDictionary? framesDict = null;
         if (pobDictionary.ContainsKey("frames"))
         {
             framesDict = pobDictionary["frames"].AsDictionary;
@@ -73,10 +73,16 @@ public class CCSpriteFrameCache
             throw (new NotSupportedException("PList format " + format + " is not supported."));
         }
 
+        if (framesDict == null)
+        {
+            CCLog.Log("cocos2d: CCSpriteFrameCache: No frames were found in the provided dictionary.");
+            return;
+        }
+
         foreach (var pair in framesDict)
         {
             PlistDictionary frameDict = pair.Value.AsDictionary;
-            CCSpriteFrame spriteFrame = null;
+            CCSpriteFrame spriteFrame;
 
             if (format == 0)
             {
@@ -133,7 +139,7 @@ public class CCSpriteFrameCache
                                             sourceSize
                     );
             }
-            else if (format == 3)
+            else // format == 3
             {
                 // get values
                 CCSize spriteSize = CCSize.Parse (frameDict["spriteSize"].AsString);
@@ -193,7 +199,7 @@ public class CCSpriteFrameCache
 
         PlistDictionary dict = document.Root.AsDictionary;
         string texturePath = "";
-        PlistDictionary metadataDict = dict.ContainsKey("metadata") ? dict["metadata"].AsDictionary : null;
+        PlistDictionary? metadataDict = dict.ContainsKey("metadata") ? dict["metadata"].AsDictionary : null;
 
         if (metadataDict != null)
         {
@@ -223,7 +229,7 @@ public class CCSpriteFrameCache
             CCLog.Log("cocos2d: CCSpriteFrameCache: Trying to use file {0} as texture", texturePath);
         }
 
-        CCTexture2D pTexture = CCTextureCache.SharedTextureCache.AddImage(texturePath);
+        CCTexture2D? pTexture = CCTextureCache.SharedTextureCache.AddImage(texturePath);
 
         if (pTexture != null)
         {
@@ -239,7 +245,7 @@ public class CCSpriteFrameCache
     {
         Debug.Assert(textureFileName != null);
         
-        CCTexture2D texture = CCTextureCache.SharedTextureCache.AddImage(textureFileName);
+        CCTexture2D? texture = CCTextureCache.SharedTextureCache.AddImage(textureFileName);
 
         if (texture != null)
         {
@@ -309,9 +315,9 @@ public class CCSpriteFrameCache
 
             foreach (var pair in tmp)
             {
-                if (pair.Value.IsAlive)
+                if (pair.Value.Target is CCSpriteFrame frame)
                 {
-                    m_pSpriteFrames.Add(pair.Key, (CCSpriteFrame) pair.Value.Target);
+                    m_pSpriteFrames.Add(pair.Key, frame);
                 }
             }
         }
@@ -325,17 +331,17 @@ public class CCSpriteFrameCache
             return;
         }
 
-        // Is this an alias ?
-        string key = m_pSpriteFramesAliases[pszName];
+        // The name can be an alias of the frame's own name. A frame's own name wins over an alias
+        // with the same name, as in SpriteFrameByName.
+        string frameName = !m_pSpriteFrames.ContainsKey(pszName) && m_pSpriteFramesAliases.TryGetValue(pszName, out string? key)
+            ? key
+            : pszName;
+        m_pSpriteFrames.Remove(frameName);
 
-        if (!string.IsNullOrEmpty(key))
+        // Drop the frame's aliases too, so none of them finds a frame added later under its name.
+        foreach (string alias in m_pSpriteFramesAliases.Where(pair => pair.Value == frameName).Select(pair => pair.Key).ToList())
         {
-            m_pSpriteFrames.Remove(key);
-            m_pSpriteFramesAliases.Remove(key);
-        }
-        else
-        {
-            m_pSpriteFrames.Remove(pszName);
+            m_pSpriteFramesAliases.Remove(alias);
         }
     }
 
@@ -374,7 +380,7 @@ public class CCSpriteFrameCache
         foreach (string key in m_pSpriteFrames.Keys)
         {
             CCSpriteFrame frame = m_pSpriteFrames[key];
-            if (frame != null && (frame.Texture.Name == texture.Name))
+            if (frame != null && frame.Texture != null && frame.Texture.Name == texture.Name)
             {
                 keysToRemove.Add(key);
             }
@@ -391,14 +397,14 @@ public class CCSpriteFrameCache
     /// </summary>
     /// <param name="pszName"></param>
     /// <returns></returns>
-    public CCSpriteFrame SpriteFrameByName(string pszName)
+    public CCSpriteFrame? SpriteFrameByName(string pszName)
     {
-        CCSpriteFrame frame;
+        CCSpriteFrame? frame;
 
         if (!m_pSpriteFrames.TryGetValue(pszName, out frame))
         {
             // try alias dictionary
-            string key;
+            string? key;
             if (m_pSpriteFramesAliases.TryGetValue(pszName, out key))
             {
                 if (!m_pSpriteFrames.TryGetValue(key, out frame))

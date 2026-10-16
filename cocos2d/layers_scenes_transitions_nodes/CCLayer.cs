@@ -35,7 +35,8 @@ public class CCLayer : CCNode, ICCAccelerometerDelegate
 {
     private bool _isAccelerometerEnabled;
 
-    private CCRenderTexture _renderTexture;
+    // Only exists while the clipping mode is BoundsWithRenderTarget.
+    private CCRenderTexture? _renderTexture;
     private bool _restoreScissor;
     private CCRect _saveScissorRect;
     private bool _noDrawChildren;
@@ -236,6 +237,7 @@ public class CCLayer : CCNode, ICCAccelerometerDelegate
             CCDrawManager.PushMatrix();
             CCDrawManager.SetIdentityMatrix();
 
+            Debug.Assert(_renderTexture != null, "InitClipping creates the render texture for BoundsWithRenderTarget");
             _renderTexture.BeginWithClear(0, 0, 0, 0);
         }
     }
@@ -250,6 +252,7 @@ public class CCLayer : CCNode, ICCAccelerometerDelegate
         {
             if (m_childClippingMode == CCClipMode.BoundsWithRenderTarget)
             {
+                Debug.Assert(_renderTexture != null, "InitClipping creates the render texture for BoundsWithRenderTarget");
                 _renderTexture.End();
 
                 CCDrawManager.PopMatrix();
@@ -272,6 +275,7 @@ public class CCLayer : CCNode, ICCAccelerometerDelegate
 
             if (m_childClippingMode == CCClipMode.BoundsWithRenderTarget)
             {
+                Debug.Assert(_renderTexture != null, "InitClipping creates the render texture for BoundsWithRenderTarget");
                 _renderTexture.Sprite.Visit();
             }
         }

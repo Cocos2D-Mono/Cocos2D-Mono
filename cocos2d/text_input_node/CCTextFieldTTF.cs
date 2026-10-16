@@ -9,15 +9,15 @@ namespace Cocos2D;
 
 public class CCTextFieldTTF : CCLabelTTF, ICCTargetedTouchDelegate
 {
-    private IAsyncResult _guideShowHandle;
+    private IAsyncResult? _guideShowHandle;
     private string _editTitle = "Input";
     private string _editDescription = "Please provide input";
     private bool _readOnly = false;
     private bool _autoEdit;
     private bool _touchHandled;
 
-    public event CCTextFieldTTFDelegate BeginEditing;
-    public event CCTextFieldTTFDelegate EndEditing;
+    public event CCTextFieldTTFDelegate? BeginEditing;
+    public event CCTextFieldTTFDelegate? EndEditing;
 
     private bool beginKeyboardEditing = false;
     private bool canEdit = false;

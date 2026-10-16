@@ -30,14 +30,14 @@ public class CCScaleTo : CCActionInterval
         m_fEndScaleY = sy;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
-            var ret = zone as CCScaleTo;
+            var ret = (CCScaleTo) zone;
             base.Copy(zone);
-            m_fEndScaleX = ret.m_fEndScaleX;
-            m_fEndScaleY = ret.m_fEndScaleY;
+            ret.m_fEndScaleX = m_fEndScaleX;
+            ret.m_fEndScaleY = m_fEndScaleY;
             return ret;
         }
         else

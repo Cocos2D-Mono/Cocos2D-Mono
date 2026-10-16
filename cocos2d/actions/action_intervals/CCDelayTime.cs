@@ -11,7 +11,7 @@ public class CCDelayTime : CCActionInterval
     {
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {

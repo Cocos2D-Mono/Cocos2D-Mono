@@ -13,7 +13,7 @@ public class CCLightningTrack
     private CCPoint _End;
     private List<CCPoint> _Track;
     private float _TrackLength = 0f;
-    private Dictionary<float, CCLightningTrack> _Branches;
+    private Dictionary<float, CCLightningTrack>? _Branches;
 
     public CCLightningTrack(CCPoint start, CCPoint end)
     {
@@ -125,7 +125,9 @@ public class CCLightningTrack
 
     private float _Length;
     private CCPoint _uDir;
-    private float[] _SegmentLengths;
+    // Filled by CreateBolt. An override that skips base leaves it empty, and GetPoint
+    // then falls back to its older algorithm.
+    private float[] _SegmentLengths = Array.Empty<float>();
 
     // Returns the point where the bolt is at a given fraction of the way through the bolt. Passing
     // zero will return the start of the bolt, and passing 1 will return the end.
@@ -157,12 +159,17 @@ public class CCLightningTrack
         }
         // New algorithm did not work, so use the old algorithm
         position = u * _Length;
-        for (int i = 0; i < _Track.Count; i += 2)
+        for (int i = 0; i + 1 < _Track.Count; i += 2)
         {
-            if (CCPoint.Dot(_Track[i] - _Start, _uDir) >= position)
+            float lineStartPos = CCPoint.Dot(_Track[i] - _Start, _uDir);
+            float lineEndPos = CCPoint.Dot(_Track[i + 1] - _Start, _uDir);
+            // The position lies on the first segment that ends at or past it.
+            if (lineEndPos >= position)
             {
-                float lineStartPos = CCPoint.Dot(_Track[i] - _Start, _uDir);
-                float lineEndPos = CCPoint.Dot(_Track[i + 1] - _Start, _uDir);
+                if (lineEndPos == lineStartPos)
+                {
+                    return _Track[i + 1];
+                }
                 float linePos = (position - lineStartPos) / (lineEndPos - lineStartPos);
 
                 return CCPoint.Lerp(_Track[i], _Track[i + 1], linePos);

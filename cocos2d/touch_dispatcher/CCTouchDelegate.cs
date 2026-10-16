@@ -4,7 +4,8 @@ namespace Cocos2D;
 
 public class CCTouchDelegate : ICCTouchDelegate
 {
-    protected Dictionary<int, string> m_pEventTypeFuncMap;
+    // Created by the first RegisterScriptTouchHandler call.
+    protected Dictionary<int, string>? m_pEventTypeFuncMap;
 
     public virtual int TouchPriority
     {

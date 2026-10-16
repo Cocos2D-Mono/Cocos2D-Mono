@@ -30,11 +30,11 @@ public class CCScaleBy : CCScaleTo
         return new CCScaleBy(m_fDuration, 1 / m_fEndScaleX, 1 / m_fEndScaleY);
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
-            var ret = zone as CCScaleBy;
+            var ret = (CCScaleBy) zone;
             base.Copy(zone); // Handles all data copying.
             return ret;
         }

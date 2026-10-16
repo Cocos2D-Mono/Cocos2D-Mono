@@ -50,7 +50,7 @@ public class CCTwirl : CCGrid3DAction
         return false;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCTwirl pCopy;
         if (pZone != null)

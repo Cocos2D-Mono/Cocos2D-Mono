@@ -8,7 +8,7 @@ namespace Cocos2D.sprite_nodes;
 
 public class CCSpriteSheetCache
 {
-    private static CCSpriteSheetCache _instance;
+    private static CCSpriteSheetCache? _instance;
 
     private Dictionary<string, CCSpriteSheet> _spriteSheets = new Dictionary<string, CCSpriteSheet>(); 
 
@@ -32,7 +32,7 @@ public class CCSpriteSheetCache
 
     public CCSpriteSheet AddSpriteSheet(string fileName)
     {
-        CCSpriteSheet result;
+        CCSpriteSheet? result;
         if (!_spriteSheets.TryGetValue(fileName, out result))
         {
             result = new CCSpriteSheet(fileName);
@@ -43,7 +43,7 @@ public class CCSpriteSheetCache
 
     public CCSpriteSheet AddSpriteSheet(string fileName, string textureFileName)
     {
-        CCSpriteSheet result;
+        CCSpriteSheet? result;
         if (!_spriteSheets.TryGetValue(fileName, out result))
         {
             result = new CCSpriteSheet(fileName, textureFileName);
@@ -54,7 +54,7 @@ public class CCSpriteSheetCache
 
     public CCSpriteSheet AddSpriteSheet(string fileName, CCTexture2D texture)
     {
-        CCSpriteSheet result;
+        CCSpriteSheet? result;
         if (!_spriteSheets.TryGetValue(fileName, out result))
         {
             result = new CCSpriteSheet(fileName, texture);
@@ -65,10 +65,10 @@ public class CCSpriteSheetCache
 
     public CCSpriteSheet AddSpriteSheet(Stream stream, CCTexture2D texture, string name)
     {
-        CCSpriteSheet result;
+        CCSpriteSheet? result;
         if (!_spriteSheets.TryGetValue(name, out result))
         {
-            result = new CCSpriteSheet(name, texture);
+            result = new CCSpriteSheet(stream, texture);
             _spriteSheets.Add(name, result);
         }
         return result;
@@ -76,18 +76,18 @@ public class CCSpriteSheetCache
 
     public CCSpriteSheet AddSpriteSheet(PlistDictionary dictionary, CCTexture2D texture, string name)
     {
-        CCSpriteSheet result;
+        CCSpriteSheet? result;
         if (!_spriteSheets.TryGetValue(name, out result))
         {
-            result = new CCSpriteSheet(name, texture);
+            result = new CCSpriteSheet(dictionary, texture);
             _spriteSheets.Add(name, result);
         }
         return result;
     }
 
-    public CCSpriteSheet SpriteSheetForKey(string name)
+    public CCSpriteSheet? SpriteSheetForKey(string name)
     {
-        CCSpriteSheet result = null;
+        CCSpriteSheet? result = null;
         if (!_spriteSheets.TryGetValue(name, out result))
         {
             CCLog.Log("SpriteSheet of key {0} is not exist.", name);
@@ -117,9 +117,9 @@ public class CCSpriteSheetCache
 
             foreach (var pair in tmp)
             {
-                if (pair.Value.IsAlive)
+                if (pair.Value.Target is CCSpriteSheet sheet)
                 {
-                    _spriteSheets.Add(pair.Key, (CCSpriteSheet)pair.Value.Target);
+                    _spriteSheets.Add(pair.Key, sheet);
                 }
             }
         }
@@ -132,7 +132,7 @@ public class CCSpriteSheetCache
             return;
         }
 
-        string key = null;
+        string? key = null;
 
         foreach (var pair in _spriteSheets)
         {

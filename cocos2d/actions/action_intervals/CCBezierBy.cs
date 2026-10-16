@@ -28,11 +28,11 @@ public class CCBezierBy : CCActionInterval
         return false;
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
-            var ret = zone as CCBezierBy;
+            var ret = (CCBezierBy) zone;
             base.Copy(zone);
 
             ret.InitWithDuration(m_fDuration, m_sConfig);

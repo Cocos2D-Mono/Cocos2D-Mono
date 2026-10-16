@@ -19,15 +19,11 @@ public class CCJumpTo : CCJumpBy
         m_delta = new CCPoint(m_delta.X - m_startPosition.X, m_delta.Y - m_startPosition.Y);
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {
-            var ret = zone as CCJumpTo;
-            if (ret == null)
-            {
-                return null;
-            }
+            var ret = (CCJumpTo) zone;
             base.Copy(zone);
 
             ret.InitWithDuration(m_fDuration, m_delta, m_height, m_nJumps);

@@ -20,11 +20,11 @@ public class CCBezierTo : CCBezierBy
         m_sConfig.EndPosition = (m_sConfig.EndPosition - m_startPosition);
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null && zone != null)
         {
-            var ret = zone as CCBezierTo;
+            var ret = (CCBezierTo) zone;
             base.Copy(zone);
             ret.InitWithDuration(m_fDuration, m_sConfig);
 

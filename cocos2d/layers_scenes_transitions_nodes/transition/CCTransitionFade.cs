@@ -23,6 +23,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 
+using System.Diagnostics;
+
 namespace Cocos2D;
 
 public class CCTransitionFade : CCTransitionScene
@@ -59,6 +61,7 @@ public class CCTransitionFade : CCTransitionScene
     protected override bool InitWithDuration(float t, CCScene scene)
     {
         InitWithDuration(t, scene, new CCColor3B(Microsoft.Xna.Framework.Color.Black));
+        Debug.Assert(m_pInScene != null && m_pOutScene != null, "The color overload initializes the scenes through the base InitWithDuration");
         return true;
     }
 
@@ -70,7 +73,6 @@ public class CCTransitionFade : CCTransitionScene
         m_pInScene.Visible = false;
 
         AddChild(l, 2, kSceneFade);
-        CCNode f = GetChildByTag(kSceneFade);
 
         var a = (CCActionInterval) new CCSequence
                                        (
@@ -80,7 +82,7 @@ public class CCTransitionFade : CCTransitionScene
                                            new CCCallFunc((Finish))
                                        );
 
-        f.RunAction(a);
+        l.RunAction(a);
     }
 
     public override void OnExit()

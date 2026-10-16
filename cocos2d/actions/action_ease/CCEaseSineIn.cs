@@ -21,10 +21,10 @@ public class CCEaseSineIn : CCActionEase
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCEaseSineOut((CCActionInterval) m_pInner.Reverse());
+        return new CCEaseSineOut((CCActionInterval) m_pInner.ReverseOrThrow());
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {

@@ -70,8 +70,8 @@ public class CCMaskedSprite : CCSprite
         int height2 = (int)target.ContentSize.Height;
         int width1 = (int)ContentSize.Width;
         int height1 = (int)ContentSize.Height;
-        byte[] maskA = CollisionMask;
-        byte[] maskB = target.CollisionMask;
+        byte[]? maskA = CollisionMask;
+        byte[]? maskB = target.CollisionMask;
         if (maskA == null || maskB == null)
         {
             return (false);
@@ -117,9 +117,9 @@ public class CCMaskedSprite : CCSprite
     /// <summary>
     /// This is the feature mask for the sprite.
     /// </summary>
-    private byte[] _MyMask;
+    private byte[]? _MyMask;
 
-    public virtual byte[] CollisionMask
+    public virtual byte[]? CollisionMask
     {
         get
         {

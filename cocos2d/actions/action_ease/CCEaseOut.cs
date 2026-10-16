@@ -21,7 +21,7 @@ public class CCEaseOut : CCEaseRateAction
         m_pInner.Update((float) (Math.Pow(time, 1 / m_fRate)));
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         if (pZone != null)
         {
@@ -36,6 +36,6 @@ public class CCEaseOut : CCEaseRateAction
 
     public override CCFiniteTimeAction Reverse()
     {
-        return new CCEaseOut((CCActionInterval) m_pInner.Reverse(), 1 / m_fRate);
+        return new CCEaseOut((CCActionInterval) m_pInner.ReverseOrThrow(), 1 / m_fRate);
     }
 }

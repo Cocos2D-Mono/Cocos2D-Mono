@@ -23,6 +23,7 @@ THE SOFTWARE.
 ****************************************************************************/
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -105,9 +106,11 @@ public interface ICCBlendProtocol
 public interface ICCTextureProtocol : ICCBlendProtocol
 {
     /// <summary>
-    /// gets or sets a new texture. it will be retained
+    /// Gets or sets the texture. A node without one, such as a sprite made with no texture,
+    /// returns null. Setting null through this interface isn't supported.
     /// </summary>
-    CCTexture2D Texture { get; set; }
+    [DisallowNull]
+    CCTexture2D? Texture { get; set; }
 }
 /// <summary>
 /// gets or sets a new Label string.

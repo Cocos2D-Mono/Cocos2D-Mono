@@ -51,7 +51,7 @@ public class CCShatteredTiles3D : CCTiledGrid3DAction
         return false;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCShatteredTiles3D pCopy;
         if (pZone != null)

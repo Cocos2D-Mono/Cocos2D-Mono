@@ -10,7 +10,7 @@ public class CCToggleVisibility : CCActionInstant
     {
     }
 
-    public override object Copy(ICCCopyable zone)
+    public override object Copy(ICCCopyable? zone)
     {
         if (zone != null)
         {

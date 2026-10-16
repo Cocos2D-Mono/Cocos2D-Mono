@@ -1,3 +1,4 @@
+#nullable disable
 using System.IO;
 #if !(WINDOWS || MACOS || LINUX)
 using System.IO.IsolatedStorage;

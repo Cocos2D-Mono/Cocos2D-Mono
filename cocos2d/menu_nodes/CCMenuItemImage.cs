@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 
 namespace Cocos2D;
@@ -14,22 +13,22 @@ public class CCMenuItemImage : CCMenuItemSprite
     {
     }
 
-    public CCMenuItemImage(string normalImage, string selectedImage)
+    public CCMenuItemImage(string normalImage, string? selectedImage)
         :this(normalImage, selectedImage, normalImage, null)
     {
     }
 
-    public CCMenuItemImage(string normalImage, string selectedImage, Action<CCMenuItem> selector)
+    public CCMenuItemImage(string normalImage, string? selectedImage, Action<CCMenuItem>? selector)
         :this(normalImage, selectedImage, normalImage, selector)
     {
     }
 
-    public CCMenuItemImage(string normalImage, string selectedImage, string disabledImage)
+    public CCMenuItemImage(string normalImage, string? selectedImage, string? disabledImage)
         : this(normalImage, selectedImage, disabledImage, null)
     {
     }
 
-    public CCMenuItemImage(string normalImage, string selectedImage, string disabledImage, Action<CCMenuItem> selector)
+    public CCMenuItemImage(string? normalImage, string? selectedImage, string? disabledImage, Action<CCMenuItem>? selector)
         : base(selector)
     {
 

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using Cocos2D.Compression.Zlib;
-using WP7Contrib.Communications.Compression;
 
 namespace Cocos2D;
 
@@ -532,7 +532,8 @@ public class CCTMXMapInfo : ICCSAXDelegator
                 {
                     try
                     {
-                        GZipStream inGZipStream = new GZipStream(new MemoryStream(pTMXMapInfo.CurrentString));
+                        using GZipStream inGZipStream =
+                            new GZipStream(new MemoryStream(pTMXMapInfo.CurrentString), CompressionMode.Decompress);
 
                         var outMemoryStream = new MemoryStream();
 

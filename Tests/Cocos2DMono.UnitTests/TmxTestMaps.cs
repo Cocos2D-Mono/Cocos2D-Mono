@@ -18,13 +18,25 @@ internal static class TmxTestMaps
     // A 2x2 layer, its tiles' global IDs given as base64 of 32-bit little-endian values.
     public static string Layer(string name, params uint[] gids)
     {
+        return "<layer name=\"" + name + "\" width=\"2\" height=\"2\"><data encoding=\"base64\">" +
+               Convert.ToBase64String(TileBytes(gids)) + "</data></layer>";
+    }
+
+    // The same layer with its data gzip-compressed, optionally with a bad checksum.
+    public static string GzipLayer(string name, bool corruptChecksum, params uint[] gids)
+    {
+        return "<layer name=\"" + name + "\" width=\"2\" height=\"2\"><data encoding=\"base64\" compression=\"gzip\">" +
+               Convert.ToBase64String(GzipTestData.Compress(TileBytes(gids), corruptChecksum)) + "</data></layer>";
+    }
+
+    private static byte[] TileBytes(uint[] gids)
+    {
         var bytes = new byte[gids.Length * 4];
         for (int i = 0; i < gids.Length; i++)
         {
             BitConverter.GetBytes(gids[i]).CopyTo(bytes, i * 4);
         }
-        return "<layer name=\"" + name + "\" width=\"2\" height=\"2\"><data encoding=\"base64\">" +
-               Convert.ToBase64String(bytes) + "</data></layer>";
+        return bytes;
     }
 
     // A 2x2 orthogonal map with 8x8 tiles holding the given elements.

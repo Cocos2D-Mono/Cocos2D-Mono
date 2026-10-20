@@ -8,6 +8,8 @@ namespace Cocos2DMono.UnitTests;
 // Tests from the tile maps' nullable conversion (C2D-300). A map read from a stream has no file
 // name, which made its first tileset image throw ArgumentNullException. Layer data that failed to
 // decompress, and elements outside the element they belong to, threw NullReferenceException.
+// The gzip layer tests come from replacing the bundled gzip port with System.IO.Compression
+// (C2D-316). The port never checked a layer's gzip checksum, so corrupt data became wrong tiles.
 public class CCTMXMapInfoTests
 {
     [Fact]
@@ -34,6 +36,24 @@ public class CCTMXMapInfoTests
         var info = TmxTestMaps.Parse(TmxTestMaps.TilesetWithoutImage +
                                      "<layer name=\"bad\" width=\"2\" height=\"2\">" +
                                      "<data encoding=\"base64\" compression=\"gzip\">AAECAwQFBgcICQ==</data></layer>");
+
+        Assert.All(info.Layers.Single().Tiles, gid => Assert.Equal(0u, gid));
+    }
+
+    [Fact]
+    public void Parse_AGzipLayer_ReadsItsTiles()
+    {
+        var info = TmxTestMaps.Parse(TmxTestMaps.TilesetWithoutImage +
+                                     TmxTestMaps.GzipLayer("ground", corruptChecksum: false, 1, 0, 0, 2));
+
+        Assert.Equal(new uint[] { 1, 0, 0, 2 }, info.Layers.Single().Tiles);
+    }
+
+    [Fact]
+    public void Parse_AGzipLayerWithABadChecksum_LeavesTheLayerEmpty()
+    {
+        var info = TmxTestMaps.Parse(TmxTestMaps.TilesetWithoutImage +
+                                     TmxTestMaps.GzipLayer("ground", corruptChecksum: true, 1, 0, 0, 2));
 
         Assert.All(info.Layers.Single().Tiles, gid => Assert.Equal(0u, gid));
     }

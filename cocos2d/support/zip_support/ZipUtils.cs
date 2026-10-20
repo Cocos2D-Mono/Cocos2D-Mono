@@ -25,9 +25,9 @@ THE SOFTWARE.
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
-using WP7Contrib.Communications.Compression;
 
 namespace Cocos2D;
 
@@ -61,7 +61,7 @@ public class ZipUtils
         MemoryStream ms = new MemoryStream(parameterout, true);
         try
         {
-            GZipStream gs = new GZipStream(new MemoryStream(parameterin, false)); // , CompressionMode.Decompress, false);
+            using GZipStream gs = new GZipStream(new MemoryStream(parameterin, false), CompressionMode.Decompress);
             gs.CopyTo(ms);
             return ((int)ms.Length);
         }

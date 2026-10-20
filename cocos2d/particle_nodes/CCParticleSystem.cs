@@ -1,10 +1,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using GZipInputStream=WP7Contrib.Communications.Compression.GZipStream; // Found in Support/Compression/GZipStream
 
 namespace Cocos2D;
 
@@ -616,8 +616,8 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
         else {
 
             try {
-            var gzipInputStream = 
-                new GZipInputStream(new MemoryStream(dataBytes));
+            using var gzipInputStream =
+                new GZipStream(new MemoryStream(dataBytes), CompressionMode.Decompress);
 
 
             MemoryStream zipoutStream = new MemoryStream();

@@ -62,6 +62,10 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 
   Overrides of the converters' `ConvertFrom` and `ConvertTo` should declare `context`,
   `culture` and `ConvertTo`'s `value` nullable, as `TypeConverter` does.
+- **Gzip data is decompressed with .NET's `System.IO.Compression`.** That covers TMX layers with
+  `compression="gzip"`, gzip-compressed particle textures and `ZipUtils.InflateMemory`. The engine
+  used to bundle an internal port of an old zlib library, from before Windows Phone had
+  `System.IO.Compression`; it's removed. No public API changes.
 
 ### Fixed
 
@@ -106,6 +110,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - The `CCPoint`, `CCSize` and `CCRect` type converters convert a null value to an empty string,
   as `TypeConverter` does, instead of throwing `NullReferenceException`. For example,
   `TypeDescriptor.GetConverter(typeof(CCPoint)).ConvertToString(null)`.
+- Gzip data whose checksum doesn't match is rejected, like other data that can't be
+  decompressed: a TMX layer stays empty, and `ZipUtils.InflateMemory` returns 0. The checksum
+  used to go unchecked, so corrupt data became wrong tiles or pixels.
 
 ## 2.7.0 - 2026-10-16
 

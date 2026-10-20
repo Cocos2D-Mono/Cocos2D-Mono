@@ -413,6 +413,9 @@ public class TestController : CCLayer
             case (int)TestCases.TEST_GRADIENT:
                 pScene = new GradientTestScene();
                 break;
+            case (int)TestCases.TEST_GZIP:
+                pScene = new GzipTestScene();
+                break;
             case (int)TestCases.TEST_PIXEL_PERFECT:
                 pScene = new PixelPerfectTestScene();
                 break;

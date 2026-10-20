@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 
@@ -58,7 +57,7 @@ namespace Cocos2D;
 		}
 		internal static bool DeSerializeBool(StreamReader sr)
 		{
-			string s = sr.ReadLine();
+			string? s = sr.ReadLine();
 			if (s == null)
 			{
 				CCLog.Log("DeSerializeBool: null");
@@ -68,7 +67,7 @@ namespace Cocos2D;
 		}
 		internal static float DeSerializeFloat(StreamReader sr)
 		{
-			string s = sr.ReadLine();
+			string? s = sr.ReadLine();
 			if (s == null)
 			{
 				CCLog.Log("DeSerializeFloat: null");
@@ -78,7 +77,7 @@ namespace Cocos2D;
 		}
 		internal static int DeSerializeInt(StreamReader sr)
 		{
-			string s = sr.ReadLine();
+			string? s = sr.ReadLine();
 			if (s == null)
 			{
 				CCLog.Log("DeSerializeInt: null");
@@ -94,7 +93,7 @@ namespace Cocos2D;
 		}
 		internal static CCSize DeSerializeSize(StreamReader sr)
 		{
-			string x = sr.ReadLine();
+			string? x = sr.ReadLine();
 			if(x == null ){
 				CCLog.Log("DeSerializeSize: null");
 				return(CCSize.Zero);
@@ -107,7 +106,7 @@ namespace Cocos2D;
 		}
 		internal static CCPoint DeSerializePoint(StreamReader sr)
 		{
-			string x = sr.ReadLine();
+			string? x = sr.ReadLine();
 			if (x == null)
 			{
 				CCLog.Log("DeSerializePoint: null");

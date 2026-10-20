@@ -48,6 +48,20 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 
   Overrides of `CCTMXLayer.InitWithTilesetInfo` and `CCTMXTiledMap.InitWithTmxFile` must call
   the base method; the compiler now checks.
+- **Nullable annotations for the support helpers** (`CCUserDefault`, `CCObjectPool`, the
+  `CCPoint`, `CCSize` and `CCRect` type converters, `CCUtils` and `CCImageTGA`). The visible
+  changes:
+  - `CCUserDefault.GetStringForKey` accepts a null default, which it returns for a missing key.
+    With a non-null default, the result is non-null.
+  - `CCObjectPool`'s optional `parent` is nullable.
+  - `CCPointConverter.CCPointFromString`, `CCSizeConverter.CCSizeFromString`,
+    `CCRectConverter.CCRectFromString` and `CCUtils.SplitWithForm` accept null, which gives
+    zero (or false), as it already did.
+  - `CCImageTGA.imageData` is an empty array, not null, for an image made with the
+    parameterless constructor.
+
+  Overrides of the converters' `ConvertFrom` and `ConvertTo` should declare `context`,
+  `culture` and `ConvertTo`'s `value` nullable, as `TypeConverter` does.
 
 ### Fixed
 
@@ -89,6 +103,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   names the element, instead of `NullReferenceException`.
 - `CCTMXLayer` throws `ArgumentException` for a tileset with no image, or one whose image can't
   be loaded. It used to fail inside the texture cache or throw `NullReferenceException`.
+- The `CCPoint`, `CCSize` and `CCRect` type converters convert a null value to an empty string,
+  as `TypeConverter` does, instead of throwing `NullReferenceException`. For example,
+  `TypeDescriptor.GetConverter(typeof(CCPoint)).ConvertToString(null)`.
 
 ## 2.7.0 - 2026-10-16
 

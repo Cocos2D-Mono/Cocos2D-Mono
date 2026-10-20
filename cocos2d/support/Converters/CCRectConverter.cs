@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -14,7 +13,7 @@ namespace Cocos2D;
 		// The ITypeDescriptorContext interface provides the context for the
 		// conversion. Typically, this interface is used at design time to 
 		// provide information about the design-time container.
-		public override bool CanConvertFrom(ITypeDescriptorContext context, 
+		public override bool CanConvertFrom(ITypeDescriptorContext? context,
 		                                   Type sourceType) {
 		
 			if (sourceType == typeof(string)) {
@@ -23,8 +22,8 @@ namespace Cocos2D;
 			return base.CanConvertFrom(context, sourceType);
 		}
 		// Overrides the ConvertFrom method of TypeConverter.
-		public override object ConvertFrom(ITypeDescriptorContext context, 
-		                                   CultureInfo culture, object value) {
+		public override object? ConvertFrom(ITypeDescriptorContext? context,
+		                                    CultureInfo? culture, object value) {
 			if (value is string) {
 				return CCRectFromString(value as String);
 			}
@@ -32,16 +31,17 @@ namespace Cocos2D;
 		}
 
 		// Overrides the ConvertTo method of TypeConverter.
-		public override object ConvertTo(ITypeDescriptorContext context, 
-		                                 CultureInfo culture, object value, Type destinationType) {  
-			if (destinationType == typeof(string)) {
+		public override object? ConvertTo(ITypeDescriptorContext? context,
+		                                  CultureInfo? culture, object? value, Type destinationType) {
+			// A null value goes to the base class, which converts it to an empty string.
+			if (destinationType == typeof(string) && value != null) {
 				return "{" + ((CCRect)value).Origin.X + "," + ((CCRect)value).Origin.Y + "," + 
 					((CCRect)value).Size.Width + "," + ((CCRect)value).Size.Height + "}";
 			}
 			return base.ConvertTo(context, culture, value, destinationType);
 		}
 
-		public static CCRect CCRectFromString(string pszContent)
+		public static CCRect CCRectFromString(string? pszContent)
 		{
 			CCRect result = CCRect.Zero;
 			

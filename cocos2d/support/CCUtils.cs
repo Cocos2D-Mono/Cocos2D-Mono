@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010 cocos2d-x.org
 Copyright (c) 2011-2012 openxlive.com
@@ -171,7 +170,7 @@ public class CCUtils
 		// if the form is right,the string will be splited into the parameter strs;
 		// or the parameter strs will be empty.
 		// if the form is right return true,else return false.
-		public static bool SplitWithForm(string pStr, List<string> strs)
+		public static bool SplitWithForm(string? pStr, List<string> strs)
 		{
 			bool bRet = false;
 

@@ -61,7 +61,7 @@
 
     MonoGame publishes no maccatalyst or tvos package (still true at 3.8.5), so those
     TFMs build against the MonoGame.Framework assemblies produced by our fork:
-      https://github.com/Cocos2D-Mono/MonoGame   (branch feature/mac-catalyst-support)
+      https://github.com/Cocos2D-Mono/MonoGame   (branch cocos2d-mono)
       dotnet build MonoGame.Framework/MonoGame.Framework.MacCatalyst.csproj -c <Configuration>
       dotnet build MonoGame.Framework/MonoGame.Framework.tvOS.csproj -c <Configuration>
     which write Artifacts/MonoGame.Framework/{MacCatalyst,tvOS}/<Configuration>/MonoGame.Framework.dll.

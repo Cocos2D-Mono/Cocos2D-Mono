@@ -56,6 +56,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   `NullReferenceException` when it updates. It has no track to follow, so it stays where it is.
 - `CCParallaxScrollNode`'s sprite sheet constructor throws `ArgumentException` for a sheet whose
   first frame has no texture, instead of `NullReferenceException`.
+- `CCProgressTimer`'s constructor and `Sprite` setter throw `ArgumentNullException` for a null
+  sprite. The constructor used to make a timer that drew nothing, and replacing a sprite with
+  null threw `NullReferenceException` after clearing it.
 
 ## 2.7.0 - 2026-10-16
 

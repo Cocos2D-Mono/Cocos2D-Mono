@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -80,6 +81,9 @@ public class CCProgressTimer : CCNode
         [MemberNotNull(nameof(m_pSprite))]
         set
         {
+            // A timer draws through its sprite; null would leave it with none.
+            ArgumentNullException.ThrowIfNull(value);
+
             if (m_pSprite != value)
             {
                 m_pSprite = value;

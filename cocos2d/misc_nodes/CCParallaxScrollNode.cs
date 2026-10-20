@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,8 +14,8 @@ public class CCParallaxScrollNode : CCNode
     private const float kDefaultPTMRatio = 32f;
 
     private List<CCParallaxScrollOffset> _scrollOffsets;
-    private CCSpriteBatchNode _batch;
-    private CCSpriteSheet _spriteSheet;
+    private CCSpriteBatchNode? _batch;
+    private CCSpriteSheet? _spriteSheet;
 
     /// <summary>
     /// Scaling ratio for real world size to game world size.
@@ -36,7 +35,8 @@ public class CCParallaxScrollNode : CCNode
     {
         _spriteSheet = sheet;
         _scrollOffsets = new List<CCParallaxScrollOffset>();
-        _batch = new CCSpriteBatchNode(sheet.Frames[0].Texture);
+        _batch = new CCSpriteBatchNode(sheet.Frames[0].Texture
+            ?? throw new ArgumentException("The sprite sheet's first frame has no texture.", nameof(sheet)));
         PTMRatio = kDefaultPTMRatio;
     }
     /// <summary>
@@ -234,7 +234,7 @@ public class CCParallaxScrollNode : CCNode
         }
     }
 
-    public CCSpriteBatchNode BatchNode
+    public CCSpriteBatchNode? BatchNode
     {
         get
         {

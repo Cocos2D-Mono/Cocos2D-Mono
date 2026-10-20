@@ -22,6 +22,19 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 
   Overrides of `CCMenuItemFont.InitWithString` must set the font name, for example by calling
   the base method; the compiler now checks.
+- **Nullable annotations for the misc nodes** (the clipping, draw, lightning, motion streak,
+  parallax scroll, progress timer and render texture nodes). The visible changes:
+  - `CCClippingNode.Stencil` is nullable, and so is the stencil `Init` takes: a clipping node
+    made with the parameterless constructor has none.
+  - `CCMotionStreak.Texture` is nullable: a streak made with the parameterless constructor has
+    none, and neither has one whose texture file couldn't be loaded.
+  - `CCParallaxScrollNode.BatchNode` is nullable: a node made with the parameterless
+    constructor doesn't batch its sprites.
+
+  Overrides of `CCDrawNode.Init` and `CCRenderTexture.InitWithWidthAndHeight` must call the
+  base method, and overrides of `CCProgressTimer.InitWithSprite` must set the sprite, for
+  example by calling the base method; the compiler now checks. Overrides of
+  `CCMotionStreak.InitWithFade` that take a texture should declare it nullable.
 
 ### Fixed
 
@@ -39,6 +52,10 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   label, or whose label has no text, instead of `NullReferenceException`. So do
   `CCMenuItemFont`'s `ItemFontName`, `ItemFontSize` and `Color` setters, which rebuild the
   label from its text.
+- A `CCLightningStreak` made with the parameterless constructor no longer throws
+  `NullReferenceException` when it updates. It has no track to follow, so it stays where it is.
+- `CCParallaxScrollNode`'s sprite sheet constructor throws `ArgumentException` for a sheet whose
+  first frame has no texture, instead of `NullReferenceException`.
 
 ## 2.7.0 - 2026-10-16
 

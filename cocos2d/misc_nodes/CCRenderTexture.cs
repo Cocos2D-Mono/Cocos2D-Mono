@@ -1,5 +1,5 @@
-#nullable disable
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -17,6 +17,12 @@ public partial class CCRenderTexture : CCNode
     public CCRenderTexture()
     {
         m_ePixelFormat = SurfaceFormat.Color;
+
+        // Set by InitWithWidthAndHeight, which the other constructors call and a subclass using
+        // this one must call.
+        _renderTarget2D = null!;
+        m_pSprite = null!;
+        m_pTexture = null!;
     }
 
     public CCSprite Sprite
@@ -42,16 +48,15 @@ public partial class CCRenderTexture : CCNode
 
     private void TextureReInit()
     {
-        _renderTarget2D = null;
-        m_pTexture = null;
+        // MakeTexture replaces the render target, texture and sprite.
         if (m_pSprite != null)
         {
             m_pSprite.RemoveFromParent();
-            m_pSprite = null;
         }
         MakeTexture();
     }
 
+    [MemberNotNull(nameof(_renderTarget2D), nameof(m_pSprite), nameof(m_pTexture))]
     private void MakeTexture()
     {
         m_pTexture = new CCTexture2D();
@@ -75,6 +80,7 @@ public partial class CCRenderTexture : CCNode
     private RenderTargetUsage _usage;
     private int _width, _height;
 
+    [MemberNotNull(nameof(_renderTarget2D), nameof(m_pSprite), nameof(m_pTexture))]
     protected virtual bool InitWithWidthAndHeight(int w, int h, SurfaceFormat colorFormat, DepthFormat depthFormat, RenderTargetUsage usage)
     {
         _width = (int)Math.Ceiling(w * CCMacros.CCContentScaleFactor());
@@ -160,7 +166,7 @@ public partial class CCRenderTexture : CCNode
 
         CCDirector director = CCDirector.SharedDirector;
 
-        CCDrawManager.SetRenderTarget((CCTexture2D) null);
+        CCDrawManager.SetRenderTarget((CCTexture2D?) null);
 
         director.Projection = director.Projection;
     }

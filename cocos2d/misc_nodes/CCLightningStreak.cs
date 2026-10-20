@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +7,8 @@ namespace Cocos2D;
 
 public class CCLightningStreak : CCMotionStreak
 {
-    private CCLightningTrack _Track;
+    // Null for a streak made with the parameterless constructor.
+    private CCLightningTrack? _Track;
     private float _CurrentTime = 0f;
     private bool _Cyclical = false;
     private float _StreakLifetime = 1f;
@@ -100,7 +100,11 @@ public class CCLightningStreak : CCMotionStreak
                 _IsComplete = true;
             }
         }
-        Position = _Track.GetPoint(_CurrentTime / Duration);
+        // A streak made with the parameterless constructor has no track to follow.
+        if (_Track != null)
+        {
+            Position = _Track.GetPoint(_CurrentTime / Duration);
+        }
         base.Update(delta);
     }
 }

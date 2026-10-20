@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
@@ -15,7 +14,8 @@ public class CCShapeHandle
 {
     internal int StartIndex;
     internal int VertexCount;
-    internal CCDrawNodeRetained Owner;
+    // Null for a handle made with new rather than by a node.
+    internal CCDrawNodeRetained? Owner;
     internal bool Active = true;
 
     /// <summary>
@@ -50,7 +50,7 @@ public class CCDrawNodeRetained : CCNode
     private List<VertexPositionColor> _vertices;
     private List<CCShapeHandle> _shapes;
     private CCBlendFunc _blendFunc;
-    private VertexPositionColor[] _drawBuffer;
+    private VertexPositionColor[]? _drawBuffer;
     private int _drawBufferCount;
     private bool _dirty;
 

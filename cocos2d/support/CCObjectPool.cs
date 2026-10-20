@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 
@@ -36,14 +35,14 @@ public class CCObjectPool<T> where T : CCNode, new()
 {
     private readonly List<T> _pool;
     private readonly List<T> _active;
-    private readonly CCNode _parent;
+    private readonly CCNode? _parent;
 
     /// <summary>
     /// Creates a new object pool.
     /// </summary>
     /// <param name="parent">Optional parent node. When set, new objects are automatically added as children.</param>
     /// <param name="initialSize">Number of objects to pre-allocate.</param>
-    public CCObjectPool(CCNode parent = null, int initialSize = 0)
+    public CCObjectPool(CCNode? parent = null, int initialSize = 0)
     {
         _pool = new List<T>(Math.Max(initialSize, 8));
         _active = new List<T>(Math.Max(initialSize, 8));

@@ -1,4 +1,3 @@
-#nullable disable
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -83,6 +82,7 @@ public class CCParallaxNode : CCNode
             for (int i = 0; i < m_pParallaxArray.Count; i++)
             {
                 var point = m_pParallaxArray[i];
+                Debug.Assert(point.Child != null, "AddChild gives every point object a child");
                 float x = -pos.X + pos.X * point.Ratio.X + point.Offset.X;
                 float y = -pos.Y + pos.Y * point.Ratio.Y + point.Offset.Y;
                 point.Child.Position = new CCPoint(x, y);

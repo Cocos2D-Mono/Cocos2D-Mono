@@ -1,7 +1,7 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Cocos2D;
@@ -15,11 +15,11 @@ public class CCTMXLayer : CCSpriteBatchNode
     protected float m_fAlphaFuncValue;
     protected float m_fContentScaleFactor;
     protected int m_nVertexZvalue;
-    protected List<int> m_pAtlasIndexArray;
+    protected List<int>? m_pAtlasIndexArray;
     private Dictionary<string, string> _properties;
-    protected CCSprite m_pReusedTile;
+    protected CCSprite? m_pReusedTile;
     private CCTMXTilesetInfo _tileSet;
-    private uint[] _tiles;
+    private uint[]? _tiles;
     protected string m_sLayerName;
     private CCSize _layerSize;
 
@@ -42,9 +42,9 @@ public class CCTMXLayer : CCSpriteBatchNode
         set { _mapTileSize = value; }
     }
 
-    /** pointer to the map of tiles */
+    /** pointer to the map of tiles. Null once ReleaseMap has dropped it. */
 
-    public uint[] Tiles
+    public uint[]? Tiles
     {
         get { return _tiles; }
         set { _tiles = value; }
@@ -89,6 +89,7 @@ public class CCTMXLayer : CCSpriteBatchNode
 
     /** initializes a CCTMXLayer with a tileset info, a layer info and a map info */
 
+    [MemberNotNull(nameof(_properties), nameof(_tileSet), nameof(m_sLayerName))]
     protected virtual bool InitWithTilesetInfo(CCTMXTilesetInfo tilesetInfo, CCTMXLayerInfo layerInfo, CCTMXMapInfo mapInfo)
     {
         // XXX: is 35% a good estimate ?
@@ -96,48 +97,47 @@ public class CCTMXLayer : CCSpriteBatchNode
         float totalNumberOfTiles = size.Width * size.Height;
         float capacity = totalNumberOfTiles * 0.35f + 1; // 35 percent is occupied ?
 
-        CCTexture2D texture = null;
-        if (tilesetInfo != null)
-        {
-            texture = CCTextureCache.SharedTextureCache.AddImage(tilesetInfo.m_sSourceImage);
-        }
+        // The layer draws its tiles from the tileset's image.
+        string image = tilesetInfo.m_sSourceImage
+            ?? throw new ArgumentException("The tileset '" + tilesetInfo.m_sName + "' has no image.", nameof(tilesetInfo));
+        CCTexture2D texture = CCTextureCache.SharedTextureCache.AddImage(image)
+            ?? throw new ArgumentException("The tileset image '" + image + "' couldn't be loaded.", nameof(tilesetInfo));
 
-        if (base.InitWithTexture(texture, (int) capacity))
-        {
-            // layerInfo
-            m_sLayerName = layerInfo.Name;
-            _layerSize = size;
-            _tiles = layerInfo.Tiles;
-            m_uMinGID = layerInfo.MinGID;
-            m_uMaxGID = layerInfo.MaxGID;
-            m_cOpacity = layerInfo.Opacity;
-            Properties = new Dictionary<string, string>(layerInfo.Properties);
-            m_fContentScaleFactor = CCDirector.SharedDirector.ContentScaleFactor;
+        // CCSpriteBatchNode's InitWithTexture always succeeds.
+        base.InitWithTexture(texture, (int) capacity);
 
-            // tilesetInfo
-            _tileSet = tilesetInfo;
+        // layerInfo
+        m_sLayerName = layerInfo.Name;
+        _layerSize = size;
+        _tiles = layerInfo.Tiles;
+        m_uMinGID = layerInfo.MinGID;
+        m_uMaxGID = layerInfo.MaxGID;
+        m_cOpacity = layerInfo.Opacity;
+        _properties = new Dictionary<string, string>(layerInfo.Properties);
+        m_fContentScaleFactor = CCDirector.SharedDirector.ContentScaleFactor;
 
-            // mapInfo
-            _mapTileSize = mapInfo.TileSize;
-            _layerOrientation = (CCTMXOrientation) mapInfo.Orientation;
+        // tilesetInfo
+        _tileSet = tilesetInfo;
 
-            // offset (after layer orientation is set);
-            CCPoint offset = ApplyLayerOffset(layerInfo.Offset);
-            Position = offset.PixelsToPoints();
+        // mapInfo
+        _mapTileSize = mapInfo.TileSize;
+        _layerOrientation = (CCTMXOrientation) mapInfo.Orientation;
 
-            m_pAtlasIndexArray = new List<int>((int) totalNumberOfTiles);
+        // offset (after layer orientation is set);
+        CCPoint offset = ApplyLayerOffset(layerInfo.Offset);
+        Position = offset.PixelsToPoints();
 
-            var contentSize = new CCSize(_layerSize.Width * _mapTileSize.Width,
-                                  _layerSize.Height * _mapTileSize.Height);
+        m_pAtlasIndexArray = new List<int>((int) totalNumberOfTiles);
 
-            ContentSize = contentSize.PixelsToPoints();
+        var contentSize = new CCSize(_layerSize.Width * _mapTileSize.Width,
+                              _layerSize.Height * _mapTileSize.Height);
 
-            m_bUseAutomaticVertexZ = false;
-            m_nVertexZvalue = 0;
+        ContentSize = contentSize.PixelsToPoints();
 
-            return true;
-        }
-        return false;
+        m_bUseAutomaticVertexZ = false;
+        m_nVertexZvalue = 0;
+
+        return true;
     }
 
     /** dealloc the map that contains the tile position from memory.
@@ -159,19 +159,19 @@ public class CCTMXLayer : CCSpriteBatchNode
     - or layer.removeTileAt(ccp(x,y));
     */
 
-    public virtual CCSprite TileAt(CCPoint pos)
+    public virtual CCSprite? TileAt(CCPoint pos)
     {
         Debug.Assert(pos.X < _layerSize.Width && pos.Y < _layerSize.Height && pos.X >= 0 && pos.Y >= 0, "TMXLayer: invalid position");
         Debug.Assert(_tiles != null && m_pAtlasIndexArray != null, "TMXLayer: the tiles map has been released");
 
-        CCSprite tile = null;
+        CCSprite? tile = null;
         uint gid = TileGIDAt(pos);
 
         // if GID == 0, then no tile is present
         if (gid != 0)
         {
             var z = (int) (pos.X + pos.Y * _layerSize.Width);
-            tile = (CCSprite) GetChildByTag(z);
+            tile = (CCSprite?) GetChildByTag(z);
 
             // tile not created yet. create it
             if (tile == null)
@@ -275,7 +275,7 @@ public class CCTMXLayer : CCSpriteBatchNode
             else
             {
                 var z = (int) (pos.X + pos.Y * _layerSize.Width);
-                var sprite = (CCSprite) GetChildByTag(z);
+                var sprite = (CCSprite?) GetChildByTag(z);
                 if (sprite != null)
                 {
                     CCRect rect = _tileSet.RectForGID(gid);
@@ -317,7 +317,7 @@ public class CCTMXLayer : CCSpriteBatchNode
             m_pAtlasIndexArray.RemoveAt(atlasIndex);
 
             // remove it from sprites and/or texture atlas
-            var sprite = (CCSprite) GetChildByTag(z);
+            var sprite = (CCSprite?) GetChildByTag(z);
             if (sprite != null)
             {
                 base.RemoveChild(sprite, true);
@@ -385,6 +385,8 @@ public class CCTMXLayer : CCSpriteBatchNode
 
     public virtual void SetupTiles()
     {
+        Debug.Assert(_tiles != null, "TMXLayer: the tiles map has been released");
+
         // Optimization: quick hack that sets the image size on the tileset
         _tileSet.m_tImageSize = m_pobTextureAtlas.Texture.ContentSizeInPixels;
 
@@ -448,7 +450,8 @@ public class CCTMXLayer : CCSpriteBatchNode
             return;
         }
 
-        Debug.Assert(m_pChildren.Contains(sprite), "Tile does not belong to TMXLayer");
+        Debug.Assert(m_pChildren != null && m_pChildren.Contains(sprite), "Tile does not belong to TMXLayer");
+        Debug.Assert(_tiles != null && m_pAtlasIndexArray != null, "TMXLayer: the tiles map has been released");
 
         int atlasIndex = sprite.AtlasIndex;
         int zz = m_pAtlasIndexArray[atlasIndex];
@@ -512,6 +515,7 @@ public class CCTMXLayer : CCSpriteBatchNode
 
     private CCSprite AppendTileForGID(uint gid, CCPoint pos)
     {
+        Debug.Assert(m_pAtlasIndexArray != null, "TMXLayer: the tiles map has been released");
         CCRect rect = _tileSet.RectForGID(gid);
         rect = rect.PixelsToPoints();
 
@@ -537,6 +541,7 @@ public class CCTMXLayer : CCSpriteBatchNode
 
     private CCSprite InsertTileForGID(uint gid, CCPoint pos)
     {
+        Debug.Assert(_tiles != null && m_pAtlasIndexArray != null, "TMXLayer: the tiles map has been released");
         CCRect rect = _tileSet.RectForGID(gid);
         rect = rect.PixelsToPoints();
 
@@ -577,6 +582,7 @@ public class CCTMXLayer : CCSpriteBatchNode
 
     private CCSprite UpdateTileForGID(uint gid, CCPoint pos)
     {
+        Debug.Assert(_tiles != null, "TMXLayer: the tiles map has been released");
         CCRect rect = _tileSet.RectForGID(gid);
         rect = new CCRect(rect.Origin.X / m_fContentScaleFactor, rect.Origin.Y / m_fContentScaleFactor, rect.Size.Width / m_fContentScaleFactor,
                           rect.Size.Height / m_fContentScaleFactor);
@@ -746,6 +752,7 @@ public class CCTMXLayer : CCSpriteBatchNode
     // index
     private int AtlasIndexForExistantZ(int z)
     {
+        Debug.Assert(m_pAtlasIndexArray != null, "TMXLayer: the tiles map has been released");
         int index = m_pAtlasIndexArray.BinarySearch(z);
 
         Debug.Assert(index != -1, "TMX atlas index not found. Shall not happen");
@@ -755,6 +762,7 @@ public class CCTMXLayer : CCSpriteBatchNode
 
     private int AtlasIndexForNewZ(int z)
     {
+        Debug.Assert(m_pAtlasIndexArray != null, "TMXLayer: the tiles map has been released");
         // XXX: This can be improved with a sort of binary search
         int i, count;
         for (i = 0, count = m_pAtlasIndexArray.Count; i < count; i++)

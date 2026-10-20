@@ -1,7 +1,7 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework;
 
 namespace Cocos2D;
@@ -10,10 +10,10 @@ public class CCTileMapAtlas : CCAtlasNode
 {
     //! numbers of tiles to render
     protected int m_nItemsToRender;
-    protected Dictionary<CCGridSize, int> m_pPosToAtlasIndex;
-    private CCImageTGA _tgaInfo;
+    protected Dictionary<CCGridSize, int>? m_pPosToAtlasIndex;
+    private CCImageTGA? _tgaInfo;
 
-    public CCImageTGA TGAInfo
+    public CCImageTGA? TGAInfo
     {
         get { return _tgaInfo; }
         set { _tgaInfo = value; }
@@ -80,6 +80,7 @@ public class CCTileMapAtlas : CCAtlasNode
         m_pPosToAtlasIndex = null;
     }
 
+    [MemberNotNull(nameof(_tgaInfo))]
     private void LoadTgAfile(string file)
     {
         Debug.Assert(!string.IsNullOrEmpty(file), "file must be non-nil");
@@ -164,6 +165,7 @@ public class CCTileMapAtlas : CCAtlasNode
     public override void UpdateAtlasValues()
     {
         Debug.Assert(_tgaInfo != null, "tgaInfo must be non-nil");
+        Debug.Assert(m_pPosToAtlasIndex != null, "posToAtlasIndex must be non-nil");
 
         int total = 0;
 

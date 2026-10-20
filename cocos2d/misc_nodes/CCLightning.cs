@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,10 +33,10 @@ public class CCLightning : CCDrawNode
     internal class BoltStatus 
     {
         internal CCLightningBolt Bolt;
-        internal List<CCPoint> Segments;
+        internal required List<CCPoint> Segments;
         internal float CurrentTime;
         internal int LastSegmentIndex;
-        internal List<int> DrawNodeVertexIndex;
+        internal required List<int> DrawNodeVertexIndex;
     }
 
     public float Sway

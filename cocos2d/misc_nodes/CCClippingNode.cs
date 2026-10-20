@@ -1,11 +1,10 @@
-#nullable disable
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Cocos2D;
 
 public class CCClippingNode : CCNode
 {
-    protected CCNode m_pStencil;
+    protected CCNode? m_pStencil;
     protected float m_fAlphaThreshold;
     protected bool m_bInverted;
 
@@ -15,7 +14,7 @@ public class CCClippingNode : CCNode
         set { m_bInverted = value; }
     }
 
-    public CCNode Stencil
+    public CCNode? Stencil
     {
         get { return m_pStencil; }
         set { m_pStencil = value; }
@@ -42,7 +41,7 @@ public class CCClippingNode : CCNode
         return Init(null);
     }
 
-    public bool Init(CCNode stencil)
+    public bool Init(CCNode? stencil)
     {
         m_pStencil = stencil;
         m_fAlphaThreshold = 1;

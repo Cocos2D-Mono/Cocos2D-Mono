@@ -1,4 +1,5 @@
-#nullable disable
+using System;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -32,7 +33,7 @@ public class CCProgressTimer : CCNode
     protected float m_fPercentage;
     protected int m_nVertexDataCount;
     protected CCSprite m_pSprite;
-    protected CCV3F_C4B_T2F[] m_pVertexData;
+    protected CCV3F_C4B_T2F[]? m_pVertexData;
     protected CCPoint m_tBarChangeRate;
     protected CCPoint m_tMidpoint;
 
@@ -77,8 +78,12 @@ public class CCProgressTimer : CCNode
     public CCSprite Sprite
     {
         get { return m_pSprite; }
+        [MemberNotNull(nameof(m_pSprite))]
         set
         {
+            // A timer draws through its sprite; null would leave it with none.
+            ArgumentNullException.ThrowIfNull(value);
+
             if (m_pSprite != value)
             {
                 m_pSprite = value;
@@ -163,6 +168,7 @@ public class CCProgressTimer : CCNode
 
     #endregion
 
+    [MemberNotNull(nameof(m_pSprite))]
     protected virtual bool InitWithSprite(CCSprite sp)
     {
         Percentage = 0.0f;
@@ -181,7 +187,7 @@ public class CCProgressTimer : CCNode
         return true;
     }
 
-    private static short[] s_pIndexes;
+    private static short[]? s_pIndexes;
 
     public override void Draw()
     {

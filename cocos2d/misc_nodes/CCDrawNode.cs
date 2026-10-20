@@ -1,6 +1,6 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -26,6 +26,7 @@ public class CCDrawNode : CCNode
         set { _blendFunc = value; }
     }
 
+    [MemberNotNull(nameof(_vertices))]
     public override bool Init()
     {
         base.Init();
@@ -520,7 +521,7 @@ public class CCDrawNode : CCNode
         set;
     }
 
-    private VertexPositionColor[] _toDraw;
+    private VertexPositionColor[]? _toDraw;
 
     public override void Draw()
     {

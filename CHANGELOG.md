@@ -111,8 +111,12 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   as `TypeConverter` does, instead of throwing `NullReferenceException`. For example,
   `TypeDescriptor.GetConverter(typeof(CCPoint)).ConvertToString(null)`.
 - Gzip data whose checksum doesn't match is rejected, like other data that can't be
-  decompressed: a TMX layer stays empty, and `ZipUtils.InflateMemory` returns 0. The checksum
-  used to go unchecked, so corrupt data became wrong tiles or pixels.
+  decompressed: a TMX layer stays empty, `ZipUtils.InflateMemory` returns 0, and a particle
+  system gets the default texture. The checksum used to go unchecked, so corrupt data became
+  wrong tiles or pixels.
+- A particle system whose embedded texture can't be decompressed or decoded gets the default
+  texture, as when decoding throws. It used to be left without a texture, and debug builds
+  failed an assertion.
 
 ## 2.7.0 - 2026-10-16
 

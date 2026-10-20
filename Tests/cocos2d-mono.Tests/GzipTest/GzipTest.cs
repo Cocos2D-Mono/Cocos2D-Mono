@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -9,8 +10,9 @@ namespace tests;
 
 /// <summary>
 /// Checks the engine's gzip paths on the device: a TMX map with a gzip layer, particle systems
-/// whose textures are embedded as gzip data, and ZipUtils.InflateMemory with valid data and with
-/// a bad checksum. Each check shows PASS or FAIL, and is logged with a "GzipTest:" prefix.
+/// whose textures are embedded as gzip data (and one whose data is corrupt, which should get the
+/// default texture), and ZipUtils.InflateMemory with valid data and with a bad checksum. Each
+/// check shows PASS or FAIL, and is logged with a "GzipTest:" prefix.
 /// </summary>
 public class GzipTest : CCLayer
 {
@@ -58,6 +60,17 @@ public class GzipTest : CCLayer
         Check("Particle textures from gzip: " + SizeOf(galaxy) + " and " + SizeOf(upsidedown),
               SizeOf(galaxy) == "32x32" && SizeOf(upsidedown) == "64x64");
 
+        // Galaxy again, with the checksum of its embedded data corrupted. It should fall back to the
+        // default texture.
+        var broken = new CCParticleSystemQuad();
+        broken.InitWithDictionary(CorruptedCopy("Particles/Galaxy.plist"));
+        broken.Position = new CCPoint(s.Width * 0.74f, s.Height * 0.58f);
+        AddChild(broken, 1);
+        // The engine caches its default particle texture under this key.
+        bool usesDefault = broken.Texture != null &&
+                           broken.Texture == CCTextureCache.SharedTextureCache.TextureForKey("__firePngData");
+        Check("Particle with a bad embedded checksum: " + (usesDefault ? "default texture" : SizeOf(broken)), usesDefault);
+
         byte[] text = Encoding.ASCII.GetBytes("hello world");
         byte[] valid = Compress(text, false);
         var output = new byte[64];
@@ -99,6 +112,23 @@ public class GzipTest : CCLayer
     {
         CCTexture2D texture = system.Texture;
         return texture != null ? texture.PixelsWide + "x" + texture.PixelsHigh : "no texture";
+    }
+
+    // A copy of a particle plist whose embedded texture data has a bad gzip checksum. Its texture
+    // name is neither a file nor in the texture cache, so the embedded data is what gets loaded.
+    private static PlistDictionary CorruptedCopy(string plist)
+    {
+        PlistDictionary original = CCContentManager.SharedContentManager.Load<PlistDocument>(plist).Root.AsDictionary;
+        var copy = new PlistDictionary();
+        foreach (KeyValuePair<string, PlistObjectBase> entry in original)
+        {
+            copy[entry.Key] = entry.Value;
+        }
+        byte[] data = Convert.FromBase64String(original["textureImageData"].AsString);
+        data[data.Length - 8] ^= 0xFF;
+        copy["textureImageData"] = new PlistString(Convert.ToBase64String(data));
+        copy["textureFileName"] = new PlistString("GzipTestCorrupt.png");
+        return copy;
     }
 
     // Gzip data made by the BCL's compressor. With corruptChecksum, the CRC-32 in the trailer no

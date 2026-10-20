@@ -1,7 +1,7 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using Cocos2D.Compression.Zlib;
@@ -35,9 +35,9 @@ public class CCTMXMapInfo : ICCSAXDelegator
     protected Dictionary<string, string> m_pProperties;
     protected Dictionary<uint, Dictionary<string, string>> m_pTileProperties;
     protected List<CCTMXTilesetInfo> m_pTilesets;
-    protected byte[] m_sCurrentString;
-    private string _resources;
-    protected string m_sTMXFileName;
+    protected byte[]? m_sCurrentString;
+    private string? _resources;
+    protected string? m_sTMXFileName;
 
     protected CCSize m_tMapSize;
 
@@ -147,7 +147,7 @@ public class CCTMXMapInfo : ICCSAXDelegator
     /// <summary>
     /// ! tmx filename
     /// </summary>
-    public string TMXFileName
+    public string? TMXFileName
     {
         get { return m_sTMXFileName; }
         set { m_sTMXFileName = value; }
@@ -156,7 +156,7 @@ public class CCTMXMapInfo : ICCSAXDelegator
     /// <summary>
     /// ! current string
     /// </summary>
-    public byte[] CurrentString
+    public byte[]? CurrentString
     {
         get { return m_sCurrentString; }
         set { m_sCurrentString = value; }
@@ -173,9 +173,29 @@ public class CCTMXMapInfo : ICCSAXDelegator
 
     #endregion
 
+    // The element a TMX element belongs to, such as the tileset a <tile> describes. A
+    // well-formed file always has one; a malformed one gets an exception that says so.
+    private static T LastParent<T>(List<T> elements, string element, string parent) where T : class
+    {
+        return elements.LastOrDefault()
+            ?? throw new InvalidDataException("TMX: a <" + element + "> element must be inside a <" + parent + "> element.");
+    }
+
+    // A path in the map, such as a tileset's image, relative to the map's file. A map read from
+    // a stream has no file, so the path is relative to its resource path, if it has one.
+    private string PathFromMap(string path)
+    {
+        if (m_sTMXFileName != null)
+        {
+            return CCFileUtils.FullPathFromRelativeFile(path, m_sTMXFileName);
+        }
+        string name = CCFileUtils.RemoveExtension(path);
+        return _resources != null ? Path.Combine(_resources, name) : name;
+    }
+
     #region ICCSAXDelegator Members
 
-    public void StartElement(object ctx, string name, string[] atts)
+    public void StartElement(object ctx, string name, string[]? atts)
     {
         CCTMXMapInfo pTMXMapInfo = this;
         string elementName = name;
@@ -230,7 +250,7 @@ public class CCTMXMapInfo : ICCSAXDelegator
 
                 var isTsxExtension = externalTilesetFilename.ToLower().EndsWith(".tsx");
 
-                externalTilesetFilename = CCFileUtils.FullPathFromRelativeFile(externalTilesetFilename, pTMXMapInfo.TMXFileName);
+                externalTilesetFilename = pTMXMapInfo.PathFromMap(externalTilesetFilename);
 
                 if (isTsxExtension)
                 {
@@ -273,7 +293,7 @@ public class CCTMXMapInfo : ICCSAXDelegator
         }
         else if (elementName == "tile")
         {
-            CCTMXTilesetInfo info = pTMXMapInfo.Tilesets.LastOrDefault();
+            CCTMXTilesetInfo info = LastParent(pTMXMapInfo.Tilesets, "tile", "tileset");
             var dict = new Dictionary<string, string>();
             pTMXMapInfo.ParentGID = (info.m_uFirstGid + uint.Parse(attributeDict["id"]));
             pTMXMapInfo.TileProperties.Add(pTMXMapInfo.ParentGID, dict);
@@ -340,11 +360,11 @@ public class CCTMXMapInfo : ICCSAXDelegator
         }
         else if (elementName == "image")
         {
-            CCTMXTilesetInfo tileset = pTMXMapInfo.Tilesets.LastOrDefault();
+            CCTMXTilesetInfo tileset = LastParent(pTMXMapInfo.Tilesets, "image", "tileset");
 
             // build full path
             string imagename = attributeDict["source"];
-            tileset.m_sSourceImage = CCFileUtils.FullPathFromRelativeFile(imagename, pTMXMapInfo.TMXFileName);
+            tileset.m_sSourceImage = pTMXMapInfo.PathFromMap(imagename);
         }
         else if (elementName == "data")
         {
@@ -374,7 +394,7 @@ public class CCTMXMapInfo : ICCSAXDelegator
         }
         else if (elementName == "object")
         {
-            CCTMXObjectGroup objectGroup = pTMXMapInfo.ObjectGroups.LastOrDefault();
+            CCTMXObjectGroup objectGroup = LastParent(pTMXMapInfo.ObjectGroups, "object", "objectgroup");
 
             // The value for "type" was blank or not a valid class name
             // Create an instance of TMXObjectInfo to store the object and its properties
@@ -426,7 +446,7 @@ public class CCTMXMapInfo : ICCSAXDelegator
             else if (pTMXMapInfo.ParentElement == (int) CCTMXProperty.Layer)
             {
                 // The parent element is the last layer
-                CCTMXLayerInfo layer = pTMXMapInfo.Layers.LastOrDefault();
+                CCTMXLayerInfo layer = LastParent(pTMXMapInfo.Layers, "property", "layer");
                 string value = attributeDict["value"];
                 string key = attributeDict["name"];
                 // Add the property to the layer
@@ -435,7 +455,7 @@ public class CCTMXMapInfo : ICCSAXDelegator
             else if (pTMXMapInfo.ParentElement == (int) CCTMXProperty.ObjectGroup)
             {
                 // The parent element is the last object group
-                CCTMXObjectGroup objectGroup = pTMXMapInfo.ObjectGroups.LastOrDefault();
+                CCTMXObjectGroup objectGroup = LastParent(pTMXMapInfo.ObjectGroups, "property", "objectgroup");
                 string value = attributeDict["value"];
                 string key = attributeDict["name"];
                 objectGroup.Properties.Add(key, value);
@@ -443,8 +463,8 @@ public class CCTMXMapInfo : ICCSAXDelegator
             else if (pTMXMapInfo.ParentElement == (int) CCTMXProperty.Object)
             {
                 // The parent element is the last object
-                CCTMXObjectGroup objectGroup = pTMXMapInfo.ObjectGroups.LastOrDefault();
-                Dictionary<string, string> dict = objectGroup.Objects.LastOrDefault();
+                CCTMXObjectGroup objectGroup = LastParent(pTMXMapInfo.ObjectGroups, "property", "objectgroup");
+                Dictionary<string, string> dict = LastParent(objectGroup.Objects, "property", "object");
 
                 string propertyName = attributeDict["name"];
                 string propertyValue = attributeDict["value"];
@@ -462,7 +482,7 @@ public class CCTMXMapInfo : ICCSAXDelegator
         else if (elementName == "polygon")
         {
             // find parent object's dict and add polygon-points to it
-            CCTMXObjectGroup objectGroup = m_pObjectGroups.LastOrDefault();
+            CCTMXObjectGroup objectGroup = LastParent(m_pObjectGroups, "polygon", "objectgroup");
             var dict = objectGroup.Objects.LastOrDefault();
 
             // get points value string
@@ -497,12 +517,14 @@ public class CCTMXMapInfo : ICCSAXDelegator
     public void EndElement(object ctx, string elementName)
     {
         CCTMXMapInfo pTMXMapInfo = this;
-        byte[] encoded = null;
+        byte[]? encoded = null;
 
         if (elementName == "data" && (pTMXMapInfo.LayerAttribs & (int) CCTMXLayerAttrib.Base64) != 0)
         {
             pTMXMapInfo.StoringCharacters = false;
-            CCTMXLayerInfo layer = pTMXMapInfo.Layers.LastOrDefault();
+            CCTMXLayerInfo layer = LastParent(pTMXMapInfo.Layers, "data", "layer");
+            // The parser hands the element's data to TextHandler before the element ends.
+            Debug.Assert(pTMXMapInfo.CurrentString != null, "TMX: no data was read for the layer");
             if ((pTMXMapInfo.LayerAttribs & ((int) (CCTMXLayerAttrib.Gzip) | (int) CCTMXLayerAttrib.Zlib)) != 0)
             {
                 //gzip compress
@@ -553,6 +575,13 @@ public class CCTMXMapInfo : ICCSAXDelegator
             else
             {
                 encoded = pTMXMapInfo.CurrentString;
+            }
+
+            if (encoded == null)
+            {
+                // The data couldn't be decompressed (logged above), so the layer stays empty.
+                pTMXMapInfo.CurrentString = null;
+                return;
             }
 
             for (int i = 0; i < layer.Tiles.Length; i++)
@@ -617,7 +646,8 @@ public class CCTMXMapInfo : ICCSAXDelegator
         InitWithXml(s, null);
     }
 
-    private void InternalInit(string tmxFileName, string resourcePath)
+    [MemberNotNull(nameof(m_pTilesets), nameof(m_pLayers), nameof(m_pObjectGroups), nameof(m_pProperties), nameof(m_pTileProperties))]
+    private void InternalInit(string? tmxFileName, string? resourcePath)
     {
         m_pTilesets = new List<CCTMXTilesetInfo>();
         m_pLayers = new List<CCTMXLayerInfo>();
@@ -648,13 +678,16 @@ public class CCTMXMapInfo : ICCSAXDelegator
     /// <summary>
     /// initializes a TMX format witha  tmx file
     /// </summary>
+    [MemberNotNull(nameof(m_pTilesets), nameof(m_pLayers), nameof(m_pObjectGroups), nameof(m_pProperties), nameof(m_pTileProperties))]
     protected bool InitWithTmxFile(string tmxFile)
     {
         InternalInit(tmxFile, null);
+        Debug.Assert(m_sTMXFileName != null, "InternalInit sets the file name from tmxFile");
         return ParseXmlFile(m_sTMXFileName);
     }
 
-    protected bool InitWithXml(string tmxString, string resourcePath)
+    [MemberNotNull(nameof(m_pTilesets), nameof(m_pLayers), nameof(m_pObjectGroups), nameof(m_pProperties), nameof(m_pTileProperties))]
+    protected bool InitWithXml(string tmxString, string? resourcePath)
     {
         InternalInit(null, resourcePath);
         return ParseXmlString(tmxString);

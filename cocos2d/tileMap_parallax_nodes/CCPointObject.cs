@@ -1,11 +1,11 @@
-#nullable disable
 
 
 namespace Cocos2D;
 
 public class CCPointObject
 {
-    public CCNode Child;
+    // Set by CCParallaxNode.AddChild; null until then.
+    public CCNode? Child;
     public CCPoint Offset;
     public CCPoint Ratio;
 

@@ -35,6 +35,19 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   base method, and overrides of `CCProgressTimer.InitWithSprite` must set the sprite, for
   example by calling the base method; the compiler now checks. Overrides of
   `CCMotionStreak.InitWithFade` that take a texture should declare it nullable.
+- **Nullable annotations for the tile maps** (TMX maps with their layers, object groups and
+  tilesets, tile map atlases and parallax nodes). The visible changes:
+  - `CCTMXTiledMap.LayerNamed` and `ObjectGroupNamed`, `CCTMXObjectGroup.ObjectNamed` and
+    `CCTMXLayer.TileAt` return null for a name or position with nothing there, as they already
+    did.
+  - `CCTMXLayer.Tiles` and `CCTileMapAtlas.TGAInfo` are nullable: `ReleaseMap` drops them.
+  - `CCTMXMapInfo.TMXFileName` is nullable: a map read from a stream has no file name.
+  - `CCTMXTilesetInfo.m_sName` and `m_sSourceImage`, `CCTMXObjectGroup.GroupName` and
+    `CCPointObject.Child` are nullable until they're set.
+  - `CCTMXLayerInfo.Tiles` is an empty array, not null, for a layer info made with `new`.
+
+  Overrides of `CCTMXLayer.InitWithTilesetInfo` and `CCTMXTiledMap.InitWithTmxFile` must call
+  the base method; the compiler now checks.
 
 ### Fixed
 
@@ -59,6 +72,23 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - `CCProgressTimer`'s constructor and `Sprite` setter throw `ArgumentNullException` for a null
   sprite. The constructor used to make a timer that drew nothing, and replacing a sprite with
   null threw `NullReferenceException` after clearing it.
+- A TMX map with a layer whose tiles are all empty no longer throws `NullReferenceException`
+  when it's built. Such a layer has no tileset to draw with, so it isn't created, as in
+  cocos2d-x 3, and `LayerNamed` returns null for it.
+- A TMX map read from a stream (`CCTMXMapInfo` and `CCTMXTiledMap` from a `StreamReader`) no
+  longer throws `ArgumentNullException` at its first tileset image. With no map file for the
+  image path to be relative to, the path is used as written, without its extension.
+- `CCTMXTiledMap.LayerNamed` returns null on a map with no layers, instead of throwing
+  `NullReferenceException`.
+- `CCTMXObjectGroup.ObjectNamed` skips objects without a name. An unnamed object before the one
+  asked for made it throw `KeyNotFoundException`.
+- Gzip-compressed layer data that can't be decompressed leaves the layer empty, as the logged
+  error intends, instead of throwing `NullReferenceException`.
+- A malformed TMX file with a `<tile>`, `<image>`, `<data>`, `<object>`, `<property>` or
+  `<polygon>` element outside the element it belongs to throws an `InvalidDataException` that
+  names the element, instead of `NullReferenceException`.
+- `CCTMXLayer` throws `ArgumentException` for a tileset with no image, or one whose image can't
+  be loaded. It used to fail inside the texture cache or throw `NullReferenceException`.
 
 ## 2.7.0 - 2026-10-16
 

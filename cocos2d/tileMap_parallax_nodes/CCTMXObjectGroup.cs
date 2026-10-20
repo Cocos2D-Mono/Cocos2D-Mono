@@ -1,4 +1,3 @@
-#nullable disable
 using System.Collections.Generic;
 
 namespace Cocos2D;
@@ -11,7 +10,7 @@ public class CCTMXObjectGroup
     /// <summary>
     /// name of the group
     /// </summary>
-    protected string m_sGroupName;
+    protected string? m_sGroupName;
 
     protected CCPoint m_tPositionOffset;
 
@@ -48,7 +47,7 @@ public class CCTMXObjectGroup
         set { m_pObjects = value; }
     }
 
-    public string GroupName
+    public string? GroupName
     {
         get { return m_sGroupName; }
         set { m_sGroupName = value; }
@@ -70,14 +69,14 @@ public class CCTMXObjectGroup
     /// </summary>
     /// <param name="objectName"></param>
     /// <returns></returns>
-    public Dictionary<string, string> ObjectNamed(string objectName)
+    public Dictionary<string, string>? ObjectNamed(string objectName)
     {
         if (m_pObjects != null && m_pObjects.Count > 0)
         {
             for (int i = 0; i < m_pObjects.Count; i++)
             {
-                string name = m_pObjects[i]["name"];
-                if (name != null && name == objectName)
+                // An object without a name is skipped.
+                if (m_pObjects[i].TryGetValue("name", out var name) && name == objectName)
                 {
                     return m_pObjects[i];
                 }

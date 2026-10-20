@@ -4,6 +4,42 @@ All notable changes to Cocos2D-Mono are recorded here. This file was introduced 
 2.5.10; earlier releases are described in their GitHub release notes / git history.
 The project follows [Semantic Versioning](https://semver.org/) where practical.
 
+## Unreleased
+
+### Changed
+
+- **Nullable annotations for the menus** (`CCMenu` and the menu items). The visible changes:
+  - `CCMenu.SelectedItem` and `FocusedItem` are nullable: no item is selected or has the focus
+    until one is touched or focused.
+  - `CCMenuItem`'s `OnActivated`, `OnSelected` and `OnUnselected` events are nullable, and so
+    is the selector its constructor, `InitWithTarget` and `SetTarget` take.
+  - `CCMenuItemLabel.Label` and `CCMenuItemSprite`'s `NormalImage`, `SelectedImage` and
+    `DisabledImage` are nullable. Each can be set to null, and an item made with the
+    parameterless constructor has none.
+  - `CCMenuItemImage`'s constructors, and `CCMenuItemSprite`'s constructors that take image
+    nodes, accept null for the selected and disabled images. The four-argument ones accept it
+    for the normal image too.
+
+  Overrides of `CCMenuItemFont.InitWithString` must set the font name, for example by calling
+  the base method; the compiler now checks.
+
+### Fixed
+
+- Giving the focus to a `CCMenu` with no items no longer throws `NullReferenceException`.
+- Pressing a gamepad button while a `CCMenu` has the focus but none of its items does no
+  longer throws `NullReferenceException`; nothing is selected.
+- `CCMenu.AddChild` throws `ArgumentException` for a child that isn't a menu item, in release
+  builds as well as debug ones. Release builds used to add it, leaving a null in the menu's
+  item list that threw `NullReferenceException` when the menu entered a scene.
+- A `CCMenuItemToggle` made with the parameterless constructor starts with an empty item list,
+  so `AddSubItem` and `Enabled` no longer throw `NullReferenceException`.
+- Enabling or disabling a `CCMenuItemLabel` that has no label no longer throws
+  `NullReferenceException`.
+- `CCMenuItemLabel.Text` and `SetString` throw `InvalidOperationException` for an item with no
+  label, or whose label has no text, instead of `NullReferenceException`. So do
+  `CCMenuItemFont`'s `ItemFontName`, `ItemFontSize` and `Color` setters, which rebuild the
+  label from its text.
+
 ## 2.7.0 - 2026-10-16
 
 The first nullable reference type annotations. The base nodes, input, layers and scenes,

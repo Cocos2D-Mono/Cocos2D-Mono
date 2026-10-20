@@ -1,4 +1,3 @@
-#nullable disable
 
 using System;
 
@@ -13,9 +12,9 @@ public class CCMenuItem : CCNode
     public const int kCurrentItem = 32767;
     public const uint kZoomActionTag = 0xc0c05002;
 
-    public event Action<CCMenuItem> OnActivated;
-    public event Action<CCMenuItem> OnSelected;
-    public event Action<CCMenuItem> OnUnselected;
+    public event Action<CCMenuItem>? OnActivated;
+    public event Action<CCMenuItem>? OnSelected;
+    public event Action<CCMenuItem>? OnUnselected;
 
     protected static uint _fontSize = 32;
     protected static string _fontName = "arial";
@@ -24,8 +23,8 @@ public class CCMenuItem : CCNode
     protected bool m_bIsEnabled;
     protected bool m_bIsSelected;
 
-    protected string m_functionName;
-    protected Action<CCMenuItem> m_pfnSelector;
+    protected string? m_functionName;
+    protected Action<CCMenuItem>? m_pfnSelector;
 
     public CCMenuItem()
     {
@@ -39,7 +38,7 @@ public class CCMenuItem : CCNode
     /// </summary>
     /// <param name="selector"></param>
     /// <returns></returns>
-    public CCMenuItem(Action<CCMenuItem> selector)
+    public CCMenuItem(Action<CCMenuItem>? selector)
     {
         InitWithTarget(selector);
     }
@@ -60,7 +59,7 @@ public class CCMenuItem : CCNode
     /// </summary>
     /// <param name="selector"></param>
     /// <returns></returns>
-    public bool InitWithTarget(Action<CCMenuItem> selector)
+    public bool InitWithTarget(Action<CCMenuItem>? selector)
     {
         AnchorPoint = new CCPoint(0.5f, 0.5f);
         m_pfnSelector = selector;
@@ -129,7 +128,7 @@ public class CCMenuItem : CCNode
     /// If pszFunctionName is NULL, then unregister it.
     /// </summary>
     /// <param name="pszFunctionName"></param>
-    public virtual void RegisterScriptHandler(string pszFunctionName)
+    public virtual void RegisterScriptHandler(string? pszFunctionName)
     {
         throw new NotImplementedException("CCMenuItem.RegisterScriptHandler is not supported in this version of Cocos2d-XNA");
     }
@@ -139,7 +138,7 @@ public class CCMenuItem : CCNode
     /// item lifecycle.
     /// </summary>
     /// <param name="selector"></param>
-    public virtual void SetTarget(Action<CCMenuItem> selector)
+    public virtual void SetTarget(Action<CCMenuItem>? selector)
     {
         m_pfnSelector = selector;
     }

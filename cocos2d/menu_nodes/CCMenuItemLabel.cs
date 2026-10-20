@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Reflection.Emit;
 
@@ -7,13 +6,13 @@ namespace Cocos2D;
 public class CCMenuItemLabel : CCMenuItem
 {
     protected float m_fOriginalScale;
-    protected CCNode m_pLabel;
+    protected CCNode? m_pLabel;
     protected CCColor3B m_tColorBackup;
     protected CCColor3B m_tDisabledColor;
 
     protected CCMenuItemLabel() {}
 
-    public CCMenuItemLabel(CCNode label, Action<CCMenuItem> selector)
+    public CCMenuItemLabel(CCNode label, Action<CCMenuItem>? selector)
     {
         InitWithLabel(label, selector);
     }
@@ -27,7 +26,7 @@ public class CCMenuItemLabel : CCMenuItem
         set { m_tDisabledColor = value; }
     }
 
-    public CCNode Label
+    public CCNode? Label
     {
         get { return m_pLabel; }
         set
@@ -53,16 +52,17 @@ public class CCMenuItemLabel : CCMenuItem
         get { return base.Enabled; }
         set
         {
-            if (m_bIsEnabled != value)
+            // An item without a label has no color to change.
+            if (m_bIsEnabled != value && m_pLabel is ICCRGBAProtocol coloredLabel)
             {
                 if (!value)
                 {
-                    m_tColorBackup = (m_pLabel as ICCRGBAProtocol).Color;
-                    (m_pLabel as ICCRGBAProtocol).Color = m_tDisabledColor;
+                    m_tColorBackup = coloredLabel.Color;
+                    coloredLabel.Color = m_tDisabledColor;
                 }
                 else
                 {
-                    (m_pLabel as ICCRGBAProtocol).Color = m_tColorBackup;
+                    coloredLabel.Color = m_tColorBackup;
                 }
             }
             base.Enabled = value;
@@ -71,15 +71,18 @@ public class CCMenuItemLabel : CCMenuItem
 
     public string Text
     {
-        get { return (m_pLabel as ICCLabelProtocol).Text; }
-        set
+        get
         {
-            (m_pLabel as ICCLabelProtocol).Text = (value);
-            ContentSize = m_pLabel.ContentSize;
+            if (m_pLabel is not ICCLabelProtocol textLabel)
+            {
+                throw NoTextLabel();
+            }
+            return textLabel.Text;
         }
+        set { SetString(value); }
     }
 
-    protected bool InitWithLabel(CCNode label, Action<CCMenuItem> selector)
+    protected bool InitWithLabel(CCNode label, Action<CCMenuItem>? selector)
     {
         base.InitWithTarget(selector);
         m_fOriginalScale = 1.0f;
@@ -95,8 +98,19 @@ public class CCMenuItemLabel : CCMenuItem
 
     public void SetString(string label)
     {
-        (m_pLabel as ICCLabelProtocol).Text = (label);
+        if (m_pLabel is not ICCLabelProtocol textLabel)
+        {
+            throw NoTextLabel();
+        }
+        textLabel.Text = label;
         ContentSize = m_pLabel.ContentSize;
+    }
+
+    private InvalidOperationException NoTextLabel()
+    {
+        return new InvalidOperationException(m_pLabel == null
+            ? "The menu item has no label."
+            : "The menu item's label, a " + m_pLabel.GetType().Name + ", has no text.");
     }
 
     public override void Activate()
@@ -116,7 +130,7 @@ public class CCMenuItemLabel : CCMenuItem
         {
             base.Selected();
 
-            CCAction action = GetAction(unchecked((int) kZoomActionTag));
+            CCAction? action = GetAction(unchecked((int) kZoomActionTag));
             if (action != null)
             {
                 StopAction(action);

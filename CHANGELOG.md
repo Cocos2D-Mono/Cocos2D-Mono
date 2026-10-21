@@ -4,7 +4,42 @@ All notable changes to Cocos2D-Mono are recorded here. This file was introduced 
 2.5.10; earlier releases are described in their GitHub release notes / git history.
 The project follows [Semantic Versioning](https://semver.org/) where practical.
 
-## Unreleased
+## 2.8.0 - 2026-10-23
+
+More nullable reference type annotations, continuing 2.7.0. The menus, the misc nodes
+(clipping, draw, lightning, motion streak, parallax scroll, progress timer and render texture),
+the tile maps and the support helpers now say which of their members can be null. Converting
+them turned up the bugs fixed below. The engine also stops bundling its own gzip code: TMX
+layers, particle textures and `ZipUtils` now decompress with .NET's `System.IO.Compression`.
+The director and scheduler, the platform code, the extensions and Box2D follow in later 2.x
+releases.
+
+### ⚠️ Upgrading
+
+Bump the package reference to 2.8.0. Apart from nullability, no public API changed or went away
+since 2.7.0, so nothing stops compiling unless the build treats the new nullable warnings as
+errors. Three things can still affect a game:
+
+- **New warnings in projects that enable nullable.** Using one of the newly annotated members
+  without a check, such as `CCMenu.SelectedItem`, `CCTMXTiledMap.LayerNamed` or the result of
+  `CCUserDefault.GetStringForKey` with a null default, now raises a nullable warning (CS86xx).
+  As with 2.7.0, `<WarningsNotAsErrors>nullable</WarningsNotAsErrors>` keeps them as warnings
+  in a build with `TreatWarningsAsErrors`. A subclass that overrides one of the init methods
+  listed under Changed is also warned until it calls the base method.
+- **Some failures throw a more specific exception.** For example, `CCMenu.AddChild` throws
+  `ArgumentException` for a child that isn't a menu item, in release builds too;
+  `CCProgressTimer` throws `ArgumentNullException` for a null sprite; and a malformed TMX file
+  throws `InvalidDataException`. Before, they threw `NullReferenceException`, sometimes much
+  later, or quietly made a node that didn't work. Code that catches `NullReferenceException`
+  from the engine should handle the new exceptions; Fixed lists each one.
+- **Some fixes change what existing code does.** Check code that worked around the old
+  behavior:
+  - Gzip data with a bad checksum is rejected, where it used to decompress into wrong tiles or
+    pixels.
+  - A particle system whose embedded texture can't be loaded gets the default texture instead
+    of none.
+  - `CCImageTGA.imageData` and `CCTMXLayerInfo.Tiles` are empty arrays, not null, on objects
+    made with the parameterless constructor.
 
 ### Changed
 
@@ -117,6 +152,13 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - A particle system whose embedded texture can't be decompressed or decoded gets the default
   texture, as when decoding throws. It used to be left without a texture, and debug builds
   failed an assertion.
+
+### Documentation
+
+- The docs site's API reference is rebuilt at each release again. The rebuild had failed at
+  every release since 2.6.0.
+- The instructions for building Mac Catalyst and tvOS from source (in `Directory.Build.props`)
+  name the MonoGame fork's long-lived `cocos2d-mono` branch instead of a feature branch.
 
 ## 2.7.0 - 2026-10-16
 

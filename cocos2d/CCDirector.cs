@@ -257,16 +257,17 @@ public abstract class CCDirector
                                         }
                                         else
                                         {
-                                            // Skip a type the game no longer has, or one that isn't a scene.
+                                            // The scene list ends at the first line that isn't a scene type the game has: the
+                                            // running-scene marker that follows the list, or a type the game no longer has.
+                                            // Stopping there, as the exception it used to throw did, keeps each restored scene
+                                            // lined up with its numbered save file.
                                             Type? screenType = Type.GetType(line);
-                                            if (screenType != null && Activator.CreateInstance(screenType) is CCScene scene)
+                                            if (screenType == null || !typeof(CCScene).IsAssignableFrom(screenType) ||
+                                                Activator.CreateInstance(screenType) is not CCScene scene)
                                             {
-                                                PushScene(scene);
+                                                break;
                                             }
-                                            else
-                                            {
-                                                CCLog.Log("Skipping {0}: it isn't a scene type in this game.", line);
-                                            }
+                                            PushScene(scene);
                                                     //                                                    _scenesStack.Add(scene);
                                                 }
                                             }

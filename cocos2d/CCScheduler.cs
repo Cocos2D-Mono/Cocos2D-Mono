@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,8 +12,9 @@ namespace Cocos2D
 
     public class CCTimer : ICCSelectorProtocol
     {
-        private CCScheduler _scheduler;
-        private readonly ICCSelectorProtocol _target;
+        // Null for a timer made with the parameterless constructor, which has nothing to run.
+        private CCScheduler? _scheduler;
+        private readonly ICCSelectorProtocol? _target;
 
         private readonly bool _runForever;
         private readonly float _delay;
@@ -27,7 +27,7 @@ namespace Cocos2D
 
         public float OriginalInterval;
         public float Interval;
-        public Action<float> Selector;
+        public Action<float>? Selector;
 
         public CCTimer()
         {
@@ -161,7 +161,7 @@ namespace Cocos2D
                     if (!_runForever && _timesExecuted > _repeat)
                     {
                         //unschedule timer
-                        _scheduler.UnscheduleSelector(Selector, _target);
+                        _scheduler?.UnscheduleSelector(Selector, _target);
                     }
                 }
             }
@@ -204,13 +204,13 @@ namespace Cocos2D
         private readonly LinkedList<ListEntry> _updatesNegList = new LinkedList<ListEntry>(); // list of priority < 0
         private readonly LinkedList<ListEntry> _updatesPosList = new LinkedList<ListEntry>(); // list priority > 0
 
-        private HashTimeEntry _currentTarget;
+        private HashTimeEntry? _currentTarget;
         private bool _currentTargetSalvaged;
         private bool _updateHashLocked;
 
         public float TimeScale = 1.0f;
 
-        public event Action<Exception> OnUnhandledException;
+        public event Action<Exception>? OnUnhandledException;
 
         private void UpdateTarget(ICCSelectorProtocol target, float dt)
         {
@@ -235,12 +235,12 @@ namespace Cocos2D
                     dt *= TimeScale;
                 }
 
-                LinkedListNode<ListEntry> next;
+                LinkedListNode<ListEntry>? next;
 
                 // Null checks on lists before iterating
                 if (_updatesNegList != null)
                 {
-                    for (LinkedListNode<ListEntry> node = _updatesNegList.First; node != null; node = next)
+                    for (LinkedListNode<ListEntry>? node = _updatesNegList.First; node != null; node = next)
                     {
                         next = node.Next;
                         if (node.Value != null && !node.Value.Paused && !node.Value.MarkedForDeletion)
@@ -252,7 +252,7 @@ namespace Cocos2D
 
                 if (_updates0List != null)
                 {
-                    for (LinkedListNode<ListEntry> node = _updates0List.First; node != null; node = next)
+                    for (LinkedListNode<ListEntry>? node = _updates0List.First; node != null; node = next)
                     {
                         next = node.Next;
                         if (node.Value != null && !node.Value.Paused && !node.Value.MarkedForDeletion)
@@ -264,7 +264,7 @@ namespace Cocos2D
 
                 if (_updatesPosList != null)
                 {
-                    for (LinkedListNode<ListEntry> node = _updatesPosList.First; node != null; node = next)
+                    for (LinkedListNode<ListEntry>? node = _updatesPosList.First; node != null; node = next)
                     {
                         next = node.Next;
                         if (node.Value != null && !node.Value.Paused && !node.Value.MarkedForDeletion)
@@ -317,7 +317,7 @@ namespace Cocos2D
                 // Delete all updates that are marked for deletion with null checks added on lists
                 if (_updatesNegList != null)
                 {
-                    for (LinkedListNode<ListEntry> node = _updatesNegList.First; node != null; node = next)
+                    for (LinkedListNode<ListEntry>? node = _updatesNegList.First; node != null; node = next)
                     {
                         next = node.Next;
                         if (node.Value != null && node.Value.MarkedForDeletion)
@@ -330,7 +330,7 @@ namespace Cocos2D
 
                 if (_updates0List != null)
                 {
-                    for (LinkedListNode<ListEntry> node = _updates0List.First; node != null; node = next)
+                    for (LinkedListNode<ListEntry>? node = _updates0List.First; node != null; node = next)
                     {
                         next = node.Next;
                         if (node.Value != null && node.Value.MarkedForDeletion)
@@ -343,7 +343,7 @@ namespace Cocos2D
 
                 if (_updatesPosList != null)
                 {
-                    for (LinkedListNode<ListEntry> node = _updatesPosList.First; node != null; node = next)
+                    for (LinkedListNode<ListEntry>? node = _updatesPosList.First; node != null; node = next)
                     {
                         next = node.Next;
                         if (node.Value != null && node.Value.MarkedForDeletion)
@@ -378,7 +378,7 @@ namespace Cocos2D
             Debug.Assert(selector != null);
             Debug.Assert(target != null);
 
-            HashTimeEntry element;
+            HashTimeEntry? element;
 
             lock (_hashForTimers)
             {
@@ -436,7 +436,7 @@ namespace Cocos2D
 
         public void ScheduleUpdateForTarget(ICCSelectorProtocol targt, int priority, bool paused)
         {
-            HashUpdateEntry element;
+            HashUpdateEntry? element;
 
             if (_hashForUpdates.TryGetValue(targt, out element))
             {
@@ -469,7 +469,7 @@ namespace Cocos2D
     	     @since v0.99.3
     	     */
 
-        public void UnscheduleSelector(Action<float> selector, ICCSelectorProtocol target)
+        public void UnscheduleSelector(Action<float>? selector, ICCSelectorProtocol? target)
         {
             // explicity handle nil arguments when removing an object
             if (selector == null || target == null)
@@ -477,7 +477,7 @@ namespace Cocos2D
                 return;
             }
 
-            HashTimeEntry element;
+            HashTimeEntry? element;
             if (_hashForTimers.TryGetValue(target, out element))
             {
                 for (int i = 0; i < element.Timers.Count; i++)
@@ -525,7 +525,7 @@ namespace Cocos2D
     	     @since v0.99.3
     	     */
 
-        public void UnscheduleAllForTarget(ICCSelectorProtocol target)
+        public void UnscheduleAllForTarget(ICCSelectorProtocol? target)
         {
             // explicit NULL handling
             if (target == null)
@@ -534,11 +534,11 @@ namespace Cocos2D
             }
 
             // custom selectors           
-            HashTimeEntry element;
+            HashTimeEntry? element;
 
             if (_hashForTimers.TryGetValue(target, out element))
             {
-                if (element.Timers.Contains(element.CurrentTimer))
+                if (element.CurrentTimer != null && element.Timers.Contains(element.CurrentTimer))
                 {
                     element.CurrentTimerSalvaged = true;
                 }
@@ -585,14 +585,14 @@ namespace Cocos2D
         }
         */
 
-        public void UnscheduleUpdateForTarget(ICCSelectorProtocol target)
+        public void UnscheduleUpdateForTarget(ICCSelectorProtocol? target)
         {
             if (target == null)
             {
                 return;
             }
 
-            HashUpdateEntry element;
+            HashUpdateEntry? element;
             if (_hashForUpdates.TryGetValue(target, out element))
             {
                 if (_updateHashLocked)
@@ -728,14 +728,14 @@ namespace Cocos2D
             Debug.Assert(target != null);
 
             // custom selectors
-            HashTimeEntry entry;
+            HashTimeEntry? entry;
             if (_hashForTimers.TryGetValue(target, out entry))
             {
                 entry.Paused = true;
             }
 
             // Update selector
-            HashUpdateEntry updateEntry;
+            HashUpdateEntry? updateEntry;
             if (_hashForUpdates.TryGetValue(target, out updateEntry))
             {
                 updateEntry.Entry.Paused = true;
@@ -747,14 +747,14 @@ namespace Cocos2D
             Debug.Assert(target != null);
 
             // custom selectors
-            HashTimeEntry element;
+            HashTimeEntry? element;
             if (_hashForTimers.TryGetValue(target, out element))
             {
                 element.Paused = false;
             }
 
             // Update selector
-            HashUpdateEntry elementUpdate;
+            HashUpdateEntry? elementUpdate;
             if (_hashForUpdates.TryGetValue(target, out elementUpdate))
             {
                 elementUpdate.Entry.Paused = false;
@@ -766,14 +766,14 @@ namespace Cocos2D
             Debug.Assert(target != null, "target must be non nil");
 
             // Custom selectors
-            HashTimeEntry element;
+            HashTimeEntry? element;
             if (_hashForTimers.TryGetValue(target, out element))
             {
                 return element.Paused;
             }
 
             // We should check update selectors if target does not have custom selectors
-            HashUpdateEntry elementUpdate;
+            HashUpdateEntry? elementUpdate;
             if (_hashForUpdates.TryGetValue(target, out elementUpdate))
             {
                 return elementUpdate.Entry.Paused;
@@ -787,22 +787,18 @@ namespace Cocos2D
             _hashForTimers.Remove(element.Target);
 
             element.Timers.Clear();
-            element.Target = null;
         }
 
         private void RemoveUpdateFromHash(ListEntry entry)
         {
-            HashUpdateEntry element;
+            HashUpdateEntry? element;
             if (_hashForUpdates.TryGetValue(entry.Target, out element))
             {
                 // list entry
                 element.List.Remove(entry);
-                element.Entry = null;
 
                 // hash entry
                 _hashForUpdates.Remove(entry.Target);
-
-                element.Target = null;
             }
         }
 
@@ -823,7 +819,7 @@ namespace Cocos2D
             else
             {
                 bool added = false;
-                for (LinkedListNode<ListEntry> node = list.First; node != null; node = node.Next)
+                for (LinkedListNode<ListEntry>? node = list.First; node != null; node = node.Next)
                 {
                     if (priority < node.Value.Priority)
                     {
@@ -876,12 +872,12 @@ namespace Cocos2D
 
         private class HashTimeEntry
         {
-            public CCTimer CurrentTimer;
+            public CCTimer? CurrentTimer;
             public bool CurrentTimerSalvaged;
             public bool Paused;
-            public ICCSelectorProtocol Target;
+            public required ICCSelectorProtocol Target;
             public int TimerIndex;
-            public List<CCTimer> Timers;
+            public List<CCTimer> Timers = new List<CCTimer>();
         }
 
         #endregion
@@ -890,9 +886,9 @@ namespace Cocos2D
 
         private class HashUpdateEntry
         {
-            public ListEntry Entry; // entry in the list
-            public LinkedList<ListEntry> List; // Which list does it belong to ?
-            public ICCSelectorProtocol Target; // hash key
+            public required ListEntry Entry; // entry in the list
+            public required LinkedList<ListEntry> List; // Which list does it belong to ?
+            public required ICCSelectorProtocol Target; // hash key
         }
 
         #endregion
@@ -904,7 +900,7 @@ namespace Cocos2D
             public bool MarkedForDeletion;
             public bool Paused;
             public int Priority;
-            public ICCSelectorProtocol Target;
+            public required ICCSelectorProtocol Target;
         }
 
         #endregion

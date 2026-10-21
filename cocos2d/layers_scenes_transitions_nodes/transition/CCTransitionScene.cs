@@ -106,13 +106,14 @@ public class CCTransitionScene : CCScene
 
         // retain
         m_pInScene = scene;
-        m_pOutScene = CCDirector.SharedDirector.RunningScene;
-        if (m_pOutScene == null)
+        CCScene? outScene = CCDirector.SharedDirector.RunningScene;
+        if (outScene == null)
         {
             // Creating an empty scene.
-            m_pOutScene = new CCScene();
-            m_pOutScene.Init();
+            outScene = new CCScene();
+            outScene.Init();
         }
+        m_pOutScene = outScene;
 
         if (base.Init())
         {

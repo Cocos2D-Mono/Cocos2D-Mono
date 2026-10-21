@@ -16,8 +16,9 @@ releases.
 
 ### ⚠️ Upgrading
 
-Bump the package reference to 2.8.0. Nothing stops compiling: apart from nullability, no
-public API changed or went away since 2.7.0. Three things can still affect a game:
+Bump the package reference to 2.8.0. Apart from nullability, no public API changed or went away
+since 2.7.0, so nothing stops compiling unless the build treats the new nullable warnings as
+errors. Three things can still affect a game:
 
 - **New warnings in projects that enable nullable.** Using one of the newly annotated members
   without a check, such as `CCMenu.SelectedItem`, `CCTMXTiledMap.LayerNamed` or the result of

@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 
 namespace Cocos2D;
@@ -50,7 +49,7 @@ public class CCCamera2D
     /// <summary>
     /// The node the camera is following, if any.
     /// </summary>
-    public CCNode FollowTarget { get; private set; }
+    public CCNode? FollowTarget { get; private set; }
 
     /// <summary>
     /// Smoothing factor for follow mode (0 = instant, 1 = very slow). Typical value: 0.1.

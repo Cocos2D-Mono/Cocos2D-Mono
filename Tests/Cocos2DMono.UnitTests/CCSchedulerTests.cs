@@ -102,4 +102,21 @@ public class CCSchedulerTests
         // Once removed, the target is unknown to the scheduler -> default (not paused).
         Assert.False(scheduler.IsTargetPaused(target));
     }
+
+    // From the root files' nullable conversion (C2D-302). A timer made with the parameterless
+    // constructor has no scheduler, and updating it threw NullReferenceException when it tried
+    // to unschedule itself after its one run.
+    [Fact]
+    public void Timer_FromTheParameterlessConstructor_UpdatesWithoutThrowing()
+    {
+        var timer = new CCTimer();
+
+        Exception? error = Record.Exception(() =>
+        {
+            timer.Update(0.1f);   // initialize
+            timer.Update(0.1f);   // its one run is due, then it unschedules itself
+        });
+
+        Assert.Null(error);
+    }
 }

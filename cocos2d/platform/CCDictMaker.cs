@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2009 Jason Booth
@@ -43,12 +42,12 @@ public enum CCSAXState
 };
 public class CCDictMaker : ICCSAXDelegator
 {
-    public Dictionary<string, Object> m_pRootDict;
-    public Dictionary<string, Object> m_pCurDict;
+    public Dictionary<string, Object>? m_pRootDict;
+    public Dictionary<string, Object>? m_pCurDict;
     public Stack<Dictionary<string, Object>> m_tDictStack=new Stack<Dictionary<string,object>>();
-    public string m_sCurKey;///< parsed key
+    public string? m_sCurKey;///< parsed key
     public CCSAXState m_tState;
-    public List<Object> m_pArray;
+    public List<Object>? m_pArray;
 
     Stack<List<Object>> m_tArrayStack = new Stack<List<object>>();
     Stack<CCSAXState> m_tStateStack = new Stack<CCSAXState>();
@@ -58,7 +57,7 @@ public class CCDictMaker : ICCSAXDelegator
         m_tState = CCSAXState.None;
     }
 
-    public Dictionary<string, Object> DictionaryWithContentsOfFile(string pFileName)
+    public Dictionary<string, Object>? DictionaryWithContentsOfFile(string pFileName)
     {
         CCSAXParser parser = new CCSAXParser();
 
@@ -72,7 +71,7 @@ public class CCDictMaker : ICCSAXDelegator
         return m_pRootDict;
     }
 
-    public List<Object> ArrayWithContentsOfFile(string pFileName)
+    public List<Object>? ArrayWithContentsOfFile(string pFileName)
     {
         CCSAXParser parser = new CCSAXParser();
 
@@ -93,10 +92,11 @@ public class CCDictMaker : ICCSAXDelegator
 
         EndElement(parser, "dict");
 
+        Debug.Assert(m_pRootDict != null, "The root dictionary was made before parsing.");
         return m_pRootDict["root"] as List<Object>;
     }
 
-    public void StartElement(object ctx, string name, string[] atts)
+    public void StartElement(object ctx, string name, string[]? atts)
     {
 
         string sName = name;
@@ -118,6 +118,7 @@ public class CCDictMaker : ICCSAXDelegator
             if (CCSAXState.Array == preState)
             {
                 // add the dictionary into the array
+                Debug.Assert(m_pArray != null, "The state is wrong!");
                 m_pArray.Add(m_pCurDict);
             }
             else if (CCSAXState.Dict == preState)
@@ -125,8 +126,8 @@ public class CCDictMaker : ICCSAXDelegator
 
                 // add the dictionary into the pre dictionary
                 Debug.Assert(m_tDictStack.Count > 0, "The state is wrong!");
-                Dictionary<string, Object> pPreDict = m_tDictStack.FirstOrDefault();
-                pPreDict.Add(m_sCurKey, m_pCurDict);
+                Dictionary<string, Object> pPreDict = m_tDictStack.Peek();
+                pPreDict.Add(CurrentKey, m_pCurDict);
             }
             //m_pCurDict->autorelease();
 
@@ -158,12 +159,13 @@ public class CCDictMaker : ICCSAXDelegator
             CCSAXState preState = m_tStateStack.Count == 0 ? CCSAXState.Dict : m_tStateStack.FirstOrDefault();
             if (preState == CCSAXState.Dict)
             {
-                m_pCurDict.Add(m_sCurKey, m_pArray);
+                Debug.Assert(m_pCurDict != null, "The state is wrong!");
+                m_pCurDict.Add(CurrentKey, m_pArray);
             }
             else if (preState == CCSAXState.Array)
             {
                 Debug.Assert(m_tArrayStack.Count > 0, "The state is worng!");
-                List<Object> pPreArray = m_tArrayStack.FirstOrDefault();
+                List<Object> pPreArray = m_tArrayStack.Peek();
                 pPreArray.Add(m_pArray);
             }
             //m_pArray->release();
@@ -187,7 +189,7 @@ public class CCDictMaker : ICCSAXDelegator
             m_tDictStack.Pop();
             if (m_tDictStack.Count > 0)
             {
-                m_pCurDict = m_tDictStack.FirstOrDefault();
+                m_pCurDict = m_tDictStack.Peek();
             }
         }
         else if (sName == "array")
@@ -196,7 +198,7 @@ public class CCDictMaker : ICCSAXDelegator
             m_tArrayStack.Pop();
             if (m_tArrayStack.Count > 0)
             {
-                m_pArray = m_tArrayStack.FirstOrDefault();
+                m_pArray = m_tArrayStack.Peek();
             }
         }
         else if (sName == "true")
@@ -204,11 +206,13 @@ public class CCDictMaker : ICCSAXDelegator
             string str = "1";
             if (CCSAXState.Array == curState)
             {
+                Debug.Assert(m_pArray != null, "The state is wrong!");
                 m_pArray.Add(str);
             }
             else if (CCSAXState.Dict == curState)
             {
-                m_pCurDict.Add(m_sCurKey, str);
+                Debug.Assert(m_pCurDict != null, "The state is wrong!");
+                m_pCurDict.Add(CurrentKey, str);
             }
             //str->release();
         }
@@ -217,11 +221,13 @@ public class CCDictMaker : ICCSAXDelegator
             string str = "0";
             if (CCSAXState.Array == curState)
             {
+                Debug.Assert(m_pArray != null, "The state is wrong!");
                 m_pArray.Add(str);
             }
             else if (CCSAXState.Dict == curState)
             {
-                m_pCurDict.Add(m_sCurKey, str);
+                Debug.Assert(m_pCurDict != null, "The state is wrong!");
+                m_pCurDict.Add(CurrentKey, str);
             }
             //str->release();
         }
@@ -247,20 +253,33 @@ public class CCDictMaker : ICCSAXDelegator
             case CCSAXState.Int:
             case CCSAXState.Real:
             case CCSAXState.String:
-                Debug.Assert(m_sCurKey.Length > 0, "not found key : <integet/real>");
+                Debug.Assert(!string.IsNullOrEmpty(m_sCurKey), "not found key : <integet/real>");
 
                 if (CCSAXState.Array == curState)
                 {
+                    Debug.Assert(m_pArray != null, "The state is wrong!");
                     m_pArray.Add(m_sString);
                 }
                 else if (CCSAXState.Dict == curState)
                 {
-                    m_pCurDict.Add(m_sCurKey, m_sString);
+                    Debug.Assert(m_pCurDict != null, "The state is wrong!");
+                    m_pCurDict.Add(CurrentKey, m_sString);
                 }
                 break;
             default:
                 break;
         }
         //pText->release();
+    }
+
+    // The key that the value being read belongs to. In a well-formed plist, a key comes before
+    // each value in a dictionary.
+    private string CurrentKey
+    {
+        get
+        {
+            Debug.Assert(m_sCurKey != null, "not found key");
+            return m_sCurKey;
+        }
     }
 }

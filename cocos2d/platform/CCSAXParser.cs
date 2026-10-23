@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2009 Jason Booth
@@ -23,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Xml;
@@ -34,7 +34,7 @@ namespace Cocos2D;
 
 public class CCSAXParser
 {
-    private ICCSAXDelegator _delegator;
+    private ICCSAXDelegator? _delegator;
 
     public bool Init(string pszEncoding)
     {
@@ -65,12 +65,14 @@ public class CCSAXParser
             {
                 case XmlNodeType.Element:
 
-                    string[] attrs = null;
+                    string[]? attrs = null;
 
                     if (name == "map")
                     {
-                        Width = CCUtils.CCParseInt(xmlReader.GetAttribute("width"));
-                        Height = CCUtils.CCParseInt(xmlReader.GetAttribute("height"));
+                        Width = CCUtils.CCParseInt(xmlReader.GetAttribute("width")
+                            ?? throw new InvalidDataException("TMX: the <map> element has no width."));
+                        Height = CCUtils.CCParseInt(xmlReader.GetAttribute("height")
+                            ?? throw new InvalidDataException("TMX: the <map> element has no height."));
                     }
 
                     if (xmlReader.HasAttributes)
@@ -94,7 +96,7 @@ public class CCSAXParser
                     }
                     StartElement(this, name, attrs);
 
-                    byte[] buffer = null;
+                    byte[]? buffer = null;
 
                     //read data content of tmx file
                     if (name == "data")
@@ -121,6 +123,11 @@ public class CCSAXParser
                                 string value = xmlReader.ReadElementContentAsString();
                                 buffer = Encoding.UTF8.GetBytes(value);
                             }
+                        }
+                        else
+                        {
+                            // A <data> element without attributes, such as a plist's, is read as text.
+                            buffer = Encoding.UTF8.GetBytes(xmlReader.ReadElementContentAsString());
                         }
 
                         TextHandler(this, buffer, buffer.Length);
@@ -163,18 +170,25 @@ public class CCSAXParser
         _delegator = pDelegator;
     }
 
-    public static void StartElement(object ctx, string name, string[] atts)
+    public static void StartElement(object ctx, string name, string[]? atts)
     {
-        ((CCSAXParser) (ctx))._delegator.StartElement(ctx, name, atts);
+        DelegatorOf(ctx).StartElement(ctx, name, atts);
     }
 
     public static void EndElement(object ctx, string name)
     {
-        ((CCSAXParser) (ctx))._delegator.EndElement(ctx, name);
+        DelegatorOf(ctx).EndElement(ctx, name);
     }
 
     public static void TextHandler(object ctx, byte[] ch, int len)
     {
-        ((CCSAXParser) (ctx))._delegator.TextHandler(ctx, ch, len);
+        DelegatorOf(ctx).TextHandler(ctx, ch, len);
+    }
+
+    private static ICCSAXDelegator DelegatorOf(object ctx)
+    {
+        ICCSAXDelegator? delegator = ((CCSAXParser) ctx)._delegator;
+        Debug.Assert(delegator != null, "CCSAXParser: call SetDelegator before parsing.");
+        return delegator;
     }
 }

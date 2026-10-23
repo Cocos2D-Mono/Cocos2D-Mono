@@ -40,6 +40,20 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     root, and neither does one read from a plist without a root object.
   - `PlistDictionary.TryGetValue` returns null for a missing key, and `PlistDictionary.Keys` is
     null for a dictionary that doesn't keep its keys in order.
+- **Nullable annotations for content loading** (`CCContentManager`, `CCFileUtils`,
+  `CCSAXParser`, `ICCSAXDelegator`, `CCDictMaker`, `CCSpriteFontCache`, `CCFontManager` and the
+  content readers). The visible changes:
+  - `CCContentManager.TryLoad` returns a nullable value: the type's default, such as null, when
+    the asset can't be loaded.
+  - `CCContentManager.SharedContentManager` isn't nullable, though it's null until
+    `CCApplication` loads its content or a `CCGameView` starts.
+  - `CCSpriteFontCache.GetFont` and `TryLoadFont` return a nullable `SpriteFont`, and
+    `CCFontManager.ResolveFontPath` a nullable path. `CCFontManager.RegisterTTF`, `IsTTFFont`
+    and `ResolveFontPath` accept null, which they already handled.
+  - `ICCSAXDelegator.StartElement`'s attributes are nullable, because the parser passes null
+    for an element without any. Implementations should declare `string[]? atts`.
+  - `CCDictMaker`'s public fields are nullable, and so are the dictionaries and arrays it
+    returns, including `CCFileUtils.DictionaryWithContentsOfFile`'s.
 - **Sprite frame, sprite sheet, animation and particle plists that lack a value they need**
   throw an `InvalidDataException` that says what's missing. So does one whose root isn't a
   dictionary. Before, most of these threw `NullReferenceException`, `NotSupportedException` or
@@ -88,6 +102,19 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - A `PlistArray` or `PlistDictionary` made from a collection that holds null throws
   `InvalidCastException`, as for other values it can't convert, instead of
   `NullReferenceException`.
+- A plist with a `<data>` value no longer makes `CCSAXParser` throw `NullReferenceException`.
+  `CCDictMaker`, and so `CCFileUtils.DictionaryWithContentsOfFile`, skips the value and reads
+  the rest.
+- A TMX map without a `width` or `height` throws an `InvalidDataException` that names it,
+  instead of `ArgumentNullException`.
+- `CCFileUtils.FullPathFromRelativeFile` resolves a file relative to an empty path instead of
+  throwing `ArgumentNullException`.
+- `CCContentManager.LoadFilenameLookupDictionaryFromFile` throws `InvalidDataException` for a
+  file whose root isn't a dictionary, instead of passing null to
+  `SetFilenameLookupDictionary`.
+- `CCContentManager.Load<string>` no longer returns null for a content file without any text.
+  It tries the raw file instead, as it does when the content file can't be read, and throws
+  `ContentLoadException` if that fails too.
 
 ## 2.8.0 - 2026-10-23
 

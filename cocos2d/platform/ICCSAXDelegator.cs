@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2009 Jason Booth
@@ -27,7 +26,7 @@ namespace Cocos2D;
 
 public interface ICCSAXDelegator
 {
-    void StartElement(object ctx, string name, string[] atts);
+    void StartElement(object ctx, string name, string[]? atts);
     void EndElement(object ctx, string name);
     void TextHandler(object ctx, byte[] ch, int len);
 }

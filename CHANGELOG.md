@@ -23,7 +23,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   - `CCContent.Content` is nullable until the content reader sets it.
   - `CCDirector.PopScene(t, transition)` accepts a null transition.
 
-  Overrides of `CCDirector.Init` must call the base method; the compiler now checks.
+  Overrides of `CCDirector.Init` must call the base method, which creates the scheduler, the
+  action manager and the dispatchers. The compiler can't check this, because those fields are
+  private.
 
 ### Fixed
 

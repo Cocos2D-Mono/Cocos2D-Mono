@@ -4,6 +4,37 @@ All notable changes to Cocos2D-Mono are recorded here. This file was introduced 
 2.5.10; earlier releases are described in their GitHub release notes / git history.
 The project follows [Semantic Versioning](https://semver.org/) where practical.
 
+## Unreleased
+
+### Changed
+
+- **Nullable annotations for the director, the scheduler and the other root files**
+  (`CCDirector`, `CCScheduler`, `CCTimer`, `CCCamera2D`, `CCConfiguration`, `CCContent` and
+  `CCDrawingPrimitives`). The visible changes:
+  - `CCDirector.RunningScene`, `NotificationNode` and `Delegate` are nullable: there's no
+    running scene until the first one starts, and no notification node or projection delegate
+    until one is set.
+  - `CCScheduler.UnscheduleSelector`, `UnscheduleAllForTarget` and `UnscheduleUpdateForTarget`
+    accept null, which does nothing, as before. `CCScheduler.OnUnhandledException` is a nullable
+    event.
+  - `CCTimer.Selector` is nullable: a timer made with the parameterless constructor has none.
+  - `CCCamera2D.FollowTarget` is nullable: the camera follows nothing until `Follow` is called,
+    and again after `Unfollow`.
+  - `CCContent.Content` is nullable until the content reader sets it.
+  - `CCDirector.PopScene(t, transition)` accepts a null transition.
+
+  Overrides of `CCDirector.Init` must call the base method, which creates the scheduler, the
+  action manager and the dispatchers. The compiler can't check this, because those fields are
+  private.
+
+### Fixed
+
+- A `CCTimer` made with the parameterless constructor no longer throws `NullReferenceException`
+  on its second update. It has no scheduler or selector, so updating it does nothing.
+- `CCDirector.DeserializeState` no longer puts a null in the scene stack for a saved type that
+  isn't a scene. The saved scene list ends there instead, as it already did at a type the game
+  no longer has.
+
 ## 2.8.0 - 2026-10-23
 
 More nullable reference type annotations, continuing 2.7.0. The menus, the misc nodes
@@ -25,7 +56,8 @@ errors. Three things can still affect a game:
   `CCUserDefault.GetStringForKey` with a null default, now raises a nullable warning (CS86xx).
   As with 2.7.0, `<WarningsNotAsErrors>nullable</WarningsNotAsErrors>` keeps them as warnings
   in a build with `TreatWarningsAsErrors`. A subclass that overrides one of the init methods
-  listed under Changed is also warned until it calls the base method.
+  listed under Changed is also warned until it calls the base method, except for
+  `CCDrawNode.Init`.
 - **Some failures throw a more specific exception.** For example, `CCMenu.AddChild` throws
   `ArgumentException` for a child that isn't a menu item, in release builds too;
   `CCProgressTimer` throws `ArgumentNullException` for a null sprite; and a malformed TMX file
@@ -68,8 +100,9 @@ errors. Three things can still affect a game:
 
   Overrides of `CCDrawNode.Init` and `CCRenderTexture.InitWithWidthAndHeight` must call the
   base method, and overrides of `CCProgressTimer.InitWithSprite` must set the sprite, for
-  example by calling the base method; the compiler now checks. Overrides of
-  `CCMotionStreak.InitWithFade` that take a texture should declare it nullable.
+  example by calling the base method. The compiler checks the last two, but not
+  `CCDrawNode.Init`, whose field is private. Overrides of `CCMotionStreak.InitWithFade` that
+  take a texture should declare it nullable.
 - **Nullable annotations for the tile maps** (TMX maps with their layers, object groups and
   tilesets, tile map atlases and parallax nodes). The visible changes:
   - `CCTMXTiledMap.LayerNamed` and `ObjectGroupNamed`, `CCTMXObjectGroup.ObjectNamed` and

@@ -47,6 +47,7 @@ using System;
 
 namespace Cocos2D.Compression.Zlib;
 
+[Obsolete(ZlibDeprecation.Message)]
 internal sealed class Tree
 {
     private const int MAX_BITS = 15;

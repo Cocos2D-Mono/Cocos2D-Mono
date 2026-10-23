@@ -44,8 +44,11 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * and contributors of zlib.
 */
 
+using System;
+
 namespace Cocos2D.Compression.Zlib;
 
+[Obsolete(ZlibDeprecation.Message)]
 internal sealed class Adler32
 {
     // largest prime smaller than 65536

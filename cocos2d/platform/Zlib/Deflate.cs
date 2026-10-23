@@ -47,6 +47,7 @@ using System;
 
 namespace Cocos2D.Compression.Zlib;
 
+[Obsolete(ZlibDeprecation.Message)]
 public sealed class Deflate
 {
     private const int MAX_MEM_LEVEL = 9;

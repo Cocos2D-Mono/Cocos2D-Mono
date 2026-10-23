@@ -48,6 +48,7 @@ using System.IO;
 
 namespace Cocos2D.Compression.Zlib;
 
+[Obsolete(ZlibDeprecation.Message)]
 public class ZStreamException : IOException
 {
     public ZStreamException()

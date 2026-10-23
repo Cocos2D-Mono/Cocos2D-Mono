@@ -5,6 +5,7 @@ using System.Text;
 
 namespace Cocos2D.Compression.Zlib;
 
+[Obsolete(ZlibDeprecation.Message)]
 public class SupportClass
 {
     /// <summary>

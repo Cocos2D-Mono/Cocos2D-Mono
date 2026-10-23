@@ -43,8 +43,11 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * and contributors of zlib.
 */
 
+using System;
+
 namespace Cocos2D.Compression.Zlib;
 
+[Obsolete(ZlibDeprecation.Message)]
 internal sealed class StaticTree
 {
     private const int MAX_BITS = 15;

@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -42,7 +41,7 @@ public static class CCFontManager
     /// </summary>
     /// <param name="relativePath">Path relative to content root, e.g. "fonts/myfont.ttf".</param>
     /// <returns>True if the font file exists and was registered.</returns>
-    public static bool RegisterTTF(string relativePath)
+    public static bool RegisterTTF(string? relativePath)
     {
         if (string.IsNullOrEmpty(relativePath))
             return false;
@@ -53,7 +52,7 @@ public static class CCFontManager
             return false;
         }
 
-        string fullPath = ResolveFontPath(relativePath);
+        string? fullPath = ResolveFontPath(relativePath);
 
         if (fullPath != null && File.Exists(fullPath))
         {
@@ -86,7 +85,7 @@ public static class CCFontManager
     /// Rejects rooted paths and directory traversal.
     /// Returns null if the content manager is not initialized or the path is invalid.
     /// </summary>
-    public static string ResolveFontPath(string relativePath)
+    public static string? ResolveFontPath(string? relativePath)
     {
         if (string.IsNullOrEmpty(relativePath))
             return null;
@@ -96,7 +95,7 @@ public static class CCFontManager
 
         try
         {
-            string rootDir = null;
+            string? rootDir = null;
 
             if (CCContentManager.SharedContentManager != null)
             {
@@ -139,7 +138,7 @@ public static class CCFontManager
     /// <summary>
     /// Checks whether a font name refers to a TTF file (ends with .ttf extension).
     /// </summary>
-    public static bool IsTTFFont(string fontName)
+    public static bool IsTTFFont(string? fontName)
     {
         if (string.IsNullOrEmpty(fontName))
             return false;

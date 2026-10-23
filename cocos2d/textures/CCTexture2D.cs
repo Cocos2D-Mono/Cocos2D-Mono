@@ -514,7 +514,7 @@ public class CCTexture2D : CCGraphicsResource
 #if DEBUG
             CCLog.Log("Loading font '{0}' at size {1}", fontName, fontSize);
 #endif
-            SpriteFont font = CCSpriteFontCache.SharedInstance.TryLoadFont(fontName, fontSize, out loadedSize);
+            SpriteFont? font = CCSpriteFontCache.SharedInstance.TryLoadFont(fontName, fontSize, out loadedSize);
 
             if (font == null)
             {

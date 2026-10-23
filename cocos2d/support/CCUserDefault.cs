@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2011 cocos2d-x.org
 
@@ -28,6 +27,7 @@ using System;
 using Cocos2D;
 using System.IO;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Xml;
 
@@ -38,11 +38,11 @@ namespace Cocos2D;
 public class CCUserDefault 
 {
 
-	private static CCUserDefault _userDefault = null;
+	private static CCUserDefault? _userDefault = null;
 	private static string USERDEFAULT_ROOT_NAME = "userDefaultRoot";
 	private static string XML_FILE_NAME = "UserDefault.xml";
 
-    private static ICCUserDefaultStorage storage;
+    private static ICCUserDefaultStorage? storage;
 
     /// <summary>
     /// The storage backend the settings file is persisted through. Defaults to a plain
@@ -100,9 +100,9 @@ public class CCUserDefault
 		return true;
 	}
 
-	private string getValueForKey(string key)
+	private string? getValueForKey(string key)
 	{
-		string value = null;
+		string? value = null;
 		if (! values.TryGetValue(key, out value)) {
 			value = null;
 		}
@@ -141,7 +141,7 @@ public class CCUserDefault
 
 	public bool GetBoolForKey(string pKey, bool defaultValue)
 	{
-		string value = getValueForKey(pKey);
+		string? value = getValueForKey(pKey);
 		bool ret = defaultValue;
 
 		if (value != null)
@@ -159,7 +159,7 @@ public class CCUserDefault
 
 	public int GetIntegerForKey(string pKey, int defaultValue)
 	{
-		string value = getValueForKey(pKey);
+		string? value = getValueForKey(pKey);
 		int ret = defaultValue;
 
 		if (value != null)
@@ -179,7 +179,7 @@ public class CCUserDefault
 
 	public double GetDoubleForKey(string pKey, double defaultValue)
 	{
-		string value = getValueForKey(pKey);
+		string? value = getValueForKey(pKey);
 		double ret = defaultValue;
 
 		if (value != null)
@@ -190,10 +190,11 @@ public class CCUserDefault
 		return ret;
 	}
 
-	public string GetStringForKey(string pKey, string defaultValue)
+	[return: NotNullIfNotNull(nameof(defaultValue))]
+	public string? GetStringForKey(string pKey, string? defaultValue)
 	{
-		string value = getValueForKey(pKey);
-		string ret = defaultValue;
+		string? value = getValueForKey(pKey);
+		string? ret = defaultValue;
 
 		if (value != null)
 		{

@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
@@ -13,11 +12,13 @@ public class CCMotionStreak : CCNode, ICCTextureProtocol
     private float _fadeDelta;
     private float _minSeg;
     private float _stroke;
-    private float[] _pointState;
-    private CCPoint[] _pointVertexes;
+    // Empty until InitWithFade sizes them: a streak made with the parameterless constructor has
+    // no points.
+    private float[] _pointState = Array.Empty<float>();
+    private CCPoint[] _pointVertexes = Array.Empty<CCPoint>();
     /** texture used for the motion streak */
-    private CCTexture2D _texture;
-    private CCV3F_C4B_T2F[] _vertices;
+    private CCTexture2D? _texture;
+    private CCV3F_C4B_T2F[] _vertices = Array.Empty<CCV3F_C4B_T2F>();
     private CCBlendFunc _blendFunc;
     private CCPoint _positionR;
 
@@ -69,7 +70,7 @@ public class CCMotionStreak : CCNode, ICCTextureProtocol
 
     #region ICCTextureProtocol Members
 
-    public CCTexture2D Texture
+    public CCTexture2D? Texture
     {
         get { return _texture; }
         set { _texture = value; }
@@ -99,11 +100,11 @@ public class CCMotionStreak : CCNode, ICCTextureProtocol
     {
         Debug.Assert(!String.IsNullOrEmpty(path), "Invalid filename");
 
-        CCTexture2D texture = CCTextureCache.SharedTextureCache.AddImage(path);
+        CCTexture2D? texture = CCTextureCache.SharedTextureCache.AddImage(path);
         return InitWithFade(fade, minSeg, stroke, color, texture);
     }
 
-    protected virtual bool InitWithFade(float fade, float minSeg, float stroke, CCColor3B color, CCTexture2D texture)
+    protected virtual bool InitWithFade(float fade, float minSeg, float stroke, CCColor3B color, CCTexture2D? texture)
     {
         Position = CCPoint.Zero;
         AnchorPoint = CCPoint.Zero;

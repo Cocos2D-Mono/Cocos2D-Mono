@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 
 namespace Cocos2D;
@@ -6,12 +5,12 @@ namespace Cocos2D;
 public class CCMenuItemSprite : CCMenuItem
 {
     protected float m_fOriginalScale;
-    private CCNode _disabledImage;
-    private CCNode _normalImage;
+    private CCNode? _disabledImage;
+    private CCNode? _normalImage;
 
-    private CCNode _selectedImage;
+    private CCNode? _selectedImage;
 
-    public CCNode NormalImage
+    public CCNode? NormalImage
     {
         get { return _normalImage; }
         set
@@ -37,7 +36,7 @@ public class CCMenuItemSprite : CCMenuItem
         }
     }
 
-    public CCNode SelectedImage
+    public CCNode? SelectedImage
     {
         get { return _selectedImage; }
         set
@@ -62,7 +61,7 @@ public class CCMenuItemSprite : CCMenuItem
         }
     }
 
-    public CCNode DisabledImage
+    public CCNode? DisabledImage
     {
         get { return _disabledImage; }
         set
@@ -103,19 +102,19 @@ public class CCMenuItemSprite : CCMenuItem
         set
         {
             _displayedColor = _realColor = value;
-            if (NormalImage is CCSprite)
+            if (NormalImage is CCSprite normalSprite)
             {
-                (NormalImage as CCSprite).Color = value;
+                normalSprite.Color = value;
             }
 
-            if (SelectedImage is CCSprite)
+            if (SelectedImage is CCSprite selectedSprite)
             {
-                (SelectedImage as CCSprite).Color = value;
+                selectedSprite.Color = value;
             }
 
-            if (DisabledImage is CCSprite)
+            if (DisabledImage is CCSprite disabledSprite)
             {
-                (DisabledImage as CCSprite).Color = value;
+                disabledSprite.Color = value;
             }
 
             if (_cascadeColorEnabled)
@@ -138,19 +137,19 @@ public class CCMenuItemSprite : CCMenuItem
         set
         {
             _displayedOpacity = _realOpacity = value;
-            if (NormalImage is CCSprite)
+            if (NormalImage is CCSprite normalSprite)
             {
-                (NormalImage as CCSprite).Opacity = value;
+                normalSprite.Opacity = value;
             }
 
-            if (SelectedImage is CCSprite)
+            if (SelectedImage is CCSprite selectedSprite)
             {
-                (SelectedImage as CCSprite).Opacity = value;
+                selectedSprite.Opacity = value;
             }
 
-            if (DisabledImage is CCSprite)
+            if (DisabledImage is CCSprite disabledSprite)
             {
-                (DisabledImage as CCSprite).Opacity = value;
+                disabledSprite.Opacity = value;
             }
 
             if (_cascadeOpacityEnabled)
@@ -172,37 +171,37 @@ public class CCMenuItemSprite : CCMenuItem
         ZoomBehaviorOnTouch = false;
     }
 
-    public CCMenuItemSprite(Action<CCMenuItem> selector)
+    public CCMenuItemSprite(Action<CCMenuItem>? selector)
         : base(selector)
     {
     }
 
-    public CCMenuItemSprite(string normalSprite, Action<CCMenuItem> selector)
+    public CCMenuItemSprite(string normalSprite, Action<CCMenuItem>? selector)
         : this(new CCSprite(normalSprite), new CCSprite(normalSprite), new CCSprite(normalSprite), selector)
     {
     }
 
-    public CCMenuItemSprite(string normalSprite, string selectedSprite, Action<CCMenuItem> selector)
+    public CCMenuItemSprite(string normalSprite, string selectedSprite, Action<CCMenuItem>? selector)
         :this(new CCSprite(normalSprite), new CCSprite(selectedSprite), new CCSprite(normalSprite), selector)
     {
     }
 
-    public CCMenuItemSprite(CCTexture2D normalSprite, CCTexture2D selectedSprite, Action<CCMenuItem> selector)
+    public CCMenuItemSprite(CCTexture2D normalSprite, CCTexture2D selectedSprite, Action<CCMenuItem>? selector)
         : this(new CCSprite(normalSprite), new CCSprite(selectedSprite), new CCSprite(normalSprite), selector)
     {
     }
 
-    public CCMenuItemSprite(CCNode normalSprite, CCNode selectedSprite)
+    public CCMenuItemSprite(CCNode normalSprite, CCNode? selectedSprite)
         :this(normalSprite, selectedSprite, normalSprite, null)
     {
     }
 
-		public CCMenuItemSprite(CCNode normalSprite, CCNode selectedSprite, Action<CCMenuItem> selector)
+		public CCMenuItemSprite(CCNode normalSprite, CCNode? selectedSprite, Action<CCMenuItem>? selector)
         :this(normalSprite, selectedSprite, normalSprite, selector)
     {
     }
 
-    public CCMenuItemSprite(CCNode normalSprite, CCNode selectedSprite, CCNode disabledSprite, Action<CCMenuItem> selector)
+    public CCMenuItemSprite(CCNode? normalSprite, CCNode? selectedSprite, CCNode? disabledSprite, Action<CCMenuItem>? selector)
     {
         InitWithTarget(selector);
 
@@ -245,7 +244,7 @@ public class CCMenuItemSprite : CCMenuItem
                 _normalImage.Visible = true;
                 if (ZoomBehaviorOnTouch)
                 {
-                    CCAction action = GetAction(unchecked((int)kZoomActionTag));
+                    CCAction? action = GetAction(unchecked((int)kZoomActionTag));
                     if (action != null)
                     {
                         StopAction(action);

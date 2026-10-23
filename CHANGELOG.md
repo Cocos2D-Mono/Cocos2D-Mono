@@ -4,6 +4,162 @@ All notable changes to Cocos2D-Mono are recorded here. This file was introduced 
 2.5.10; earlier releases are described in their GitHub release notes / git history.
 The project follows [Semantic Versioning](https://semver.org/) where practical.
 
+## 2.8.0 - 2026-10-23
+
+More nullable reference type annotations, continuing 2.7.0. The menus, the misc nodes
+(clipping, draw, lightning, motion streak, parallax scroll, progress timer and render texture),
+the tile maps and the support helpers now say which of their members can be null. Converting
+them turned up the bugs fixed below. The engine also stops bundling its own gzip code: TMX
+layers, particle textures and `ZipUtils` now decompress with .NET's `System.IO.Compression`.
+The director and scheduler, the platform code, the extensions and Box2D follow in later 2.x
+releases.
+
+### ⚠️ Upgrading
+
+Bump the package reference to 2.8.0. Apart from nullability, no public API changed or went away
+since 2.7.0, so nothing stops compiling unless the build treats the new nullable warnings as
+errors. Three things can still affect a game:
+
+- **New warnings in projects that enable nullable.** Using one of the newly annotated members
+  without a check, such as `CCMenu.SelectedItem`, `CCTMXTiledMap.LayerNamed` or the result of
+  `CCUserDefault.GetStringForKey` with a null default, now raises a nullable warning (CS86xx).
+  As with 2.7.0, `<WarningsNotAsErrors>nullable</WarningsNotAsErrors>` keeps them as warnings
+  in a build with `TreatWarningsAsErrors`. A subclass that overrides one of the init methods
+  listed under Changed is also warned until it calls the base method.
+- **Some failures throw a more specific exception.** For example, `CCMenu.AddChild` throws
+  `ArgumentException` for a child that isn't a menu item, in release builds too;
+  `CCProgressTimer` throws `ArgumentNullException` for a null sprite; and a malformed TMX file
+  throws `InvalidDataException`. Before, they threw `NullReferenceException`, sometimes much
+  later, or quietly made a node that didn't work. Code that catches `NullReferenceException`
+  from the engine should handle the new exceptions; Fixed lists each one.
+- **Some fixes change what existing code does.** Check code that worked around the old
+  behavior:
+  - Gzip data with a bad checksum is rejected, where it used to decompress into wrong tiles or
+    pixels.
+  - A particle system whose embedded texture can't be loaded gets the default texture instead
+    of none.
+  - `CCImageTGA.imageData` and `CCTMXLayerInfo.Tiles` are empty arrays, not null, on objects
+    made with the parameterless constructor.
+
+### Changed
+
+- **Nullable annotations for the menus** (`CCMenu` and the menu items). The visible changes:
+  - `CCMenu.SelectedItem` and `FocusedItem` are nullable: no item is selected or has the focus
+    until one is touched or focused.
+  - `CCMenuItem`'s `OnActivated`, `OnSelected` and `OnUnselected` events are nullable, and so
+    is the selector its constructor, `InitWithTarget` and `SetTarget` take.
+  - `CCMenuItemLabel.Label` and `CCMenuItemSprite`'s `NormalImage`, `SelectedImage` and
+    `DisabledImage` are nullable. Each can be set to null, and an item made with the
+    parameterless constructor has none.
+  - `CCMenuItemImage`'s constructors, and `CCMenuItemSprite`'s constructors that take image
+    nodes, accept null for the selected and disabled images. The four-argument ones accept it
+    for the normal image too.
+
+  Overrides of `CCMenuItemFont.InitWithString` must set the font name, for example by calling
+  the base method; the compiler now checks.
+- **Nullable annotations for the misc nodes** (the clipping, draw, lightning, motion streak,
+  parallax scroll, progress timer and render texture nodes). The visible changes:
+  - `CCClippingNode.Stencil` is nullable, and so is the stencil `Init` takes: a clipping node
+    made with the parameterless constructor has none.
+  - `CCMotionStreak.Texture` is nullable: a streak made with the parameterless constructor has
+    none, and neither has one whose texture file couldn't be loaded.
+  - `CCParallaxScrollNode.BatchNode` is nullable: a node made with the parameterless
+    constructor doesn't batch its sprites.
+
+  Overrides of `CCDrawNode.Init` and `CCRenderTexture.InitWithWidthAndHeight` must call the
+  base method, and overrides of `CCProgressTimer.InitWithSprite` must set the sprite, for
+  example by calling the base method; the compiler now checks. Overrides of
+  `CCMotionStreak.InitWithFade` that take a texture should declare it nullable.
+- **Nullable annotations for the tile maps** (TMX maps with their layers, object groups and
+  tilesets, tile map atlases and parallax nodes). The visible changes:
+  - `CCTMXTiledMap.LayerNamed` and `ObjectGroupNamed`, `CCTMXObjectGroup.ObjectNamed` and
+    `CCTMXLayer.TileAt` return null for a name or position with nothing there, as they already
+    did.
+  - `CCTMXLayer.Tiles` and `CCTileMapAtlas.TGAInfo` are nullable: `ReleaseMap` drops them.
+  - `CCTMXMapInfo.TMXFileName` is nullable: a map read from a stream has no file name.
+  - `CCTMXTilesetInfo.m_sName` and `m_sSourceImage`, `CCTMXObjectGroup.GroupName` and
+    `CCPointObject.Child` are nullable until they're set.
+  - `CCTMXLayerInfo.Tiles` is an empty array, not null, for a layer info made with `new`.
+
+  Overrides of `CCTMXLayer.InitWithTilesetInfo` and `CCTMXTiledMap.InitWithTmxFile` must call
+  the base method; the compiler now checks.
+- **Nullable annotations for the support helpers** (`CCUserDefault`, `CCObjectPool`, the
+  `CCPoint`, `CCSize` and `CCRect` type converters, `CCUtils` and `CCImageTGA`). The visible
+  changes:
+  - `CCUserDefault.GetStringForKey` accepts a null default, which it returns for a missing key.
+    With a non-null default, the result is non-null.
+  - `CCObjectPool`'s optional `parent` is nullable.
+  - `CCPointConverter.CCPointFromString`, `CCSizeConverter.CCSizeFromString`,
+    `CCRectConverter.CCRectFromString` and `CCUtils.SplitWithForm` accept null, which gives
+    zero (or false), as it already did.
+  - `CCImageTGA.imageData` is an empty array, not null, for an image made with the
+    parameterless constructor.
+
+  Overrides of the converters' `ConvertFrom` and `ConvertTo` should declare `context`,
+  `culture` and `ConvertTo`'s `value` nullable, as `TypeConverter` does.
+- **Gzip data is decompressed with .NET's `System.IO.Compression`.** That covers TMX layers with
+  `compression="gzip"`, gzip-compressed particle textures and `ZipUtils.InflateMemory`. The engine
+  used to bundle an internal port of an old zlib library, from before Windows Phone had
+  `System.IO.Compression`; it's removed. No public API changes.
+
+### Fixed
+
+- Giving the focus to a `CCMenu` with no items no longer throws `NullReferenceException`.
+- Pressing a gamepad button while a `CCMenu` has the focus but none of its items does no
+  longer throws `NullReferenceException`; nothing is selected.
+- `CCMenu.AddChild` throws `ArgumentException` for a child that isn't a menu item, in release
+  builds as well as debug ones. Release builds used to add it, leaving a null in the menu's
+  item list that threw `NullReferenceException` when the menu entered a scene.
+- A `CCMenuItemToggle` made with the parameterless constructor starts with an empty item list,
+  so `AddSubItem` and `Enabled` no longer throw `NullReferenceException`.
+- Enabling or disabling a `CCMenuItemLabel` that has no label no longer throws
+  `NullReferenceException`.
+- `CCMenuItemLabel.Text` and `SetString` throw `InvalidOperationException` for an item with no
+  label, or whose label has no text, instead of `NullReferenceException`. So do
+  `CCMenuItemFont`'s `ItemFontName`, `ItemFontSize` and `Color` setters, which rebuild the
+  label from its text.
+- A `CCLightningStreak` made with the parameterless constructor no longer throws
+  `NullReferenceException` when it updates. It has no track to follow, so it stays where it is.
+- `CCParallaxScrollNode`'s sprite sheet constructor throws `ArgumentException` for a sheet whose
+  first frame has no texture, instead of `NullReferenceException`.
+- `CCProgressTimer`'s constructor and `Sprite` setter throw `ArgumentNullException` for a null
+  sprite. The constructor used to make a timer that drew nothing, and replacing a sprite with
+  null threw `NullReferenceException` after clearing it.
+- A TMX map with a layer whose tiles are all empty no longer throws `NullReferenceException`
+  when it's built. Such a layer has no tileset to draw with, so it isn't created, as in
+  cocos2d-x 3, and `LayerNamed` returns null for it.
+- A TMX map read from a stream (`CCTMXMapInfo` and `CCTMXTiledMap` from a `StreamReader`) no
+  longer throws `ArgumentNullException` at its first tileset image. With no map file for the
+  image path to be relative to, the path is used as written, without its extension.
+- `CCTMXTiledMap.LayerNamed` returns null on a map with no layers, instead of throwing
+  `NullReferenceException`.
+- `CCTMXObjectGroup.ObjectNamed` skips objects without a name. An unnamed object before the one
+  asked for made it throw `KeyNotFoundException`.
+- Gzip-compressed layer data that can't be decompressed leaves the layer empty, as the logged
+  error intends, instead of throwing `NullReferenceException`.
+- A malformed TMX file with a `<tile>`, `<image>`, `<data>`, `<object>`, `<property>` or
+  `<polygon>` element outside the element it belongs to throws an `InvalidDataException` that
+  names the element, instead of `NullReferenceException`.
+- `CCTMXLayer` throws `ArgumentException` for a tileset with no image, or one whose image can't
+  be loaded. It used to fail inside the texture cache or throw `NullReferenceException`.
+- The `CCPoint`, `CCSize` and `CCRect` type converters convert a null value to an empty string,
+  as `TypeConverter` does, instead of throwing `NullReferenceException`. For example,
+  `TypeDescriptor.GetConverter(typeof(CCPoint)).ConvertToString(null)`.
+- Gzip data whose checksum doesn't match is rejected, like other data that can't be
+  decompressed: a TMX layer stays empty, `ZipUtils.InflateMemory` returns 0, and a particle
+  system gets the default texture. The checksum used to go unchecked, so corrupt data became
+  wrong tiles or pixels.
+- A particle system whose embedded texture can't be decompressed or decoded gets the default
+  texture, as when decoding throws. It used to be left without a texture, and debug builds
+  failed an assertion.
+
+### Documentation
+
+- The docs site's API reference is rebuilt at each release again. The rebuild had failed at
+  every release since 2.6.0.
+- The instructions for building Mac Catalyst and tvOS from source (in `Directory.Build.props`)
+  name the MonoGame fork's long-lived `cocos2d-mono` branch instead of a feature branch.
+
 ## 2.7.0 - 2026-10-16
 
 The first nullable reference type annotations. The base nodes, input, layers and scenes,

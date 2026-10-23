@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 
@@ -6,7 +5,8 @@ namespace Cocos2D;
 
 public class CCMenuItemToggle : CCMenuItem
 {
-    public List<CCMenuItem> m_pSubItems;
+    // Empty, not null, for a toggle made with the parameterless constructor, so AddSubItem works on it.
+    public List<CCMenuItem> m_pSubItems = new List<CCMenuItem>();
     private int _selectedIndex=-1;
 
     public CCMenuItemToggle()
@@ -14,7 +14,7 @@ public class CCMenuItemToggle : CCMenuItem
         InitWithTarget(null);
     }
 
-    public CCMenuItemToggle(Action<CCMenuItem> selector, params CCMenuItem[] items)
+    public CCMenuItemToggle(Action<CCMenuItem>? selector, params CCMenuItem[] items)
     {
         InitWithTarget(selector, items);
     }
@@ -27,7 +27,7 @@ public class CCMenuItemToggle : CCMenuItem
             if (value != _selectedIndex && m_pSubItems.Count > 0)
             {
                 _selectedIndex = value;
-                var currentItem = (CCMenuItem) GetChildByTag(kCurrentItem);
+                var currentItem = (CCMenuItem?) GetChildByTag(kCurrentItem);
                 if (currentItem != null)
                 {
                     currentItem.Visible = false;
@@ -59,7 +59,7 @@ public class CCMenuItemToggle : CCMenuItem
         }
     }
 
-    public bool InitWithTarget(Action<CCMenuItem> selector, CCMenuItem[] items)
+    public bool InitWithTarget(Action<CCMenuItem>? selector, CCMenuItem[] items)
     {
         base.InitWithTarget(selector);
         CascadeColorEnabled = true;
@@ -149,7 +149,7 @@ public class CCMenuItemToggle : CCMenuItem
         m_pSubItems[_selectedIndex].Selected();
         if (ZoomBehaviorOnTouch)
         {
-            CCAction action = m_pSubItems[_selectedIndex].GetAction(unchecked((int)kZoomActionTag));
+            CCAction? action = m_pSubItems[_selectedIndex].GetAction(unchecked((int)kZoomActionTag));
             if (action != null)
             {
                 StopAction(action);

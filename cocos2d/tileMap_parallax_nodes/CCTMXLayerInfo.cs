@@ -1,4 +1,4 @@
-#nullable disable
+using System;
 using System.Collections.Generic;
 
 namespace Cocos2D;
@@ -9,7 +9,7 @@ public class CCTMXLayerInfo
     private bool _ownTiles = true;
     private bool _visible;
     private byte _opacity;
-    private uint[] _tiles;
+    private uint[] _tiles = Array.Empty<uint>();
     private string _name = "";
     private CCSize _layerSize;
     private CCPoint _offset;

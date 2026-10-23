@@ -19,7 +19,7 @@ env:
   # Directory.Build.props). Those cells clone the fork at exactly this commit, so a
   # push to the fork's branch cannot break this workflow. Bump it deliberately, once
   # the fork's own "Catalyst platform" workflow is green on the new commit.
-  MONOGAME_FORK_REF: 36d2a915e756db3c544c19747e65f3042f2d3c28 # Cocos2D-Mono/MonoGame feature/mac-catalyst-support, 2026-09-09
+  MONOGAME_FORK_REF: 36d2a915e756db3c544c19747e65f3042f2d3c28 # Cocos2D-Mono/MonoGame cocos2d-mono, 2026-09-09
 
 jobs:
   build:

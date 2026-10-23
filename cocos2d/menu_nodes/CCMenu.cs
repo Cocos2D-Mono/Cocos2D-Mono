@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -33,7 +32,7 @@ public class CCMenu : CCLayerRGBA
 
     protected bool m_bEnabled;
     protected CCMenuState m_eState;
-    protected CCMenuItem m_pSelectedItem;
+    protected CCMenuItem? m_pSelectedItem;
 
     private LinkedList<CCMenuItem> _Items = new LinkedList<CCMenuItem>();
 
@@ -55,15 +54,15 @@ public class CCMenu : CCLayerRGBA
         set
         {
             base.HasFocus = value;
-            // Set the first menu item to have the focus
-            if (FocusedItem == null)
+            // Set the first menu item to have the focus, if the menu has any items
+            if (FocusedItem == null && _Items.First != null)
             {
                 _Items.First.Value.HasFocus = true;
             }
         }
     }
 
-    public CCMenuItem SelectedItem
+    public CCMenuItem? SelectedItem
     {
         get { return m_pSelectedItem; }
     }
@@ -92,10 +91,14 @@ public class CCMenu : CCLayerRGBA
             xButton == CCGamePadButtonStatus.Pressed || yButton == CCGamePadButtonStatus.Pressed || leftShoulder == CCGamePadButtonStatus.Pressed ||
             rightShoulder == CCGamePadButtonStatus.Pressed)
         {
-            CCMenuItem item = FocusedItem;
-            item.Selected();
-            m_pSelectedItem = item;
-            m_eState = CCMenuState.TrackingTouch;
+            // The menu can have the focus while none of its items does.
+            CCMenuItem? item = FocusedItem;
+            if (item != null)
+            {
+                item.Selected();
+                m_pSelectedItem = item;
+                m_eState = CCMenuState.TrackingTouch;
+            }
         }
         else if (backButton == CCGamePadButtonStatus.Released || aButton == CCGamePadButtonStatus.Released || bButton == CCGamePadButtonStatus.Released ||
             xButton == CCGamePadButtonStatus.Released || yButton == CCGamePadButtonStatus.Released || leftShoulder == CCGamePadButtonStatus.Released ||
@@ -104,7 +107,7 @@ public class CCMenu : CCLayerRGBA
             if (m_eState == CCMenuState.TrackingTouch)
             {
                 // Now we are selecting the menu item
-                CCMenuItem item = FocusedItem;
+                CCMenuItem? item = FocusedItem;
                 if (item != null && m_pSelectedItem == item)
                 {
                     // Activate this item
@@ -121,7 +124,7 @@ public class CCMenu : CCLayerRGBA
     /// Returns the menu item with the focus. Note that this only has a value if the GamePad or Keyboard is enabled. Touch
     /// devices do not have a "focus" concept.
     /// </summary>
-    public CCMenuItem FocusedItem
+    public CCMenuItem? FocusedItem
     {
         get
         {
@@ -158,7 +161,7 @@ public class CCMenu : CCLayerRGBA
     /// </summary>
     /// <param name="items"></param>
     /// <returns></returns>
-    private bool InitWithArray(params CCMenuItem[] items)
+    private bool InitWithArray(params CCMenuItem[]? items)
     {
         if (_Items.Count > 0)
         {
@@ -220,15 +223,19 @@ public class CCMenu : CCLayerRGBA
 
     public override void AddChild(CCNode child, int zOrder, int tag)
     {
-        Debug.Assert(child is CCMenuItem, "Menu only supports MenuItem objects as children");
+        // Checked in release builds too: any other child would leave a null in the item list.
+        if (child is not CCMenuItem item)
+        {
+            throw new ArgumentException("A menu only takes menu items as children.", nameof(child));
+        }
         base.AddChild(child, zOrder, tag);
         if (_Items.Count == 0)
         {
-            _Items.AddFirst(child as CCMenuItem);
+            _Items.AddFirst(item);
         }
         else
         {
-            _Items.AddLast(child as CCMenuItem);
+            _Items.AddLast(item);
         }
     }
 
@@ -243,9 +250,9 @@ public class CCMenu : CCLayerRGBA
 
         base.RemoveChild(child, cleanup);
 
-        if (_Items.Contains(child as CCMenuItem))
+        if (child is CCMenuItem item)
         {
-            _Items.Remove(child as CCMenuItem);
+            _Items.Remove(item);
         }
     }
 
@@ -294,7 +301,7 @@ public class CCMenu : CCLayerRGBA
             return false;
         }
 
-        for (CCNode c = m_pParent; c != null; c = c.Parent)
+        for (CCNode? c = m_pParent; c != null; c = c.Parent)
         {
             if (c.Visible == false)
             {
@@ -336,7 +343,7 @@ public class CCMenu : CCLayerRGBA
     public override void TouchMoved(CCTouch touch)
     {
         Debug.Assert(m_eState == CCMenuState.TrackingTouch, "[Menu TouchMoved] -- invalid state");
-        CCMenuItem currentItem = ItemForTouch(touch);
+        CCMenuItem? currentItem = ItemForTouch(touch);
         if (currentItem != m_pSelectedItem)
         {
             if (m_pSelectedItem != null)
@@ -639,7 +646,7 @@ public class CCMenu : CCLayerRGBA
 
     #endregion
 
-    protected virtual CCMenuItem ItemForTouch(CCTouch touch)
+    protected virtual CCMenuItem? ItemForTouch(CCTouch touch)
     {
         CCPoint touchLocation = touch.Location;
 

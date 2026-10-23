@@ -1,10 +1,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using GZipInputStream=WP7Contrib.Communications.Compression.GZipStream; // Found in Support/Compression/GZipStream
 
 namespace Cocos2D;
 
@@ -564,20 +564,29 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
                             var dataBytes = Convert.FromBase64String(textureData);
                             Debug.Assert(dataBytes != null, string.Format("CCParticleSystem: error decoding textureImageData : {0}",textureName));
 
+                            // Null when the data can't be decompressed, for example when its gzip checksum doesn't
+                            // match. Inflate logs why.
                             var imageBytes = Inflate(dataBytes);
-                            Debug.Assert(imageBytes != null, string.Format("CCParticleSystem: error init image with Data for texture : {0}",textureName));
 
                             try
                             {
-                                CCTexture2D? texx = CCTextureCache.SharedTextureCache.AddImage(imageBytes, textureName, SurfaceFormat.Color);
-                                if (texx == null && textureName.IndexOf('.') > -1)
+                                CCTexture2D? texx = null;
+                                if (imageBytes != null)
                                 {
-                                    texx = CCTextureCache.SharedTextureCache.AddImage(imageBytes, textureName.Substring(textureName.LastIndexOf('.')), SurfaceFormat.Color);
+                                    texx = CCTextureCache.SharedTextureCache.AddImage(imageBytes, textureName, SurfaceFormat.Color);
+                                    if (texx == null && textureName.IndexOf('.') > -1)
+                                    {
+                                        texx = CCTextureCache.SharedTextureCache.AddImage(imageBytes, textureName.Substring(textureName.LastIndexOf('.')), SurfaceFormat.Color);
+                                    }
                                 }
-                                if (texx != null)
+                                if (texx == null)
                                 {
-                                    Texture = texx;
+                                    // Image data that couldn't be decompressed or decoded gets the default texture,
+                                    // as an exception does below.
+                                    CCLog.Log("CCParticleSystem: couldn't load the embedded texture " + textureName + ", so the default texture is used.");
+                                    texx = CCParticleExample.DefaultTexture;
                                 }
+                                Texture = texx;
                             }
                             catch (Exception ex)
                             {
@@ -616,8 +625,8 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
         else {
 
             try {
-            var gzipInputStream = 
-                new GZipInputStream(new MemoryStream(dataBytes));
+            using var gzipInputStream =
+                new GZipStream(new MemoryStream(dataBytes), CompressionMode.Decompress);
 
 
             MemoryStream zipoutStream = new MemoryStream();

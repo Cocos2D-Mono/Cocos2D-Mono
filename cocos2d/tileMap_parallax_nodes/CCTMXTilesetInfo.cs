@@ -1,4 +1,3 @@
-#nullable disable
 
 namespace Cocos2D;
 
@@ -7,11 +6,12 @@ public class CCTMXTilesetInfo
     /// <summary>
     /// The name of this tileset.
     /// </summary>
-    public string m_sName;
+    public string? m_sName;
     /// <summary>
     ///filename containing the tiles (should be spritesheet / texture atlas) 
     /// </summary>
-    public string m_sSourceImage;
+    // Null for a tileset with no image.
+    public string? m_sSourceImage;
     /// <summary>
     /// size in pixels of the image
     /// </summary>

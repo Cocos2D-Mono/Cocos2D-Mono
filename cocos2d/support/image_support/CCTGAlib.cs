@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2009 Jason Booth
@@ -71,9 +70,9 @@ public class CCImageTGA
     public short height;
 
     /// <summary>
-    /// raw data
+    /// raw data (empty for an image made with the parameterless constructor)
     /// </summary>
-    public Color[] imageData;
+    public Color[] imageData = Array.Empty<Color>();
 
     public int flipped;
 
@@ -250,11 +249,11 @@ internal class CCTGAlib
     /// this is the function to call when we want to load an image
     /// </summary>
     /// <param name="?"></param>
-    /// <returns></returns>
-    public static CCImageTGA Load(string pszFilename)
+    /// <returns>Always null: the port of the loader below is commented out.</returns>
+    public static CCImageTGA? Load(string pszFilename)
     {
         //int mode, total;
-        CCImageTGA info = null;
+        CCImageTGA? info = null;
         //CCFileData data = new CCFileData(pszFilename, "rb");
         //UInt64 nSize = data.Size;
         //byte[] pBuffer = data.Buffer;

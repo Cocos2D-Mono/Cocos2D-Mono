@@ -1,5 +1,5 @@
-#nullable disable
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -11,17 +11,17 @@ public class CCMenuItemFont : CCMenuItemLabel
     public CCMenuItemFont (string value) : this(value, null)
     { }
     
-		public CCMenuItemFont (string value, Action<CCMenuItem> selector)
+		public CCMenuItemFont (string value, Action<CCMenuItem>? selector)
     {
         InitWithString(value, _fontName, (int)_fontSize, selector);
     }
 
-    public CCMenuItemFont(string value, string fontName, Action<CCMenuItem> selector)
+    public CCMenuItemFont(string value, string fontName, Action<CCMenuItem>? selector)
     {
         InitWithString(value, fontName, (int)_fontSize, selector);
     }
 
-    public CCMenuItemFont(string value, string fontName, int fontSize, Action<CCMenuItem> selector)
+    public CCMenuItemFont(string value, string fontName, int fontSize, Action<CCMenuItem>? selector)
     {
         InitWithString(value, fontName, fontSize, selector);
     }
@@ -79,7 +79,8 @@ public class CCMenuItemFont : CCMenuItemLabel
         }
     }
 
-		protected virtual bool InitWithString(string value, string fontName, int fontSize, Action<CCMenuItem> selector)
+		[MemberNotNull(nameof(m_strFontName))]
+		protected virtual bool InitWithString(string value, string fontName, int fontSize, Action<CCMenuItem>? selector)
     {
         //CCAssert( value != NULL && strlen(value) != 0, "Value length must be greater than 0");
 
@@ -93,7 +94,7 @@ public class CCMenuItemFont : CCMenuItemLabel
 
     protected virtual void RecreateLabel()
     {
-        CCLabelTTF label = new CCLabelTTF((m_pLabel as ICCLabelProtocol).Text, m_strFontName, m_uFontSize);
+        CCLabelTTF label = new CCLabelTTF(Text, m_strFontName, m_uFontSize);
         label.Color = Color;
         Label = label;
     }

@@ -302,6 +302,7 @@ public class CCParticleSystemQuad : CCParticleSystem
 
         CCDrawManager.BindTexture(m_pTexture);
         CCDrawManager.BlendFunc(m_tBlendFunc);
+        Debug.Assert(_quads != null, "A system outside a batch node has its own quads");
         CCDrawManager.DrawQuads(_quads, 0, m_uParticleCount);
     }
 

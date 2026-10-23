@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 
@@ -33,7 +32,7 @@ public class CCLog
         Debug.WriteLine(message);
     }
 
-    public static void Log(string format, params object[] args)
+    public static void Log(string format, params object?[] args)
     {
         Debug.WriteLine(format, args);
     }

@@ -1,6 +1,6 @@
-#nullable disable
 using Microsoft.Xna.Framework;
 #if ANDROID
+using System.Diagnostics;
 using Android.App;
 using Android.Util;
 #endif
@@ -17,7 +17,8 @@ public static class CCDevice
         if (_dpi == 0)
         {
 #if ANDROID
-            var display = Game.Activity.WindowManager.DefaultDisplay;
+            var display = Game.Activity.WindowManager?.DefaultDisplay;
+            Debug.Assert(display != null, "An activity's window manager has a default display.");
             var metrics = new DisplayMetrics();
         
             display.GetMetrics(metrics);

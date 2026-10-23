@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 #if !NETFRAMEWORK
 using System.Buffers;
@@ -6,6 +5,7 @@ using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Cocos2D;
@@ -118,6 +118,7 @@ public class CCRawList<T> : IList<T>
     public int Capacity
     {
         get { return Elements.Length; }
+        [MemberNotNull(nameof(Elements))]
         set
         {
             T[] newArray;
@@ -254,7 +255,10 @@ public class CCRawList<T> : IList<T>
         if (Elements != null && _ownsPooledBuffer)
         {
             ReturnBuffer(Elements);
-            Elements = null;
+            // The buffer is back in the pool, so the list is empty. A small unpooled array keeps
+            // it usable, as a new list is.
+            Elements = new T[4];
+            count = 0;
             _ownsPooledBuffer = false;
         }
     }
@@ -587,7 +591,7 @@ public class CCRawList<T> : IList<T>
         {
         }
 
-        object IEnumerator.Current
+        object? IEnumerator.Current
         {
             get { return _list.Elements[_index]; }
         }

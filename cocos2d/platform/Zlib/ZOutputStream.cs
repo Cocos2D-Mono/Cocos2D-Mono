@@ -49,6 +49,7 @@ using System.IO;
 
 namespace Cocos2D.Compression.Zlib;
 
+[Obsolete(ZlibDeprecation.Message)]
 public class ZOutputStream : Stream
 {
     protected internal byte[] buf, buf1 = new byte[1];

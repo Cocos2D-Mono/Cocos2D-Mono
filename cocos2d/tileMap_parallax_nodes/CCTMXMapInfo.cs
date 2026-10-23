@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using Cocos2D.Compression.Zlib;
 
 namespace Cocos2D;
 
@@ -557,14 +556,15 @@ public class CCTMXMapInfo : ICCSAXDelegator
                 //zlib
                 if ((pTMXMapInfo.LayerAttribs & (int) CCTMXLayerAttrib.Zlib) != 0)
                 {
-                    var inZInputStream = new ZInputStream(new MemoryStream(pTMXMapInfo.CurrentString));
+                    using var inZlibStream =
+                        new ZLibStream(new MemoryStream(pTMXMapInfo.CurrentString), CompressionMode.Decompress);
 
                     var outMemoryStream = new MemoryStream();
 
                     var buffer = new byte[1024];
                     while (true)
                     {
-                        int bytesRead = inZInputStream.Read(buffer, 0, buffer.Length);
+                        int bytesRead = inZlibStream.Read(buffer, 0, buffer.Length);
                         if (bytesRead == 0)
                             break;
                         outMemoryStream.Write(buffer, 0, bytesRead);

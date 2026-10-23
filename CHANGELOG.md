@@ -26,6 +26,16 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   Overrides of `CCDirector.Init` must call the base method, which creates the scheduler, the
   action manager and the dispatchers. The compiler can't check this, because those fields are
   private.
+- **Zlib-compressed TMX layers** (`compression="zlib"`) decompress with .NET's
+  `System.IO.Compression.ZLibStream` instead of the bundled zlib port. A corrupt one throws
+  `InvalidDataException` instead of the port's `ZStreamException`.
+
+### Deprecated
+
+- **The bundled zlib port, `Cocos2D.Compression.Zlib`** (`ZInputStream`, `ZOutputStream`,
+  `ZStream`, `ZStreamException`, `Deflate`, `SupportClass` and `zlibConst`), is obsolete and will
+  be removed in 3.0. The engine no longer uses it. Use `System.IO.Compression.ZLibStream`
+  instead.
 
 ### Fixed
 

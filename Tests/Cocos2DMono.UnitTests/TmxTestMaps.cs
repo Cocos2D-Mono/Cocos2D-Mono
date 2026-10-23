@@ -29,6 +29,13 @@ internal static class TmxTestMaps
                Convert.ToBase64String(GzipTestData.Compress(TileBytes(gids), corruptChecksum)) + "</data></layer>";
     }
 
+    // The same layer with its data zlib-compressed, optionally with a bad checksum.
+    public static string ZlibLayer(string name, bool corruptChecksum, params uint[] gids)
+    {
+        return "<layer name=\"" + name + "\" width=\"2\" height=\"2\"><data encoding=\"base64\" compression=\"zlib\">" +
+               Convert.ToBase64String(ZlibTestData.Compress(TileBytes(gids), corruptChecksum)) + "</data></layer>";
+    }
+
     private static byte[] TileBytes(uint[] gids)
     {
         var bytes = new byte[gids.Length * 4];

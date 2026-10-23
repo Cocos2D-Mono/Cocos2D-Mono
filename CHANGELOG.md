@@ -84,7 +84,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   it does for one whose root isn't a dictionary. It used to pass a null file name to the texture
   cache.
 - `PlistDocument.Write` writes a plist without a root object for a document that has no root,
-  instead of throwing `NullReferenceException`.
+  instead of throwing `NullReferenceException`. Loading a plist without a root object into a
+  document also clears the root it had, which it used to keep.
 - A `PlistArray` or `PlistDictionary` made from a collection that holds null throws
   `InvalidCastException`, as for other values it can't convert, instead of
   `NullReferenceException`.

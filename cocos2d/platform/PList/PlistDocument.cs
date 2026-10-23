@@ -124,6 +124,8 @@ public class PlistDocument : PlistObjectBase
 
     public void LoadFromXml(XmlReader reader)
     {
+        // A plist without a root object leaves the document without one, not with the last root.
+        root = null;
         reader.ReadToDescendant("plist");
         while (reader.Read() && reader.NodeType != XmlNodeType.Element) ;
         if (!reader.EOF)

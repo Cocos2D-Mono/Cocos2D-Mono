@@ -29,6 +29,22 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - **Zlib-compressed TMX layers** (`compression="zlib"`) decompress with .NET's
   `System.IO.Compression.ZLibStream` instead of the bundled zlib port. A corrupt one throws
   `InvalidDataException` instead of the port's `ZStreamException`.
+- **Nullable annotations for the plist classes** (`PlistDocument`, `PlistDictionary`,
+  `PlistArray`, `PlistObjectBase` and the classes for each type of value). The visible changes:
+  - `PlistObjectBase.AsString`, `AsBinary`, `AsArray` and `AsDictionary` are nullable. They
+    return null for a key that a dictionary doesn't have, and `AsArray` and `AsDictionary` also
+    return null for some values of other types, such as a boolean. The overrides that always
+    return a value aren't nullable: `PlistString.AsString`, `PlistString.AsBinary`,
+    `PlistData.AsBinary`, `PlistArray.AsArray` and `PlistDictionary.AsDictionary`.
+  - `PlistDocument.Root` is nullable: a document made with the parameterless constructor has no
+    root, and neither does one read from a plist without a root object.
+  - `PlistDictionary.TryGetValue` returns null for a missing key, and `PlistDictionary.Keys` is
+    null for a dictionary that doesn't keep its keys in order.
+- **Sprite frame, sprite sheet, animation and particle plists that lack a value they need**
+  throw an `InvalidDataException` that says what's missing. So does one whose root isn't a
+  dictionary. Before, most of these threw `NullReferenceException`, `NotSupportedException` or
+  `ArgumentNullException`. Code that catches those exceptions should handle the new one; Fixed
+  lists each case.
 
 ### Deprecated
 
@@ -44,6 +60,34 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - `CCDirector.DeserializeState` no longer puts a null in the scene stack for a saved type that
   isn't a scene. The saved scene list ends there instead, as it already did at a type the game
   no longer has.
+- A format-3 sprite frame without an `aliases` array no longer throws `NullReferenceException`
+  in `CCSpriteFrameCache` or `CCSpriteSheet`. It has no aliases, as in cocos2d-x.
+- `CCSpriteFrameCache.RemoveSpriteFramesFromDictionary` does nothing for a dictionary without
+  frames, instead of throwing `NullReferenceException`.
+- `CCAnimationCache` no longer throws `NullReferenceException` for animation properties without
+  a `spritesheets` array. It loads no sprite sheets for them.
+- A particle plist without a `textureFileName` gets its embedded texture. The missing name was
+  read as null, which made the texture cache throw, so the system got the default texture.
+- A particle plist whose texture file can't be loaded and that has no `textureImageData` no
+  longer throws `NullReferenceException` in release builds. The system gets no texture, as it
+  already did for empty `textureImageData`.
+- A sprite frame, animation, animation frame, SpriteKit image or SpriteKit subimage that isn't a
+  dictionary throws `InvalidDataException` instead of `NullReferenceException` or
+  `NotImplementedException`. So do a SpriteKit image without a `subimages` array and a plist
+  whose root isn't a dictionary, though a sprite sheet read from a stream still throws
+  `ContentLoadException` for its root.
+- A sprite frame without one of the rectangles, points or sizes its format needs throws an
+  `InvalidDataException` that names the key, instead of `NotSupportedException`. So does an
+  animation frame without a `spriteframe`, which threw `ArgumentNullException`, and a SpriteKit
+  image without a `path` or a subimage without a `name`.
+- `CCLabelAtlas` throws `ArgumentException` for a character map without a `textureFilename`, as
+  it does for one whose root isn't a dictionary. It used to pass a null file name to the texture
+  cache.
+- `PlistDocument.Write` writes a plist without a root object for a document that has no root,
+  instead of throwing `NullReferenceException`.
+- A `PlistArray` or `PlistDictionary` made from a collection that holds null throws
+  `InvalidCastException`, as for other values it can't convert, instead of
+  `NullReferenceException`.
 
 ## 2.8.0 - 2026-10-23
 

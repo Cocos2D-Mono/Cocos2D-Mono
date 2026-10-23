@@ -1,4 +1,3 @@
-#nullable disable
 //
 // Taken from PodSleuth (http://git.gnome.org/cgit/podsleuth)
 //  
@@ -71,12 +70,12 @@ namespace Cocos2D;
         get { return Value; }
     }
 
-    public override PlistArray AsArray
+    public override PlistArray? AsArray
     {
         get { return null; }
     }
 
-    public override PlistDictionary AsDictionary
+    public override PlistDictionary? AsDictionary
     {
         get { return null; }
     }

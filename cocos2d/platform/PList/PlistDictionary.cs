@@ -1,4 +1,3 @@
-#nullable disable
 //
 // Taken from PodSleuth (http://git.gnome.org/cgit/podsleuth)
 //  
@@ -28,12 +27,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Cocos2D;
 
 	public class PlistDictionary : PlistObjectBase, IEnumerable<KeyValuePair<string, PlistObjectBase>>
 	{
-		private List<string> keys;
+		private List<string>? keys;
 		private Dictionary<string, PlistObjectBase> dict = new Dictionary<string, PlistObjectBase> ();
 
 		public PlistDictionary () : this(false)
@@ -69,7 +69,7 @@ namespace Cocos2D;
 			}
 		}
 
-    public IList<string> Keys
+    public IList<string>? Keys
     {
         get
         {
@@ -117,7 +117,7 @@ namespace Cocos2D;
 	        get { throw new NotImplementedException(); }
 	    }
 
-	    public override PlistArray AsArray
+	    public override PlistArray? AsArray
 	    {
 	        get { return null; }
 	    }
@@ -168,7 +168,7 @@ namespace Cocos2D;
 		public PlistObjectBase this[string key] {
 			get
 			{
-            PlistObjectBase value;
+            PlistObjectBase? value;
             if (dict.TryGetValue(key, out value))
                 return value;
             return _null;
@@ -182,28 +182,36 @@ namespace Cocos2D;
 			}
 		}
 		
-		public PlistObjectBase TryGetValue (string key)
+		public PlistObjectBase? TryGetValue (string key)
 		{
-			PlistObjectBase value;
+			PlistObjectBase? value;
 			if (dict.TryGetValue (key, out value))
 				return value;
 			return null;
+		}
+
+		// The string value of a key that a format requires. Throws InvalidDataException naming the
+		// key when the key is missing or its value isn't a string.
+		internal string GetRequiredString (string key)
+		{
+			return (this[key] as PlistString)?.Value
+				?? throw new InvalidDataException ("The plist has no string named '" + key + "'.");
 		}
 
 		public int Count {
 			get { return dict.Count; }
 		}
 
-		private IEnumerator<KeyValuePair<string, PlistObjectBase>> GetEnumeratorFromKeys ()
+		private IEnumerator<KeyValuePair<string, PlistObjectBase>> GetEnumeratorFromKeys (List<string> orderedKeys)
 		{
-			foreach (string key in keys) {
+			foreach (string key in orderedKeys) {
 				yield return new KeyValuePair<string, PlistObjectBase> (key, dict[key]);
 			}
 		}
 
 		public IEnumerator<KeyValuePair<string, PlistObjectBase>> GetEnumerator ()
 		{
-			return keys == null ? dict.GetEnumerator () : GetEnumeratorFromKeys ();
+			return keys == null ? dict.GetEnumerator () : GetEnumeratorFromKeys (keys);
 		}
 
 		IEnumerator IEnumerable.GetEnumerator ()

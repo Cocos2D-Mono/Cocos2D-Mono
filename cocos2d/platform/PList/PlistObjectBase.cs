@@ -1,4 +1,3 @@
-#nullable disable
 //
 // Taken from PodSleuth (http://git.gnome.org/cgit/podsleuth)
 //  
@@ -34,7 +33,7 @@ namespace Cocos2D;
 	{
 		public abstract void Write (System.Xml.XmlWriter writer);
 
-		protected static PlistObjectBase ObjectToPlistObject (object value)
+		protected static PlistObjectBase ObjectToPlistObject (object? value)
 		{
 			if (value is string) {
 				return new PlistString ((string)value);
@@ -50,7 +49,7 @@ namespace Cocos2D;
 				return new PlistDictionary ((IDictionary)value);
 			}
 
-			throw new InvalidCastException (String.Format ("`{0}' cannot be converted to a PlistObjectBase", value.GetType ()));
+			throw new InvalidCastException (String.Format ("`{0}' cannot be converted to a PlistObjectBase", value?.GetType ().ToString () ?? "null"));
 		}
 
 		public static implicit operator PlistObjectBase (string value)
@@ -78,12 +77,12 @@ namespace Cocos2D;
 			return new PlistArray (value);
 		}
 
-    public abstract byte[] AsBinary { get; }
+    public abstract byte[]? AsBinary { get; }
 	    public abstract int AsInt { get; }
     public abstract float AsFloat { get; }
-    public abstract string AsString { get; }
+    public abstract string? AsString { get; }
     public abstract DateTime AsDate { get; }
     public abstract bool AsBool { get; }
-    public abstract PlistArray AsArray { get; }
-    public abstract PlistDictionary AsDictionary { get; }
+    public abstract PlistArray? AsArray { get; }
+    public abstract PlistDictionary? AsDictionary { get; }
 	}

@@ -1,4 +1,3 @@
-#nullable disable
 //
 // Taken from PodSleuth (http://git.gnome.org/cgit/podsleuth)
 //  
@@ -43,7 +42,7 @@ public class PlistDocument : PlistObjectBase
 {
     private const string version = "1.0";
 
-    private PlistObjectBase root;
+    private PlistObjectBase? root;
 
     public PlistDocument(string data)
     {
@@ -239,10 +238,20 @@ public class PlistDocument : PlistObjectBase
         return dict;
     }
 
-    public PlistObjectBase Root
+    public PlistObjectBase? Root
     {
         get { return root; }
         set { root = value; }
+    }
+
+    // The root dictionary that the engine's plist formats all have. Throws InvalidDataException
+    // when the root is missing or isn't a dictionary. plistName, if there is one, names the plist
+    // in the message.
+    internal PlistDictionary GetRootDictionary(string? plistName = null)
+    {
+        return root as PlistDictionary
+            ?? throw new InvalidDataException(
+                (plistName == null ? "The plist" : "The plist '" + plistName + "'") + " has no root dictionary.");
     }
 
     public override void Write(System.Xml.XmlWriter writer)
@@ -251,7 +260,7 @@ public class PlistDocument : PlistObjectBase
         writer.WriteDocType("plist", "-//Apple Computer//DTD PLIST 1.0//EN", "http://www.apple.com/DTDs/PropertyList-1.0.dtd", null);
         writer.WriteStartElement("plist");
         writer.WriteAttributeString("version", version);
-        root.Write(writer);
+        root?.Write(writer);
         writer.WriteEndDocument();
     }
 
@@ -648,9 +657,9 @@ public class PlistDocument : PlistObjectBase
 
     public class PlistDocumentReader : ContentTypeReader<PlistDocument>
     {
-        private string[] _stringPool;
+        private string[] _stringPool = Array.Empty<string>();
 
-        protected override PlistDocument Read(ContentReader input, PlistDocument existingInstance)
+        protected override PlistDocument Read(ContentReader input, PlistDocument? existingInstance)
         {
             if (existingInstance == null)
             {

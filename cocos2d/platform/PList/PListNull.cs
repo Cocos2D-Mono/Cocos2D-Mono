@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +16,7 @@ public class PlistNull : PlistObject<int?>
     {
     }
 
-    public override byte[] AsBinary
+    public override byte[]? AsBinary
     {
         get { return null; }
     }
@@ -32,7 +31,7 @@ public class PlistNull : PlistObject<int?>
         get { return 0f; }
     }
 
-    public override string AsString
+    public override string? AsString
     {
         get { return null; }
     }
@@ -47,12 +46,12 @@ public class PlistNull : PlistObject<int?>
         get {return false; }
     }
 
-    public override PlistArray AsArray
+    public override PlistArray? AsArray
     {
         get { return null; }
     }
 
-    public override PlistDictionary AsDictionary
+    public override PlistDictionary? AsDictionary
     {
         get { return null; }
     }

@@ -1,4 +1,3 @@
-#nullable disable
 //
 // Taken from PodSleuth (http://git.gnome.org/cgit/podsleuth)
 //  
@@ -33,7 +32,7 @@ namespace Cocos2D;
 
 		public PlistObject (T value)
 		{
-			Value = value;
+			this.value = value;
 		}
 
 		public virtual T Value {

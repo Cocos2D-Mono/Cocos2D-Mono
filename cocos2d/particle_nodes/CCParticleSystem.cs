@@ -390,6 +390,7 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
     public bool InitWithFile(string plistFile)
     {
         PlistDocument doc = CCContentManager.SharedContentManager.Load<PlistDocument>(plistFile);
+        PlistDictionary dictionary = doc.GetRootDictionary(plistFile);
         // Add the directory containing the plist file as a search path
         int idx = plistFile.LastIndexOf('/');
         string? pathToRemove = null;
@@ -401,7 +402,7 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
                 pathToRemove = path;
             }
         }
-        bool ret = InitWithDictionary(doc.Root.AsDictionary);
+        bool ret = InitWithDictionary(dictionary);
         if (pathToRemove != null)
         {
             CCContentManager.SharedContentManager.SearchPaths.Remove(pathToRemove);
@@ -526,7 +527,7 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
 
                     // texture        
                     // Try to get the texture from the cache
-                    string textureName = dictionary["textureFileName"].AsString;
+                    string textureName = dictionary["textureFileName"].AsString ?? string.Empty;
 
                     CCTexture2D? tex = null;
 
@@ -554,7 +555,7 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
                     }
                     else
                     {
-                        string textureData = dictionary["textureImageData"].AsString;
+                        string textureData = dictionary["textureImageData"].AsString ?? string.Empty;
                         Debug.Assert(!string.IsNullOrEmpty(textureData), string.Format("CCParticleSystem: textureData does not exist : {0}",textureName));
 
                         int dataLen = textureData.Length;

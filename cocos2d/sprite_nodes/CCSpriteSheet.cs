@@ -95,7 +95,7 @@ public class CCSpriteSheet
     {
         PlistDocument document = CCContentManager.SharedContentManager.Load<PlistDocument>(fileName);
 
-        var dict = document.Root.AsDictionary;
+        var dict = document.GetRootDictionary(fileName);
         var texturePath = string.Empty;
 			plistFilePath = string.Empty;
 
@@ -176,7 +176,7 @@ public class CCSpriteSheet
     {
         PlistDocument document = CCContentManager.SharedContentManager.Load<PlistDocument>(fileName);
 
-        PlistDictionary dict = document.Root.AsDictionary;
+        PlistDictionary dict = document.GetRootDictionary(fileName);
 
         InitWithDictionary(dict, texture);
     }
@@ -198,17 +198,17 @@ public class CCSpriteSheet
     private void InitWithStream(Stream stream, CCTexture2D texture)
     {
         var document = new PlistDocument();
+        PlistDictionary dict;
         try
         {
             document.LoadFromXmlFile(stream);
-            plistType = GetPlistType(document.Root.AsDictionary);
+            dict = document.GetRootDictionary();
+            plistType = GetPlistType(dict);
         }
         catch (Exception)
         {
             throw (new Microsoft.Xna.Framework.Content.ContentLoadException("Failed to load the sprite sheet definition file from stream"));
         }
-
-        PlistDictionary dict = document.Root.AsDictionary;
 
         InitWithDictionary(dict, texture);
     }
@@ -246,9 +246,10 @@ public class CCSpriteSheet
 			foreach (var imageEntry in images) 
 			{
 				// we only support one image for now
-				var imageDict = imageEntry.AsDictionary;
+				var imageDict = imageEntry as PlistDictionary
+					?? throw new InvalidDataException ("An image of the sprite sheet isn't a dictionary.");
 
-				var path = imageDict ["path"].AsString;
+				var path = imageDict.GetRequiredString ("path");
 
 				path = Path.Combine(plistFilePath, CCFileUtils.RemoveExtension(path));
 
@@ -262,21 +263,23 @@ public class CCSpriteSheet
 				// size not used right now
 				//var size = CCSize.Parse(imageDict ["size"].AsString);
 
-				var subImages = imageDict ["subimages"].AsArray;
+				var subImages = imageDict ["subimages"] as PlistArray
+					?? throw new InvalidDataException ("The sprite sheet image '" + path + "' has no subimages array.");
 
 				foreach (var subImage in subImages) {
 					CCSpriteFrame spriteFrame;
 
-					var subImageDict = subImage.AsDictionary;
-					var name = subImageDict ["name"].AsString;
+					var subImageDict = subImage as PlistDictionary
+						?? throw new InvalidDataException ("A subimage of the sprite sheet image '" + path + "' isn't a dictionary.");
+					var name = subImageDict.GetRequiredString ("name");
 					var alias = subImageDict ["alias"].AsString;
 					var isFullyOpaque = true;
 
 					if (subImageDict.ContainsKey ("isFullyOpaque"))
 						isFullyOpaque = subImageDict ["isFullyOpaque"].AsBool;
 
-					var textureRect = CCRect.Parse (subImageDict ["textureRect"].AsString);
-					var spriteOffset = CCPoint.Parse (subImageDict ["spriteOffset"].AsString);
+					var textureRect = CCRect.Parse (subImageDict.GetRequiredString ("textureRect"));
+					var spriteOffset = CCPoint.Parse (subImageDict.GetRequiredString ("spriteOffset"));
 
 					// We are going to override the sprite offset for now to be 0,0
 					// It seems the offset is calculated off of the original size but if 
@@ -287,7 +290,7 @@ public class CCSpriteSheet
 					if (subImageDict.ContainsKey ("textureRotated")) {
 						textureRotated = subImageDict ["textureRotated"].AsBool;
 					}
-					var spriteSourceSize = CCSize.Parse (subImageDict ["spriteSourceSize"].AsString);
+					var spriteSourceSize = CCSize.Parse (subImageDict.GetRequiredString ("spriteSourceSize"));
 					var frameRect = textureRect;
 					if (textureRotated)
 						frameRect = new CCRect (textureRect.Origin.X, textureRect.Origin.Y, textureRect.Size.Height, textureRect.Size.Width);
@@ -349,7 +352,8 @@ public class CCSpriteSheet
 
 			foreach (var pair in framesDict)
 			{
-				PlistDictionary frameDict = pair.Value.AsDictionary;
+				PlistDictionary frameDict = pair.Value as PlistDictionary
+					?? throw new InvalidDataException("The sprite frame '" + pair.Key + "' isn't a dictionary.");
 				CCSpriteFrame spriteFrame;
 
 				if (format == 0)
@@ -386,7 +390,7 @@ public class CCSpriteSheet
 				}
 				else if (format == 1 || format == 2)
 				{
-					var frame = CCRect.Parse(frameDict["frame"].AsString);
+					var frame = CCRect.Parse(frameDict.GetRequiredString("frame"));
 					bool rotated = false;
 
 					// rotation
@@ -398,18 +402,18 @@ public class CCSpriteSheet
 						}
 					}
 
-					var offset = CCPoint.Parse(frameDict["offset"].AsString);
-					var sourceSize = CCSize.Parse(frameDict["sourceSize"].AsString);
+					var offset = CCPoint.Parse(frameDict.GetRequiredString("offset"));
+					var sourceSize = CCSize.Parse(frameDict.GetRequiredString("sourceSize"));
 
 					// create frame
 					spriteFrame = new CCSpriteFrame(texture, frame, rotated, offset, sourceSize);
 				}
 				else // format == 3
 				{
-					var spriteSize = CCSize.Parse(frameDict["spriteSize"].AsString);
-					var spriteOffset = CCPoint.Parse(frameDict["spriteOffset"].AsString);
-					var spriteSourceSize = CCSize.Parse(frameDict["spriteSourceSize"].AsString);
-					var textureRect = CCRect.Parse(frameDict["textureRect"].AsString);
+					var spriteSize = CCSize.Parse(frameDict.GetRequiredString("spriteSize"));
+					var spriteOffset = CCPoint.Parse(frameDict.GetRequiredString("spriteOffset"));
+					var spriteSourceSize = CCSize.Parse(frameDict.GetRequiredString("spriteSourceSize"));
+					var textureRect = CCRect.Parse(frameDict.GetRequiredString("textureRect"));
 
 					bool textureRotated = false;
 
@@ -418,12 +422,13 @@ public class CCSpriteSheet
 						textureRotated = frameDict["textureRotated"].AsBool;
 					}
 
-					// get aliases
-					var aliases = frameDict["aliases"].AsArray;
+					// get aliases, if the frame has any
+					var aliases = frameDict["aliases"].AsArray ?? new PlistArray();
 
 					for (int i = 0; i < aliases.Count; i++ )
 					{
-						string oneAlias = aliases[i].AsString;
+						string oneAlias = (aliases[i] as PlistString)?.Value
+							?? throw new InvalidDataException("An alias of the sprite frame '" + pair.Key + "' isn't a string.");
 
 						if (_spriteFramesAliases.ContainsKey(oneAlias))
 						{

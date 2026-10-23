@@ -81,7 +81,8 @@ public class CCSpriteFrameCache
 
         foreach (var pair in framesDict)
         {
-            PlistDictionary frameDict = pair.Value.AsDictionary;
+            PlistDictionary frameDict = pair.Value as PlistDictionary
+                ?? throw new InvalidDataException("The sprite frame '" + pair.Key + "' isn't a dictionary.");
             CCSpriteFrame spriteFrame;
 
             if (format == 0)
@@ -116,7 +117,7 @@ public class CCSpriteFrameCache
             }
             else if (format == 1 || format == 2)
             {
-					CCRect frame = CCRect.Parse(frameDict["frame"].AsString);
+					CCRect frame = CCRect.Parse(frameDict.GetRequiredString("frame"));
                 bool rotated = false;
 
                 // rotation
@@ -128,8 +129,8 @@ public class CCSpriteFrameCache
                     }
                 }
 
-                CCPoint offset = CCPoint.Parse(frameDict["offset"].AsString);
-					CCSize sourceSize = CCSize.Parse (frameDict["sourceSize"].AsString);
+                CCPoint offset = CCPoint.Parse(frameDict.GetRequiredString("offset"));
+					CCSize sourceSize = CCSize.Parse (frameDict.GetRequiredString("sourceSize"));
 
                 // create frame
                 spriteFrame = new CCSpriteFrame(pobTexture,
@@ -142,23 +143,24 @@ public class CCSpriteFrameCache
             else // format == 3
             {
                 // get values
-                CCSize spriteSize = CCSize.Parse (frameDict["spriteSize"].AsString);
-                CCPoint spriteOffset = CCPoint.Parse(frameDict["spriteOffset"].AsString);
-					CCSize spriteSourceSize = CCSize.Parse (frameDict["spriteSourceSize"].AsString);
-                CCRect textureRect = CCRect.Parse(frameDict["textureRect"].AsString);
+                CCSize spriteSize = CCSize.Parse (frameDict.GetRequiredString("spriteSize"));
+                CCPoint spriteOffset = CCPoint.Parse(frameDict.GetRequiredString("spriteOffset"));
+					CCSize spriteSourceSize = CCSize.Parse (frameDict.GetRequiredString("spriteSourceSize"));
+                CCRect textureRect = CCRect.Parse(frameDict.GetRequiredString("textureRect"));
                 bool textureRotated = false;
                 if (frameDict.ContainsKey("textureRotated"))
                 {
                     textureRotated = frameDict["textureRotated"].AsBool;
                 }
 
-                // get aliases
-                PlistArray aliases = frameDict["aliases"].AsArray;
+                // get aliases, if the frame has any
+                PlistArray aliases = frameDict["aliases"].AsArray ?? new PlistArray();
                 string frameKey = pair.Key;
 
                 foreach (PlistObjectBase item2 in aliases)
                 {
-                    string oneAlias = item2.AsString;
+                    string oneAlias = (item2 as PlistString)?.Value
+                        ?? throw new InvalidDataException("An alias of the sprite frame '" + frameKey + "' isn't a string.");
                     if (m_pSpriteFramesAliases.Keys.Contains(oneAlias))
                     {
                         if (m_pSpriteFramesAliases[oneAlias] != null)
@@ -197,7 +199,7 @@ public class CCSpriteFrameCache
     {
         PlistDocument document = CCContentManager.SharedContentManager.Load<PlistDocument>(pszPlist);
 
-        PlistDictionary dict = document.Root.AsDictionary;
+        PlistDictionary dict = document.GetRootDictionary(pszPlist);
         string texturePath = "";
         PlistDictionary? metadataDict = dict.ContainsKey("metadata") ? dict["metadata"].AsDictionary : null;
 
@@ -206,7 +208,7 @@ public class CCSpriteFrameCache
             // try to read  texture file name from meta data
             if (metadataDict.ContainsKey("textureFileName"))
             {
-                texturePath = metadataDict["textureFileName"].AsString;
+                texturePath = metadataDict["textureFileName"].AsString ?? string.Empty;
             }
         }
 
@@ -269,7 +271,7 @@ public class CCSpriteFrameCache
             throw (new Microsoft.Xna.Framework.Content.ContentLoadException("Failed to load the particle definition file from stream"));
         }
 
-        PlistDictionary dict = document.Root.AsDictionary;
+        PlistDictionary dict = document.GetRootDictionary();
 
         AddSpriteFramesWithDictionary(dict, pobTexture);
     }
@@ -278,7 +280,7 @@ public class CCSpriteFrameCache
     {
         PlistDocument document = CCContentManager.SharedContentManager.Load<PlistDocument>(pszPlist);
 
-        PlistDictionary dict = document.Root.AsDictionary;
+        PlistDictionary dict = document.GetRootDictionary(pszPlist);
 
         AddSpriteFramesWithDictionary(dict, pobTexture);
     }
@@ -349,14 +351,19 @@ public class CCSpriteFrameCache
     {
         PlistDocument document = CCContentManager.SharedContentManager.Load<PlistDocument>(plist);
 
-        PlistDictionary dict = document.Root.AsDictionary;
+        PlistDictionary dict = document.GetRootDictionary(plist);
 
         RemoveSpriteFramesFromDictionary(dict);
     }
 
     public void RemoveSpriteFramesFromDictionary(PlistDictionary dictionary)
     {
-        PlistDictionary framesDict = dictionary["frames"].AsDictionary;
+        PlistDictionary? framesDict = dictionary["frames"].AsDictionary;
+        if (framesDict == null)
+        {
+            return;
+        }
+
         var keysToRemove = new List<string>();
 
         foreach (var pair in framesDict)

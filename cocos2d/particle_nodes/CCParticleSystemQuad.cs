@@ -302,6 +302,12 @@ public class CCParticleSystemQuad : CCParticleSystem
 
         CCDrawManager.BindTexture(m_pTexture);
         CCDrawManager.BlendFunc(m_tBlendFunc);
+        // A system made with the parameterless constructor has no quads until it's initialized,
+        // and no particles to draw.
+        if (m_uParticleCount == 0)
+        {
+            return;
+        }
         Debug.Assert(_quads != null, "A system outside a batch node has its own quads");
         CCDrawManager.DrawQuads(_quads, 0, m_uParticleCount);
     }

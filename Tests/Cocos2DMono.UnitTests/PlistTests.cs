@@ -23,6 +23,18 @@ public class PlistTests
     }
 
     [Fact]
+    public void LoadFromXml_APlistWithoutARoot_ClearsTheOldRoot()
+    {
+        // Loading only set the root when the plist had one, so a document kept the root of the
+        // plist it loaded before.
+        var document = new PlistDocument("<plist version=\"1.0\"><string>old</string></plist>");
+
+        document.LoadFromXml("<plist version=\"1.0\"></plist>");
+
+        Assert.Null(document.Root);
+    }
+
+    [Fact]
     public void Array_FromValuesWithANull_ThrowsInvalidCastException()
     {
         // The exception's message named the value's type, so a null value threw

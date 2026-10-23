@@ -56,7 +56,8 @@ errors. Three things can still affect a game:
   `CCUserDefault.GetStringForKey` with a null default, now raises a nullable warning (CS86xx).
   As with 2.7.0, `<WarningsNotAsErrors>nullable</WarningsNotAsErrors>` keeps them as warnings
   in a build with `TreatWarningsAsErrors`. A subclass that overrides one of the init methods
-  listed under Changed is also warned until it calls the base method.
+  listed under Changed is also warned until it calls the base method, except for
+  `CCDrawNode.Init`.
 - **Some failures throw a more specific exception.** For example, `CCMenu.AddChild` throws
   `ArgumentException` for a child that isn't a menu item, in release builds too;
   `CCProgressTimer` throws `ArgumentNullException` for a null sprite; and a malformed TMX file
@@ -99,8 +100,9 @@ errors. Three things can still affect a game:
 
   Overrides of `CCDrawNode.Init` and `CCRenderTexture.InitWithWidthAndHeight` must call the
   base method, and overrides of `CCProgressTimer.InitWithSprite` must set the sprite, for
-  example by calling the base method; the compiler now checks. Overrides of
-  `CCMotionStreak.InitWithFade` that take a texture should declare it nullable.
+  example by calling the base method. The compiler checks the last two, but not
+  `CCDrawNode.Init`, whose field is private. Overrides of `CCMotionStreak.InitWithFade` that
+  take a texture should declare it nullable.
 - **Nullable annotations for the tile maps** (TMX maps with their layers, object groups and
   tilesets, tile map atlases and parallax nodes). The visible changes:
   - `CCTMXTiledMap.LayerNamed` and `ObjectGroupNamed`, `CCTMXObjectGroup.ObjectNamed` and

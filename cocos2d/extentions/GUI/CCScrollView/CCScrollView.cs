@@ -1,6 +1,7 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -43,7 +44,7 @@ public class CCScrollView : CCLayer
     protected float _minScale;
     protected float _touchLength;
     protected CCNode _container;
-    protected ICCScrollViewDelegate _delegate;
+    protected ICCScrollViewDelegate? _delegate;
     protected List<CCTouch> _touches;
     protected CCPoint _contentOffset;
     protected CCPoint _scrollDistance;
@@ -69,7 +70,7 @@ public class CCScrollView : CCLayer
     * @param container parent object
     * @return autoreleased scroll view object
     */
-    public CCScrollView(CCSize size, CCNode container)
+    public CCScrollView(CCSize size, CCNode? container)
     {
         InitWithViewSize(size, container);
     }
@@ -209,7 +210,7 @@ public class CCScrollView : CCLayer
         set { _direction = value; }
     }
 
-    public ICCScrollViewDelegate Delegate
+    public ICCScrollViewDelegate? Delegate
     {
         get { return _delegate; }
         set { _delegate = value; }
@@ -225,6 +226,7 @@ public class CCScrollView : CCLayer
 			}
     }
 
+    [MemberNotNull(nameof(_container), nameof(_touches))]
     public override bool Init()
     {
         return InitWithViewSize(new CCSize(200, 200), null);
@@ -243,18 +245,18 @@ public class CCScrollView : CCLayer
  * @return scroll view object
  */
 
-    protected virtual bool InitWithViewSize(CCSize size, CCNode container)
+    [MemberNotNull(nameof(_container), nameof(_touches))]
+    protected virtual bool InitWithViewSize(CCSize size, CCNode? container)
     {
         if (base.Init())
         {
-				_container = container;
-
-            if (_container == null)
+            if (container == null)
             {
-                _container = new CCLayer();
-                _container.IgnoreAnchorPointForPosition = false;
-                _container.AnchorPoint = CCPoint.Zero;
+                container = new CCLayer();
+                container.IgnoreAnchorPointForPosition = false;
+                container.AnchorPoint = CCPoint.Zero;
             }
+            _container = container;
 
             ViewSize = size;
 
@@ -272,6 +274,7 @@ public class CCScrollView : CCLayer
 
             return true;
         }
+        Debug.Fail("CCLayer.Init can't fail.");
         return false;
     }
 

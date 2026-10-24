@@ -1,4 +1,3 @@
-#nullable disable
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -119,14 +118,14 @@ public class CCArrayForObjectSorting : List<object>
         }
     }
 
-    public ICCSortableObject ObjectWithObjectID(int tag)
+    public ICCSortableObject? ObjectWithObjectID(int tag)
     {
         if (Count == 0)
         {
             return null;
         }
 
-        ICCSortableObject foundObj;
+        ICCSortableObject? foundObj;
 
         foundObj = new CCSortedObject();
         foundObj.ObjectID = tag;

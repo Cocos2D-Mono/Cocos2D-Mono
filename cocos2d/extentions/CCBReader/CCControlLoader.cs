@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 internal class CCControlLoader : CCNodeLoader
@@ -7,7 +6,7 @@ internal class CCControlLoader : CCNodeLoader
     private const string PROPERTY_SELECTED = "selected";
     private const string PROPERTY_CCCONTROL = "ccControl";
 
-    protected override void OnHandlePropTypeCheck(CCNode node, CCNode parent, string propertyName, bool pCheck, CCBReader reader)
+    protected override void OnHandlePropTypeCheck(CCNode node, CCNode? parent, string propertyName, bool pCheck, CCBReader reader)
     {
         if (propertyName == PROPERTY_ENABLED)
         {
@@ -23,7 +22,7 @@ internal class CCControlLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeBlockCcControl(CCNode node, CCNode parent, string propertyName,
+    protected override void OnHandlePropTypeBlockCcControl(CCNode node, CCNode? parent, string propertyName,
                                                            BlockCCControlData blockControlData, CCBReader reader)
     {
         if (propertyName == PROPERTY_CCCONTROL)

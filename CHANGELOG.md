@@ -108,6 +108,29 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   - A `CCTableView` made with the parameterless constructor needs `InitWithViewSize` to run and
     `DataSource` to be set before it's used. `DataSource` isn't nullable, though it's null until
     then.
+- **Nullable annotations for the CCB reader** (`CCBReader`, `CCBAnimationManager`, `CCNodeLoader`,
+  `CCNodeLoaderLibrary` and the CCB value, keyframe and sequence classes) **and Box2D's
+  `CCBox2dDraw`**. The visible changes:
+  - The `parent` parameter of `CCNodeLoader.LoadCCNode`, `ParseProperties` and every
+    `ParsePropType…` and `OnHandlePropType…` method is nullable, because a file's root node has
+    no parent. Overrides in custom loaders should declare `CCNode? parent`.
+  - `CCNodeLoader.ParsePropTypeSpriteFrame`, `ParsePropTypeAnimation`, `ParsePropTypeTexture`,
+    `ParsePropTypeBlock`, `ParsePropTypeBlockCcControl` and `ParsePropTypeCcbFile` are nullable.
+    So are the values that `OnHandlePropTypeSpriteFrame`, `OnHandlePropTypeAnimation`,
+    `OnHandlePropTypeTexture`, `OnHandlePropTypeBlock` and `OnHandlePropTypeCCBFile` receive,
+    because a property can be empty and a sprite frame or texture can be missing.
+  - `ICCBSelectorResolver`'s methods return nullable delegates, because the reader skips a
+    selector that no resolver handles.
+  - `CCBReader.ReadNodeGraphFromFile`, `ReadNodeGraphFromData` and `ReadFileWithCleanUp` are
+    nullable, because they return null for a file they can't read. They accept a null owner, and
+    the constructors accept a null assigner, resolver and listener.
+  - Also nullable: `CCBReader.MemberVariableAssigner`, `SelectorResolver` and `Owner`;
+    `CCBAnimationManager.RootNode`, `Delegate`, `DocumentControllerName`, `RunningSequenceName`
+    and `GetLastCompletedSequenceName`; `CCBSequence.CallBackChannel` and `SoundChannel`;
+    `CCBFile.FileNode`; and `CCBKeyframe.Value`.
+  - `CCBReader.CCBRootPath` is empty instead of null until it's set, as in cocos2d-x. The
+    reader's lists of owner outlets, owner callbacks and animation managers are empty instead of
+    null until a file fills them.
 - **Sprite frame, sprite sheet, animation and particle plists that lack a value they need**
   throw an `InvalidDataException` that says what's missing. So does one whose root isn't a
   dictionary. Before, most of these threw `NullReferenceException`, `NotSupportedException` or
@@ -202,6 +225,26 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   `NullReferenceException`.
 - `CCTableView.TouchEnded` reports the touched cell for a table view without a parent, instead
   of throwing `NullReferenceException`.
+- `CCNodeLoaderLibrary.SharedInstance` no longer throws `ArgumentException` the first time it's
+  used. It registered the default loaders a second time.
+- A `CCBReader` made with the parameterless constructor reads files with the shared node loader
+  library, instead of throwing `NullReferenceException`.
+- Reading a JavaScript-controlled CCB file with owner outlets or callbacks no longer throws
+  `NullReferenceException`.
+- When a sequence finishes, `CCBAnimationManager` tells its delegate the sequence's name, instead
+  of throwing `NullReferenceException`.
+- `CCBAnimationManager.RunAnimationsForSequenceIdTweenDuration` throws `ArgumentException` for a
+  sequence ID that doesn't exist, instead of `NullReferenceException`.
+- A sprite frame or texture that a CCB file uses but that can't be found is skipped. Before, a
+  missing texture threw `NullReferenceException` while the file loaded, and so did a missing
+  frame for a `CCScale9Sprite`. A missing frame in an animation threw when its keyframe played.
+- `CCBReader.CreateSceneWithNodeGraphFromFile` throws `InvalidDataException` for a file it can't
+  read, and so does reading a CCB file node whose own file can't be read. Before, these threw
+  `NullReferenceException`.
+- Setting an extra property on an embedded CCB file that declares none no longer throws
+  `NullReferenceException`. The property is skipped, as in cocos2d-x.
+- `CCBox2dDraw` loads its font in a `CCGameView`, which has no `CCApplication`, instead of
+  throwing `NullReferenceException`.
 
 ## 2.8.0 - 2026-10-23
 

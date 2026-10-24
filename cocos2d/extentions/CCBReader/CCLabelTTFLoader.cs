@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 internal class CCLabelTTFLoader : CCNodeLoader
@@ -18,7 +17,7 @@ internal class CCLabelTTFLoader : CCNodeLoader
         return new CCLabelTTF();
     }
 
-    protected override void OnHandlePropTypeColor3(CCNode node, CCNode parent, string propertyName, CCColor3B color, CCBReader reader)
+    protected override void OnHandlePropTypeColor3(CCNode node, CCNode? parent, string propertyName, CCColor3B color, CCBReader reader)
     {
         if (propertyName == PROPERTY_COLOR)
         {
@@ -30,7 +29,7 @@ internal class CCLabelTTFLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeByte(CCNode node, CCNode parent, string propertyName, byte pByte, CCBReader reader)
+    protected override void OnHandlePropTypeByte(CCNode node, CCNode? parent, string propertyName, byte pByte, CCBReader reader)
     {
         if (propertyName == PROPERTY_OPACITY)
         {
@@ -42,7 +41,7 @@ internal class CCLabelTTFLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeBlendFunc(CCNode node, CCNode parent, string propertyName, CCBlendFunc blendFunc,
+    protected override void OnHandlePropTypeBlendFunc(CCNode node, CCNode? parent, string propertyName, CCBlendFunc blendFunc,
                                                       CCBReader reader)
     {
         if (propertyName == PROPERTY_BLENDFUNC)
@@ -55,7 +54,7 @@ internal class CCLabelTTFLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeFontTTF(CCNode node, CCNode parent, string propertyName, string fontTTF, CCBReader reader)
+    protected override void OnHandlePropTypeFontTTF(CCNode node, CCNode? parent, string propertyName, string fontTTF, CCBReader reader)
     {
         if (propertyName == PROPERTY_FONTNAME)
         {
@@ -67,7 +66,7 @@ internal class CCLabelTTFLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeText(CCNode node, CCNode parent, string propertyName, string pText, CCBReader reader)
+    protected override void OnHandlePropTypeText(CCNode node, CCNode? parent, string propertyName, string pText, CCBReader reader)
     {
         if (propertyName == PROPERTY_STRING)
         {
@@ -79,7 +78,7 @@ internal class CCLabelTTFLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeFloatScale(CCNode node, CCNode parent, string propertyName, float floatScale, CCBReader reader)
+    protected override void OnHandlePropTypeFloatScale(CCNode node, CCNode? parent, string propertyName, float floatScale, CCBReader reader)
     {
         if (propertyName == PROPERTY_FONTSIZE)
         {
@@ -91,7 +90,7 @@ internal class CCLabelTTFLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeIntegerLabeled(CCNode node, CCNode parent, string propertyName, int pIntegerLabeled,
+    protected override void OnHandlePropTypeIntegerLabeled(CCNode node, CCNode? parent, string propertyName, int pIntegerLabeled,
                                                            CCBReader reader)
     {
         if (propertyName == PROPERTY_HORIZONTALALIGNMENT)
@@ -108,7 +107,7 @@ internal class CCLabelTTFLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeSize(CCNode node, CCNode parent, string propertyName, CCSize pSize, CCBReader reader)
+    protected override void OnHandlePropTypeSize(CCNode node, CCNode? parent, string propertyName, CCSize pSize, CCBReader reader)
     {
         if (propertyName == PROPERTY_DIMENSIONS)
         {

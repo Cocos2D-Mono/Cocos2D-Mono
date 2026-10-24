@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 internal class CCControlButtonLoader : CCControlLoader
@@ -28,7 +27,7 @@ internal class CCControlButtonLoader : CCControlLoader
         return new CCControlButton();
     }
 
-    protected override void OnHandlePropTypeCheck(CCNode node, CCNode parent, string propertyName, bool pCheck, CCBReader reader)
+    protected override void OnHandlePropTypeCheck(CCNode node, CCNode? parent, string propertyName, bool pCheck, CCBReader reader)
     {
         if (propertyName == PROPERTY_ZOOMONTOUCHDOWN)
         {
@@ -40,7 +39,7 @@ internal class CCControlButtonLoader : CCControlLoader
         }
     }
 
-    protected override void OnHandlePropTypeString(CCNode node, CCNode parent, string propertyName, string pString, CCBReader reader)
+    protected override void OnHandlePropTypeString(CCNode node, CCNode? parent, string propertyName, string pString, CCBReader reader)
     {
         if (propertyName == PROPERTY_TITLE_NORMAL)
         {
@@ -60,7 +59,7 @@ internal class CCControlButtonLoader : CCControlLoader
         }
     }
 
-    protected override void OnHandlePropTypeFontTTF(CCNode node, CCNode parent, string propertyName, string fontTTF, CCBReader reader)
+    protected override void OnHandlePropTypeFontTTF(CCNode node, CCNode? parent, string propertyName, string fontTTF, CCBReader reader)
     {
         if (propertyName == PROPERTY_TITLETTF_NORMAL)
         {
@@ -80,7 +79,7 @@ internal class CCControlButtonLoader : CCControlLoader
         }
     }
 
-    protected override void OnHandlePropTypeFloatScale(CCNode node, CCNode parent, string propertyName, float floatScale, CCBReader reader)
+    protected override void OnHandlePropTypeFloatScale(CCNode node, CCNode? parent, string propertyName, float floatScale, CCBReader reader)
     {
         if (propertyName == PROPERTY_TITLETTFSIZE_NORMAL)
         {
@@ -100,7 +99,7 @@ internal class CCControlButtonLoader : CCControlLoader
         }
     }
 
-    protected override void OnHandlePropTypePoint(CCNode node, CCNode parent, string propertyName, CCPoint point, CCBReader reader)
+    protected override void OnHandlePropTypePoint(CCNode node, CCNode? parent, string propertyName, CCPoint point, CCBReader reader)
     {
         if (propertyName == PROPERTY_LABELANCHORPOINT)
         {
@@ -112,7 +111,7 @@ internal class CCControlButtonLoader : CCControlLoader
         }
     }
 
-    protected override void OnHandlePropTypeSize(CCNode node, CCNode parent, string propertyName, CCSize pSize, CCBReader reader)
+    protected override void OnHandlePropTypeSize(CCNode node, CCNode? parent, string propertyName, CCSize pSize, CCBReader reader)
     {
         if (propertyName == PROPERTY_PREFEREDSIZE)
         {
@@ -124,7 +123,7 @@ internal class CCControlButtonLoader : CCControlLoader
         }
     }
 
-    protected override void OnHandlePropTypeSpriteFrame(CCNode node, CCNode parent, string propertyName, CCSpriteFrame spriteFrame,
+    protected override void OnHandlePropTypeSpriteFrame(CCNode node, CCNode? parent, string propertyName, CCSpriteFrame? spriteFrame,
                                                         CCBReader reader)
     {
         if (propertyName == PROPERTY_BACKGROUNDSPRITEFRAME_NORMAL)
@@ -154,7 +153,7 @@ internal class CCControlButtonLoader : CCControlLoader
         }
     }
 
-    protected override void OnHandlePropTypeColor3(CCNode node, CCNode parent, string propertyName, CCColor3B color, CCBReader reader)
+    protected override void OnHandlePropTypeColor3(CCNode node, CCNode? parent, string propertyName, CCColor3B color, CCBReader reader)
     {
         if (propertyName == PROPERTY_TITLECOLOR_NORMAL)
         {

@@ -1,5 +1,6 @@
-#nullable disable
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -69,6 +70,7 @@ public class CCControlColourPicker : CCControl
     }
 
 
+    [MemberNotNull(nameof(_background), nameof(_colourPicker), nameof(_huePicker))]
     public override bool Init()
     {
         if (base.Init())
@@ -133,6 +135,7 @@ public class CCControlColourPicker : CCControl
             ContentSize = _background.ContentSize;
             return true;
         }
+        Debug.Fail("CCControl.Init can't fail.");
         return false;
     }
 

@@ -1,4 +1,3 @@
-#nullable disable
 /*
  * CCControlSlider
  *
@@ -28,6 +27,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -155,6 +155,7 @@ public class CCControlSlider : CCControl
 		* @param thumbItem         CCMenuItem, that is used as a thumb.
 		*/
 
+    [MemberNotNull(nameof(_backgroundSprite), nameof(_progressSprite), nameof(_thumbSprite))]
     public virtual bool InitWithSprites(CCSprite backgroundSprite, CCSprite progressSprite, CCSprite thumbSprite)
     {
         if (base.Init())
@@ -166,9 +167,9 @@ public class CCControlSlider : CCControl
             IgnoreAnchorPointForPosition = false;
             TouchEnabled = true;
 
-            BackgroundSprite = backgroundSprite;
-            ProgressSprite = progressSprite;
-            ThumbSprite = thumbSprite;
+            _backgroundSprite = backgroundSprite;
+            _progressSprite = progressSprite;
+            _thumbSprite = thumbSprite;
 
             // Defines the content size
             CCRect maxRect = CCControlUtils.CCRectUnion(backgroundSprite.BoundingBox, thumbSprite.BoundingBox);
@@ -196,6 +197,7 @@ public class CCControlSlider : CCControl
             Value = _minimumValue;
             return true;
         }
+        Debug.Fail("CCControl.Init can't fail.");
         return false;
     }
 
@@ -271,7 +273,8 @@ public class CCControlSlider : CCControl
     public override bool IsTouchInside(CCTouch touch)
     {
         CCPoint touchLocation = touch.Location;
-        touchLocation = Parent.ConvertToNodeSpace(touchLocation);
+        // Without a parent, the bounding box is in world space, like the touch.
+        touchLocation = Parent?.ConvertToNodeSpace(touchLocation) ?? touchLocation;
 
         CCRect rect = BoundingBox;
         rect.Size.Width += _thumbSprite.ContentSize.Width;

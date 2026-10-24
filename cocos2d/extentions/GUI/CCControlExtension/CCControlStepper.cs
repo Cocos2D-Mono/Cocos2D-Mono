@@ -1,6 +1,6 @@
-#nullable disable
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -13,8 +13,8 @@ public enum CCControlStepperPart
 
 public class CCControlStepper : CCControl
 {
-    public event Action<CCControl, float> OnStep;
-    public event Action<CCControl, float> OnValueChanged;
+    public event Action<CCControl, float>? OnStep;
+    public event Action<CCControl, float>? OnValueChanged;
 
     private const string ControlStepperLabelFont = "Arial";
     private const float kAutorepeatDeltaTime = 0.15f;
@@ -38,6 +38,12 @@ public class CCControlStepper : CCControl
 
     public CCControlStepper()
     {
+        // Callers using this constructor call InitWithMinusSpriteAndPlusSprite straight after
+        // construction, which sets these.
+        _minusLabel = null!;
+        _minusSprite = null!;
+        _plusLabel = null!;
+        _plusSprite = null!;
     }
 
     public CCControlStepper(CCSprite minusSprite, CCSprite plusSprite)
@@ -144,6 +150,7 @@ public class CCControlStepper : CCControl
         get { return _continuous; }
     }
 
+    [MemberNotNull(nameof(_minusLabel), nameof(_minusSprite), nameof(_plusLabel), nameof(_plusSprite))]
     public bool InitWithMinusSpriteAndPlusSprite(CCSprite minusSprite, CCSprite plusSprite)
     {
         if (base.Init())
@@ -164,25 +171,25 @@ public class CCControlStepper : CCControl
             IgnoreAnchorPointForPosition = false;
 
             // Add the minus components
-            MinusSprite = minusSprite;
+            _minusSprite = minusSprite;
             _minusSprite.Position = new CCPoint(minusSprite.ContentSize.Width / 2,
                                                 minusSprite.ContentSize.Height / 2);
             AddChild(_minusSprite);
 
-            MinusLabel = new CCLabelTTF("-", ControlStepperLabelFont, 38);
+            _minusLabel = new CCLabelTTF("-", ControlStepperLabelFont, 38);
             _minusLabel.Color = ControlStepperLabelColorDisabled;
             _minusLabel.Position = new CCPoint(_minusSprite.ContentSize.Width / 2,
                                                _minusSprite.ContentSize.Height / 2);
             _minusSprite.AddChild(_minusLabel);
 
             // Add the plus components 
-            PlusSprite = plusSprite;
+            _plusSprite = plusSprite;
             _plusSprite.Position =
                 new CCPoint(minusSprite.ContentSize.Width + plusSprite.ContentSize.Width / 2,
                             minusSprite.ContentSize.Height / 2);
             AddChild(_plusSprite);
 
-            PlusLabel = new CCLabelTTF("+", ControlStepperLabelFont, 38);
+            _plusLabel = new CCLabelTTF("+", ControlStepperLabelFont, 38);
             _plusLabel.Color = ControlStepperLabelColorEnabled;
             _plusLabel.Position = _plusSprite.ContentSize.Center;
             _plusSprite.AddChild(_plusLabel);
@@ -193,6 +200,7 @@ public class CCControlStepper : CCControl
                                      maxRect.Size.Height);
             return true;
         }
+        Debug.Fail("CCControl.Init can't fail.");
         return false;
     }
 

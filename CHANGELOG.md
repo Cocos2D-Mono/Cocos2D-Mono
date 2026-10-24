@@ -79,6 +79,24 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   - On Android, `CCGameView.Game` and `AndroidView` are nullable. They're null until
     `StartGame` makes the view's own game, and stay null for a view made from an existing
     `Game`.
+- **Nullable annotations for the controls** (`CCControl`, `CCControlButton`, `CCControlSlider`,
+  `CCControlSwitch`, `CCControlStepper`, `CCControlPotentiometer`, the colour pickers and
+  `CCScale9Sprite`). The visible changes:
+  - `CCControlButton.GetTitleLabelForState` and `GetBackgroundSpriteForState` are nullable,
+    because they return null when neither the state nor `Normal` has one. So are `TitleLabel`
+    and `BackgroundSprite`, which the button sets from them when it lays itself out.
+  - `CCControl.RemoveTargetWithActionForControlEvent` and `RemoveTargetWithActionForControlEvents`
+    accept a null target or action, which matches any, as their documentation says.
+  - `CCControlSwitch`'s constructor with labels and `CCControlSwitchSprite.InitWithMaskSprite`
+    accept null labels, and `CCControlSwitchSprite.OnLabel` and `OffLabel` are nullable.
+  - `CCScale9Sprite.InitWithBatchNode` accepts a null batch node, which makes an empty sprite.
+    The protected fields for its batch node and its nine sprites are nullable, because an empty
+    sprite has none.
+  - The events of `CCControlButton`, `CCControlSwitch` and `CCControlStepper` are nullable.
+  - A `CCControlStepper`, `CCControlPotentiometer`, `CCControlHuePicker` or
+    `CCControlSaturationBrightnessPicker` made with the parameterless constructor needs its init
+    method to run before it's used. Its sprites and labels aren't nullable, though they're null
+    until then.
 - **Sprite frame, sprite sheet, animation and particle plists that lack a value they need**
   throw an `InvalidDataException` that says what's missing. So does one whose root isn't a
   dictionary. Before, most of these threw `NullReferenceException`, `NotSupportedException` or
@@ -159,6 +177,18 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - On iOS, a touch that reaches a `CCGameView` before its game starts is ignored instead of
   throwing `NullReferenceException`.
 - `CCGameView.ViewCreated` handlers get `EventArgs.Empty` instead of null.
+- `CCControl.IsTouchInside` and `CCControlSlider.IsTouchInside` test the touch in world space
+  for a control without a parent, instead of throwing `NullReferenceException`.
+- A `CCControlButton` can have a title node that isn't a label. Before, making one threw
+  `NullReferenceException`, and laying it out threw `InvalidCastException`.
+- `CCControlButton.GetTitleTtfForState`, `SetTitleTtfSizeForState` and `GetTitleBmFontForState`
+  treat a title node that isn't a label as having no font, instead of throwing
+  `InvalidCastException`.
+- Setting `CapInsets` on a `CCScale9Sprite` that has no image yet does nothing, instead of
+  throwing `NullReferenceException`.
+- `CCScale9Sprite` throws `ArgumentException` for a sprite frame name that isn't in the sprite
+  frame cache, and for a sprite frame or sprite without a texture. Before, these threw
+  `NullReferenceException`.
 
 ## 2.8.0 - 2026-10-23
 

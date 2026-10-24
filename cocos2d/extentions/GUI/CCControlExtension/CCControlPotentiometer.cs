@@ -1,5 +1,6 @@
-#nullable disable
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -17,8 +18,10 @@ public class CCControlPotentiometer : CCControl
 
     public CCControlPotentiometer()
     {
-        _thumbSprite = null;
-        _progressTimer = null;
+        // Callers using this constructor call InitWithTrackSprite_ProgressTimer_ThumbSprite straight
+        // after construction, which sets these.
+        _thumbSprite = null!;
+        _progressTimer = null!;
         _value = 0.0f;
         _minimumValue = 0.0f;
         _maximumValue = 0.0f;
@@ -129,6 +132,7 @@ public class CCControlPotentiometer : CCControl
         }
     }
 
+    [MemberNotNull(nameof(_progressTimer), nameof(_thumbSprite))]
     public bool InitWithTrackSprite_ProgressTimer_ThumbSprite(CCSprite trackSprite, CCProgressTimer progressTimer,
                                                               CCSprite thumbSprite)
     {
@@ -136,8 +140,8 @@ public class CCControlPotentiometer : CCControl
         {
             TouchEnabled = true;
 
-            ProgressTimer = progressTimer;
-            ThumbSprite = thumbSprite;
+            _progressTimer = progressTimer;
+            _thumbSprite = thumbSprite;
             thumbSprite.Position = progressTimer.Position;
 
             AddChild(thumbSprite, 2);
@@ -152,6 +156,7 @@ public class CCControlPotentiometer : CCControl
             Value = _minimumValue;
             return true;
         }
+        Debug.Fail("CCControl.Init can't fail.");
         return false;
     }
 

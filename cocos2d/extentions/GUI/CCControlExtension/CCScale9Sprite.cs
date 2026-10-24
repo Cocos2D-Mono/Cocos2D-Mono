@@ -1,4 +1,4 @@
-#nullable disable
+using System;
 using System.Diagnostics;
 
 namespace Cocos2D;
@@ -10,16 +10,16 @@ namespace Cocos2D;
 /// </summary>
 public class CCScale9Sprite : CCNode
 {
-    protected CCSpriteBatchNode _scale9Image;
-    protected CCSprite _top;
-    protected CCSprite _topLeft;
-    protected CCSprite _topRight;
-    protected CCSprite _bottom;
-    protected CCSprite _bottomLeft;
-    protected CCSprite _bottomRight;
-    protected CCSprite _centre;
-    protected CCSprite _left;
-    protected CCSprite _right;
+    protected CCSpriteBatchNode? _scale9Image;
+    protected CCSprite? _top;
+    protected CCSprite? _topLeft;
+    protected CCSprite? _topRight;
+    protected CCSprite? _bottom;
+    protected CCSprite? _bottomLeft;
+    protected CCSprite? _bottomRight;
+    protected CCSprite? _centre;
+    protected CCSprite? _left;
+    protected CCSprite? _right;
 
     protected bool _opacityModifyRGB;
     protected bool _spriteFrameRotated;
@@ -69,6 +69,12 @@ public class CCScale9Sprite : CCNode
         get { return _capInsets; }
         set
         {
+            // An empty sprite has no image to slice.
+            if (_scale9Image == null)
+            {
+                return;
+            }
+
             CCSize contentSize = m_obContentSize;
             UpdateWithBatchNode(_scale9Image, _spriteRect, _spriteFrameRotated, value);
             ContentSize = contentSize;
@@ -218,12 +224,12 @@ public class CCScale9Sprite : CCNode
         return InitWithBatchNode(null, CCRect.Zero, CCRect.Zero);
     }
 
-    public bool InitWithBatchNode(CCSpriteBatchNode batchnode, CCRect rect, CCRect capInsets)
+    public bool InitWithBatchNode(CCSpriteBatchNode? batchnode, CCRect rect, CCRect capInsets)
     {
         return InitWithBatchNode(batchnode, rect, false, capInsets);
     }
 
-    public bool InitWithBatchNode(CCSpriteBatchNode batchnode, CCRect rect, bool rotated, CCRect capInsets)
+    public bool InitWithBatchNode(CCSpriteBatchNode? batchnode, CCRect rect, bool rotated, CCRect capInsets)
     {
         base.Init();
 
@@ -519,7 +525,11 @@ public class CCScale9Sprite : CCNode
              (_topRight != null) &&
              (_bottomRight != null) &&
              (_bottomLeft != null) &&
-             (_centre != null)))
+             (_centre != null) &&
+             (_left != null) &&
+             (_right != null) &&
+             (_top != null) &&
+             (_bottom != null)))
         {
             // if any of the above sprites are NULL, return
             return;
@@ -608,7 +618,9 @@ public class CCScale9Sprite : CCNode
     {
         Debug.Assert(spriteFrame != null, "Sprite frame must be not nil");
 
-        CCSpriteBatchNode batchnode = new CCSpriteBatchNode(spriteFrame.Texture, 9);
+        CCTexture2D texture = spriteFrame.Texture
+            ?? throw new ArgumentException("The sprite frame has no texture.", nameof(spriteFrame));
+        CCSpriteBatchNode batchnode = new CCSpriteBatchNode(texture, 9);
         bool pReturn = InitWithBatchNode(batchnode, spriteFrame.Rect, spriteFrame.IsRotated, capInsets);
         return pReturn;
     }
@@ -624,7 +636,9 @@ public class CCScale9Sprite : CCNode
     {
         Debug.Assert(spriteFrameName != null, "Invalid spriteFrameName for sprite");
 
-        CCSpriteFrame frame = CCSpriteFrameCache.SharedSpriteFrameCache.SpriteFrameByName(spriteFrameName);
+        CCSpriteFrame frame = CCSpriteFrameCache.SharedSpriteFrameCache.SpriteFrameByName(spriteFrameName)
+            ?? throw new ArgumentException("The sprite frame '" + spriteFrameName + "' isn't in the sprite frame cache.",
+                                           nameof(spriteFrameName));
         bool pReturn = InitWithSpriteFrame(frame, capInsets);
         return pReturn;
     }
@@ -641,7 +655,9 @@ public class CCScale9Sprite : CCNode
     {
         Debug.Assert(sprite != null, "Sprite must be not nil");
 
-        CCSpriteBatchNode batchnode = new CCSpriteBatchNode(sprite.Texture, 9);
+        CCTexture2D texture = sprite.Texture
+            ?? throw new ArgumentException("The sprite has no texture.", nameof(sprite));
+        CCSpriteBatchNode batchnode = new CCSpriteBatchNode(texture, 9);
         bool pReturn = InitWithBatchNode(batchnode, spriteRect, capInsets);
         return pReturn;
     }
@@ -700,7 +716,9 @@ public class CCScale9Sprite : CCNode
 
     public void SetSpriteFrame(CCSpriteFrame spriteFrame)
     {
-        CCSpriteBatchNode batchnode = new CCSpriteBatchNode(spriteFrame.Texture, 9);
+        CCTexture2D texture = spriteFrame.Texture
+            ?? throw new ArgumentException("The sprite frame has no texture.", nameof(spriteFrame));
+        CCSpriteBatchNode batchnode = new CCSpriteBatchNode(texture, 9);
         UpdateWithBatchNode(batchnode, spriteFrame.Rect, spriteFrame.IsRotated, CCRect.Zero);
 
         // Reset insets

@@ -1,4 +1,3 @@
-#nullable disable
 /*
  * ColourUtils.h
  *
@@ -55,9 +54,6 @@ namespace Cocos2D;
 		public static CCSprite AddSpriteToTargetWithPosAndAnchor(string spriteName, CCNode target, CCPoint pos, CCPoint anchor)
 		{
 			var sprite = new CCSprite(spriteName);
-
-			if (sprite == null)
-				return null;
 
 			sprite.Position = pos;
 			sprite.AnchorPoint = anchor;

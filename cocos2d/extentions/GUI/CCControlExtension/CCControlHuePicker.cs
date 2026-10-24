@@ -1,5 +1,6 @@
-#nullable disable
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -14,6 +15,9 @@ public class CCControlHuePicker : CCControl
 
     public CCControlHuePicker()
     {
+        // CCControlColourPicker calls InitWithTargetAndPos straight after construction, which sets these.
+        _background = null!;
+        _slider = null!;
     }
 
     public CCControlHuePicker(CCNode target, CCPoint pos)
@@ -81,16 +85,17 @@ public class CCControlHuePicker : CCControl
         set { _startPos = value; }
     }
 
+    [MemberNotNull(nameof(_background), nameof(_slider))]
     public virtual bool InitWithTargetAndPos(CCNode target, CCPoint pos)
     {
         if (base.Init())
         {
             TouchEnabled = true;
             // Add background and slider sprites
-            Background = CCControlUtils.AddSpriteToTargetWithPosAndAnchor("huePickerBackground.png", target,
-                                                                          pos, CCPoint.Zero);
-            Slider = CCControlUtils.AddSpriteToTargetWithPosAndAnchor("colourPicker.png", target, pos,
-                                                                      new CCPoint(0.5f, 0.5f));
+            _background = CCControlUtils.AddSpriteToTargetWithPosAndAnchor("huePickerBackground.png", target,
+                                                                           pos, CCPoint.Zero);
+            _slider = CCControlUtils.AddSpriteToTargetWithPosAndAnchor("colourPicker.png", target, pos,
+                                                                       new CCPoint(0.5f, 0.5f));
 
             _slider.Position = new CCPoint(pos.X, pos.Y + _background.BoundingBox.Size.Height * 0.5f);
             _startPos = pos;
@@ -100,6 +105,7 @@ public class CCControlHuePicker : CCControl
             _huePercentage = 0.0f;
             return true;
         }
+        Debug.Fail("CCControl.Init can't fail.");
         return false;
     }
 

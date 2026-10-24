@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,9 +16,10 @@ public class CCControlButton : CCControl
     public const int kZoomActionTag = (0x7CCB0001);
     protected bool _parentInited;
 
-    protected CCNode _backgroundSprite;
-    protected Dictionary<CCControlState, CCNode> _backgroundSpriteDispatchTable;
-    protected string _currentTitle;
+    protected CCNode? _backgroundSprite;
+    protected Dictionary<CCControlState, CCNode> _backgroundSpriteDispatchTable =
+        new Dictionary<CCControlState, CCNode>();
+    protected string? _currentTitle;
 
     /** The current color used to display the title. */
     protected CCColor3B _currentTitleColor;
@@ -29,13 +29,16 @@ public class CCControlButton : CCControl
     protected int _marginH = CCControlButtonMarginLR;
     protected int _marginV = CCControlButtonMarginTB;
     protected CCSize _preferredSize;
-    protected Dictionary<CCControlState, CCColor3B> _titleColorDispatchTable;
-    protected Dictionary<CCControlState, string> _titleDispatchTable;
-    protected CCNode _titleLabel;
-    protected Dictionary<CCControlState, CCNode> _titleLabelDispatchTable;
+    protected Dictionary<CCControlState, CCColor3B> _titleColorDispatchTable =
+        new Dictionary<CCControlState, CCColor3B>();
+    protected Dictionary<CCControlState, string> _titleDispatchTable =
+        new Dictionary<CCControlState, string>();
+    protected CCNode? _titleLabel;
+    protected Dictionary<CCControlState, CCNode> _titleLabelDispatchTable =
+        new Dictionary<CCControlState, CCNode>();
     protected bool _zoomOnTouchDown;
 
-    public event CCButtonTapDelegate OnButtonTap;
+    public event CCButtonTapDelegate? OnButtonTap;
 
     /// <summary>
     /// Default ctor. Does nothing.
@@ -44,13 +47,13 @@ public class CCControlButton : CCControl
     {
     }
 
-    public CCNode BackgroundSprite
+    public CCNode? BackgroundSprite
     {
         get { return _backgroundSprite; }
         set { _backgroundSprite = value; }
     }
 
-    public CCNode TitleLabel
+    public CCNode? TitleLabel
     {
         get { return _titleLabel; }
         set { _titleLabel = value; }
@@ -113,7 +116,7 @@ public class CCControlButton : CCControl
         {
             base.Highlighted = value;
 
-            CCAction action = GetAction(kZoomActionTag);
+            CCAction? action = GetAction(kZoomActionTag);
             if (action != null)
             {
                 StopAction(action);
@@ -161,13 +164,13 @@ public class CCControlButton : CCControl
 
         TitleLabel = GetTitleLabelForState(_state);
 
-        var label = (ICCLabelProtocol) _titleLabel;
+        var label = _titleLabel as ICCLabelProtocol;
         if (label != null && !String.IsNullOrEmpty(_currentTitle))
         {
             label.Text = (_currentTitle);
         }
 
-        var rgbaLabel = (ICCRGBAProtocol) _titleLabel;
+        ICCRGBAProtocol? rgbaLabel = _titleLabel;
         if (rgbaLabel != null)
         {
             rgbaLabel.Color = _currentTitleColor;
@@ -337,9 +340,8 @@ public class CCControlButton : CCControl
         {
             Debug.Assert(node != null, "Label must not be nil.");
             var label = node as ICCLabelProtocol;
-            var rgbaLabel = node as ICCRGBAProtocol;
+            ICCRGBAProtocol rgbaLabel = node;
             Debug.Assert(backgroundSprite != null, "Background sprite must not be nil.");
-            Debug.Assert(label != null || rgbaLabel != null || backgroundSprite != null);
 
             _parentInited = true;
 
@@ -376,7 +378,7 @@ public class CCControlButton : CCControl
 
             // Initialize the dispatch table
 
-            string tempString = label.Text;
+            string tempString = label?.Text ?? String.Empty;
             //tempString->autorelease();
             SetTitleForState(tempString, CCControlState.Normal);
             SetTitleColorForState(rgbaLabel.Color, CCControlState.Normal);
@@ -512,7 +514,7 @@ public class CCControlButton : CCControl
     {
         if (_titleDispatchTable != null)
         {
-            string title;
+            string? title;
             if (_titleDispatchTable.TryGetValue(state, out title))
             {
                 return title;
@@ -613,9 +615,9 @@ public class CCControlButton : CCControl
 * in "CCControlState".
 */
 
-    public virtual CCNode GetTitleLabelForState(CCControlState state)
+    public virtual CCNode? GetTitleLabelForState(CCControlState state)
     {
-        CCNode titleLabel;
+        CCNode? titleLabel;
         if (_titleLabelDispatchTable.TryGetValue(state, out titleLabel))
         {
             return titleLabel;
@@ -639,7 +641,7 @@ public class CCControlButton : CCControl
 
     public virtual void SetTitleLabelForState(CCNode titleLabel, CCControlState state)
     {
-        CCNode previousLabel;
+        CCNode? previousLabel;
         if (_titleLabelDispatchTable.TryGetValue(state, out previousLabel))
         {
             RemoveChild(previousLabel, true);
@@ -670,7 +672,7 @@ public class CCControlButton : CCControl
 
     public virtual string GetTitleTtfForState(CCControlState state)
     {
-        var label = (ICCLabelProtocol) GetTitleLabelForState(state);
+        var label = GetTitleLabelForState(state) as ICCLabelProtocol;
         var labelTtf = label as CCLabelTTF;
         if (labelTtf != null)
         {
@@ -681,7 +683,7 @@ public class CCControlButton : CCControl
 
     public virtual void SetTitleTtfSizeForState(float size, CCControlState state)
     {
-        var label = (ICCLabelProtocol) GetTitleLabelForState(state);
+        var label = GetTitleLabelForState(state) as ICCLabelProtocol;
         if (label != null)
         {
             var labelTtf = label as CCLabelTTF;
@@ -721,11 +723,11 @@ public class CCControlButton : CCControl
 
     public virtual string GetTitleBmFontForState(CCControlState state)
     {
-        var label = (ICCLabelProtocol) GetTitleLabelForState(state);
+        var label = GetTitleLabelForState(state) as ICCLabelProtocol;
         var labelBmFont = label as CCLabelBMFont;
         if (labelBmFont != null)
         {
-            return labelBmFont.FntFile;
+            return labelBmFont.FntFile ?? String.Empty;
         }
         return String.Empty;
     }
@@ -737,9 +739,9 @@ public class CCControlButton : CCControl
 * described in "CCControlState".
 */
 
-    public virtual CCNode GetBackgroundSpriteForState(CCControlState state)
+    public virtual CCNode? GetBackgroundSpriteForState(CCControlState state)
     {
-        CCNode backgroundSprite;
+        CCNode? backgroundSprite;
         if (_backgroundSpriteDispatchTable.TryGetValue(state, out backgroundSprite))
         {
             return backgroundSprite;
@@ -763,7 +765,7 @@ public class CCControlButton : CCControl
     {
         CCSize oldPreferredSize = _preferredSize;
 
-        CCNode previousBackgroundSprite;
+        CCNode? previousBackgroundSprite;
         if (_backgroundSpriteDispatchTable.TryGetValue(state, out previousBackgroundSprite))
         {
             RemoveChild(previousBackgroundSprite, true);

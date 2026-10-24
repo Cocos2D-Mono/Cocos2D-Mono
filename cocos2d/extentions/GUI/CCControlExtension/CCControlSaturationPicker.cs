@@ -1,5 +1,6 @@
-#nullable disable
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -20,6 +21,11 @@ public class CCControlSaturationBrightnessPicker : CCControl
 
     public CCControlSaturationBrightnessPicker()
     {
+        // CCControlColourPicker calls InitWithTargetAndPos straight after construction, which sets these.
+        _background = null!;
+        _overlay = null!;
+        _shadow = null!;
+        _slider = null!;
     }
 
     public CCControlSaturationBrightnessPicker(CCNode target, CCPoint pos)
@@ -82,6 +88,7 @@ public class CCControlSaturationBrightnessPicker : CCControl
         }
     }
 
+    [MemberNotNull(nameof(_background), nameof(_overlay), nameof(_shadow), nameof(_slider))]
     public virtual bool InitWithTargetAndPos(CCNode target, CCPoint pos)
     {
         if (base.Init())
@@ -104,6 +111,7 @@ public class CCControlSaturationBrightnessPicker : CCControl
             return true;
         }
 
+        Debug.Fail("CCControl.Init can't fail.");
         return false;
     }
 

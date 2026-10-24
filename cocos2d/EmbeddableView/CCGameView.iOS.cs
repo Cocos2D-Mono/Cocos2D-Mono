@@ -1,4 +1,3 @@
-#nullable disable
 #if IOS || __IOS__
 using System;
 using System.ComponentModel;
@@ -18,7 +17,7 @@ namespace Cocos2D;
 class GameViewTimeSource
 {
     TimeSpan _timeout;
-    NSTimer _timer;
+    NSTimer? _timer;
     CCGameView _view;
 
     public GameViewTimeSource(CCGameView view, double updatesPerSecond)
@@ -67,10 +66,10 @@ class GameViewTimeSource
 public partial class CCGameView : UIView
 {
     bool _initialized;
-    GameViewTimeSource _timeSource;
+    GameViewTimeSource? _timeSource;
 
-    NSObject _backgroundObserver;
-    NSObject _foregroundObserver;
+    NSObject? _backgroundObserver;
+    NSObject? _foregroundObserver;
 
     #region Constructors
 
@@ -257,7 +256,7 @@ public partial class CCGameView : UIView
     /// <summary>
     /// Called when touches begin.
     /// </summary>
-    public override void TouchesBegan(NSSet touches, UIEvent evt)
+    public override void TouchesBegan(NSSet touches, UIEvent? evt)
     {
         base.TouchesBegan(touches, evt);
         FillTouchCollection(touches);
@@ -266,7 +265,7 @@ public partial class CCGameView : UIView
     /// <summary>
     /// Called when touches end.
     /// </summary>
-    public override void TouchesEnded(NSSet touches, UIEvent evt)
+    public override void TouchesEnded(NSSet touches, UIEvent? evt)
     {
         base.TouchesEnded(touches, evt);
         FillTouchCollection(touches);
@@ -275,7 +274,7 @@ public partial class CCGameView : UIView
     /// <summary>
     /// Called when touches move.
     /// </summary>
-    public override void TouchesMoved(NSSet touches, UIEvent evt)
+    public override void TouchesMoved(NSSet touches, UIEvent? evt)
     {
         base.TouchesMoved(touches, evt);
         FillTouchCollection(touches);
@@ -284,7 +283,7 @@ public partial class CCGameView : UIView
     /// <summary>
     /// Called when touches are cancelled.
     /// </summary>
-    public override void TouchesCancelled(NSSet touches, UIEvent evt)
+    public override void TouchesCancelled(NSSet touches, UIEvent? evt)
     {
         base.TouchesCancelled(touches, evt);
         FillTouchCollection(touches);

@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,7 +19,7 @@ public partial class CCGameView : IDisposable
     static readonly CCRect ExactFitViewportRatio = new CCRect(0, 0, 1, 1);
 
     // Currently, we have a limitation that at most one view instance can be active at any point in time
-    static WeakReference s_currentViewInstance;
+    static WeakReference? s_currentViewInstance;
 
     /// <summary>
     /// Internal graphics device service implementation.
@@ -34,10 +33,10 @@ public partial class CCGameView : IDisposable
             GraphicsDevice = graphicsDevice;
         }
 
-        public event EventHandler<EventArgs> DeviceCreated;
-        public event EventHandler<EventArgs> DeviceDisposing;
-        public event EventHandler<EventArgs> DeviceReset;
-        public event EventHandler<EventArgs> DeviceResetting;
+        public event EventHandler<EventArgs>? DeviceCreated;
+        public event EventHandler<EventArgs>? DeviceDisposing;
+        public event EventHandler<EventArgs>? DeviceReset;
+        public event EventHandler<EventArgs>? DeviceResetting;
 
         // Suppress warnings about unused events
         internal void RaiseDeviceCreated() => DeviceCreated?.Invoke(this, EventArgs.Empty);
@@ -58,7 +57,7 @@ public partial class CCGameView : IDisposable
             _graphicsDeviceService = graphicsDeviceService;
         }
 
-        public object GetService(Type serviceType)
+        public object? GetService(Type serviceType)
         {
             if (serviceType == typeof(IGraphicsDeviceService))
                 return _graphicsDeviceService;
@@ -67,9 +66,9 @@ public partial class CCGameView : IDisposable
     }
 
     internal delegate void ViewportChangedEventHandler(CCGameView sender);
-    internal event ViewportChangedEventHandler ViewportChanged;
+    internal event ViewportChangedEventHandler? ViewportChanged;
 
-    EventHandler<EventArgs> _viewCreated;
+    EventHandler<EventArgs>? _viewCreated;
 
     bool _disposed;
     volatile bool _paused;
@@ -91,33 +90,34 @@ public partial class CCGameView : IDisposable
     Viewport _defaultViewport;
     Viewport _viewport;
 
-    GraphicsDevice _graphicsDevice;
-    CCGraphicsDeviceService _graphicsDeviceService;
+    // Null until the view initialises, except where a constructor takes an existing device.
+    GraphicsDevice? _graphicsDevice;
+    CCGraphicsDeviceService? _graphicsDeviceService;
     string _contentRootDirectory = "Content";
 
-    GameTime _gameTime;
+    GameTime? _gameTime;
     TimeSpan _accumulatedElapsedTime;
     TimeSpan _targetElapsedTime;
     TimeSpan _maxElapsedTime;
-    Stopwatch _gameTimer;
+    Stopwatch? _gameTimer;
     long _previousTicks;
 
     // State management for multi-view support
-    CCDrawManagerState _drawManagerState;
+    CCDrawManagerState? _drawManagerState;
 
     // Per-view scene management for multi-view support
-    CCScene _viewScene;
-    CCScene _nextViewScene;
+    CCScene? _viewScene;
+    CCScene? _nextViewScene;
     bool _hasOwnScene;
 
     // Multi-view support - secondary views that share this view's game loop
-    List<CCGameView> _secondaryViews;
-    CCGameView _primaryView;
+    List<CCGameView>? _secondaryViews;
+    CCGameView? _primaryView;
     readonly object _secondaryViewsLock = new object();
 
     // Split-screen support - render two scenes side by side
-    CCScene _splitScreenScene;
-    CCScene _nextSplitScreenScene;
+    CCScene? _splitScreenScene;
+    CCScene? _nextSplitScreenScene;
     bool _splitScreenEnabled;
 
     #region Properties
@@ -151,7 +151,7 @@ public partial class CCGameView : IDisposable
     /// Gets the scene running in this view.
     /// If a view-specific scene is set, returns that; otherwise returns the shared director's scene.
     /// </summary>
-    public CCScene RunningScene
+    public CCScene? RunningScene
     {
         get { return _hasOwnScene ? _viewScene : Director.RunningScene; }
     }
@@ -173,7 +173,7 @@ public partial class CCGameView : IDisposable
     /// <summary>
     /// Gets the secondary scene in split-screen mode.
     /// </summary>
-    public CCScene SplitScreenScene
+    public CCScene? SplitScreenScene
     {
         get { return _splitScreenScene; }
     }
@@ -195,7 +195,12 @@ public partial class CCGameView : IDisposable
             if (_gameStarted && _paused != value)
             {
                 _paused = value;
-                _previousTicks = _gameTimer.Elapsed.Ticks;
+                // On Android the game starts before its internal game initialises the view, so
+                // there may be no timer yet.
+                if (_gameTimer != null)
+                {
+                    _previousTicks = _gameTimer.Elapsed.Ticks;
+                }
                 PlatformUpdatePaused();
             }
         }
@@ -256,7 +261,7 @@ public partial class CCGameView : IDisposable
     /// <summary>
     /// Gets the graphics device used for rendering.
     /// </summary>
-    public GraphicsDevice GraphicsDevice { get { return _graphicsDevice; } }
+    public GraphicsDevice? GraphicsDevice { get { return _graphicsDevice; } }
 
     /// <summary>
     /// Gets or sets the root directory for content loading.
@@ -583,7 +588,7 @@ public partial class CCGameView : IDisposable
         }
 
         {
-            CCScene runningScene = RunningScene;
+            CCScene? runningScene = RunningScene;
 
             if (runningScene != null)
             {
@@ -665,12 +670,13 @@ public partial class CCGameView : IDisposable
     /// </summary>
     IServiceProvider GetServiceProvider()
     {
-        IServiceProvider serviceProvider = null;
+        IServiceProvider? serviceProvider = null;
         PlatformGetServiceProvider(ref serviceProvider);
 
         if (serviceProvider == null)
         {
             // Create a simple service provider with our graphics device service
+            Debug.Assert(_graphicsDeviceService != null, "InitialiseGraphicsDevice creates the service first.");
             serviceProvider = new CCServiceProvider(_graphicsDeviceService);
         }
 
@@ -705,7 +711,7 @@ public partial class CCGameView : IDisposable
                 CCDirector.SharedDirector.SetOpenGlView();
             }
 
-            _viewCreated(this, null);
+            _viewCreated(this, EventArgs.Empty);
             _gameLoaded = true;
         }
     }
@@ -792,6 +798,8 @@ public partial class CCGameView : IDisposable
         int width = (int)ViewSize.Width;
         int height = (int)ViewSize.Height;
 
+        Debug.Assert(_graphicsDevice != null, "The view lays out its viewport after it initialises.");
+
         // The GraphicsDevice BackBuffer dimensions are used by MonoGame when laying out the viewport
         // so make sure they're updated
         _graphicsDevice.PresentationParameters.BackBufferWidth = width;
@@ -875,6 +883,8 @@ public partial class CCGameView : IDisposable
 
     void Draw()
     {
+        Debug.Assert(_gameTime != null, "Initialise creates the game time before the run loop draws.");
+
         // Restore this view's state before drawing (for multi-view support)
         if (_drawManagerState != null)
         {
@@ -899,7 +909,7 @@ public partial class CCGameView : IDisposable
             // Normal single-scene rendering
             if (CCDrawManager.BeginDraw())
             {
-                CCScene runningScene = RunningScene;
+                CCScene? runningScene = RunningScene;
 
                 if (runningScene != null)
                 {
@@ -938,7 +948,7 @@ public partial class CCGameView : IDisposable
 
         // Draw left side (primary scene)
         SetupSplitScreenProjection(0, 0, halfWidth, fullHeight, designWidth, designHeight);
-        CCScene runningScene = RunningScene;
+        CCScene? runningScene = RunningScene;
         if (runningScene != null)
         {
             runningScene.Visit();
@@ -952,6 +962,7 @@ public partial class CCGameView : IDisposable
         }
 
         // Restore full viewport
+        Debug.Assert(_graphicsDevice != null, "The view draws after it initialises.");
         _graphicsDevice.Viewport = new Viewport(0, 0, fullWidth, fullHeight);
 
         CCDrawManager.EndDraw();
@@ -975,6 +986,7 @@ public partial class CCGameView : IDisposable
         float offsetY = (viewportHeight - scaledHeight) / 2f;
 
         // Apply centering by constraining the GPU viewport to the scaled content area
+        Debug.Assert(_graphicsDevice != null, "The view draws after it initialises.");
         _graphicsDevice.Viewport = new Viewport(
             viewportX + (int)offsetX,
             viewportY + (int)offsetY,
@@ -997,6 +1009,8 @@ public partial class CCGameView : IDisposable
 
     void Tick()
     {
+        Debug.Assert(_gameTimer != null && _gameTime != null, "Initialise creates the run loop's timer and game time.");
+
         while (true)
         {
             var currentTicks = _gameTimer.Elapsed.Ticks;
@@ -1033,7 +1047,7 @@ public partial class CCGameView : IDisposable
 
     void Update(GameTime time)
     {
-        float deltaTime = (float)_gameTime.ElapsedGameTime.TotalSeconds;
+        float deltaTime = (float)time.ElapsedGameTime.TotalSeconds;
 
         // Handle view-owned scene transitions
         if (_hasOwnScene && _nextViewScene != null)
@@ -1124,7 +1138,7 @@ public partial class CCGameView : IDisposable
     /// Platform-specific service provider retrieval.
     /// Desktop platforms should provide the Game's service provider.
     /// </summary>
-    partial void PlatformGetServiceProvider(ref IServiceProvider serviceProvider);
+    partial void PlatformGetServiceProvider(ref IServiceProvider? serviceProvider);
 
     #endregion Platform-specific partial methods
 }

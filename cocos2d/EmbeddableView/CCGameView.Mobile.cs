@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 
@@ -14,10 +13,12 @@ public partial class CCGameView
 
     bool _touchEnabled;
 
-    Dictionary<int, CCTouch> _touchMap;
-    List<CCTouch> _incomingNewTouches;
-    List<CCTouch> _incomingMoveTouches;
-    List<CCTouch> _incomingReleaseTouches;
+    // Made here as well as when input handling initialises, so a touch that arrives first has
+    // somewhere to go.
+    Dictionary<int, CCTouch> _touchMap = new Dictionary<int, CCTouch>();
+    List<CCTouch> _incomingNewTouches = new List<CCTouch>();
+    List<CCTouch> _incomingMoveTouches = new List<CCTouch>();
+    List<CCTouch> _incomingReleaseTouches = new List<CCTouch>();
 
     object _touchLock = new object();
 
@@ -92,7 +93,7 @@ public partial class CCGameView
     {
         lock (_touchLock)
         {
-            CCTouch existingTouch;
+            CCTouch? existingTouch;
             if (_touchMap.TryGetValue(touchId, out existingTouch))
             {
                 var delta = existingTouch.LocationInView - position;
@@ -112,7 +113,7 @@ public partial class CCGameView
     {
         lock (_touchLock)
         {
-            CCTouch existingTouch;
+            CCTouch? existingTouch;
             if (_touchMap.TryGetValue(touchId, out existingTouch))
             {
                 _incomingReleaseTouches.Add(existingTouch);

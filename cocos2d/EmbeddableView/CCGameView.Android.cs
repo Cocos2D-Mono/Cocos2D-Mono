@@ -1,4 +1,3 @@
-#nullable disable
 #if ANDROID
 using System;
 using System.Threading;
@@ -11,6 +10,8 @@ using Android.Views;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input.Touch;
+// Android.OS has a Debug class too.
+using Debug = System.Diagnostics.Debug;
 
 namespace Cocos2D;
 
@@ -21,12 +22,12 @@ namespace Cocos2D;
 /// </summary>
 public partial class CCGameView : IDisposable
 {
-    CCInternalGame _internalGame;
-    CCAndroidScreenReceiver _screenLockHandler;
+    CCInternalGame? _internalGame;
+    CCAndroidScreenReceiver? _screenLockHandler;
     Context _context;
-    View _androidView;
+    View? _androidView;
     bool _renderLoopRunning;
-    Thread _renderThread;
+    Thread? _renderThread;
 
     #region Internal Game class for graphics initialization
 
@@ -106,17 +107,19 @@ public partial class CCGameView : IDisposable
             _gameView = view;
         }
 
-        public override void OnReceive(Context context, Intent intent)
+        public override void OnReceive(Context? context, Intent? intent)
         {
-            if (intent.Action == Intent.ActionScreenOff)
+            string? action = intent?.Action;
+            if (action == Intent.ActionScreenOff)
                 OnLocked();
-            else if (intent.Action == Intent.ActionScreenOn)
+            else if (action == Intent.ActionScreenOn)
             {
-                KeyguardManager keyguard = (KeyguardManager)context.GetSystemService(Context.KeyguardService);
-                if (!keyguard.InKeyguardRestrictedInputMode())
+                // Without a keyguard manager, nothing holds the screen locked.
+                var keyguard = (KeyguardManager?)context?.GetSystemService(Context.KeyguardService);
+                if (keyguard == null || !keyguard.InKeyguardRestrictedInputMode())
                     OnUnlocked();
             }
-            else if (intent.Action == Intent.ActionUserPresent)
+            else if (action == Intent.ActionUserPresent)
                 OnUnlocked();
         }
 
@@ -144,14 +147,7 @@ public partial class CCGameView : IDisposable
     public CCGameView(Context context)
     {
         _context = context;
-
-        // Get default display size
-        var windowManager = context.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
-        var display = windowManager.DefaultDisplay;
-        var size = new Android.Graphics.Point();
-        display.GetSize(size);
-
-        ViewSize = new CCSize(size.X, size.Y);
+        ViewSize = DefaultDisplaySize(context);
     }
 
     /// <summary>
@@ -196,13 +192,18 @@ public partial class CCGameView : IDisposable
         // Share the graphics device from the primary view
         _graphicsDevice = primaryView._graphicsDevice;
 
-        // Get default display size
+        ViewSize = DefaultDisplaySize(context);
+    }
+
+    static CCSize DefaultDisplaySize(Context context)
+    {
         var windowManager = context.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
-        var display = windowManager.DefaultDisplay;
+        var display = windowManager?.DefaultDisplay;
+        Debug.Assert(display != null, "A context's window manager has a default display.");
         var size = new Android.Graphics.Point();
         display.GetSize(size);
 
-        ViewSize = new CCSize(size.X, size.Y);
+        return new CCSize(size.X, size.Y);
     }
 
     #endregion Constructors
@@ -213,7 +214,7 @@ public partial class CCGameView : IDisposable
     /// Gets the Android View that can be added to a layout.
     /// This is the MonoGame surface view.
     /// </summary>
-    public View AndroidView
+    public View? AndroidView
     {
         get
         {
@@ -228,7 +229,7 @@ public partial class CCGameView : IDisposable
     /// <summary>
     /// Gets the internal MonoGame Game instance.
     /// </summary>
-    public Game Game => _internalGame;
+    public Game? Game => _internalGame;
 
     #endregion Properties
 
@@ -319,6 +320,8 @@ public partial class CCGameView : IDisposable
     /// </summary>
     void OnInternalGameInitialized()
     {
+        Debug.Assert(_internalGame != null, "The internal game calls this once it initialises.");
+
         // Get the Android view from the game
         _androidView = _internalGame.Services.GetService(typeof(View)) as View;
 
@@ -366,7 +369,7 @@ public partial class CCGameView : IDisposable
         canDispose = false;
     }
 
-    partial void PlatformGetServiceProvider(ref IServiceProvider serviceProvider)
+    partial void PlatformGetServiceProvider(ref IServiceProvider? serviceProvider)
     {
         if (_internalGame != null && _internalGame.Services != null)
         {
@@ -455,7 +458,7 @@ public partial class CCGameView : IDisposable
             // Normal single-scene rendering
             if (CCDrawManager.BeginDraw())
             {
-                CCScene runningScene = RunningScene;
+                CCScene? runningScene = RunningScene;
 
                 if (runningScene != null)
                 {

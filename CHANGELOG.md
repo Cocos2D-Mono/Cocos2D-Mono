@@ -70,6 +70,15 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     `OnFocusChanged` passes when nothing had focus.
   - `CCLog.Log`'s format arguments can be null. `CCTask.RunAsync`'s completion callback is
     nullable, and it receives null.
+- **Nullable annotations for the embeddable view** (`CCGameView` and its Android, iOS and
+  desktop hosts). The visible changes:
+  - `CCGameView.RunningScene` and `SplitScreenScene` are nullable, because a view has no scene
+    until one runs.
+  - `CCGameView.GraphicsDevice` is nullable. It's null until the view initialises, unless a
+    constructor took an existing device.
+  - On Android, `CCGameView.Game` and `AndroidView` are nullable. They're null until
+    `StartGame` makes the view's own game, and stay null for a view made from an existing
+    `Game`.
 - **Sprite frame, sprite sheet, animation and particle plists that lack a value they need**
   throw an `InvalidDataException` that says what's missing. So does one whose root isn't a
   dictionary. Before, most of these threw `NullReferenceException`, `NotSupportedException` or
@@ -145,6 +154,11 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   `NullReferenceException` when the garbage collector frees a resource partway through.
 - On iOS, a `CCLabel` with a `.ttf` font finds the content directory in a `CCGameView` instead
   of throwing `NullReferenceException`.
+- On Android, setting `CCGameView.Paused` after `StartGame`, but before the view's own game
+  has initialised, no longer throws `NullReferenceException`.
+- On iOS, a touch that reaches a `CCGameView` before its game starts no longer throws
+  `NullReferenceException`.
+- `CCGameView.ViewCreated` handlers get `EventArgs.Empty` instead of null.
 
 ## 2.8.0 - 2026-10-23
 

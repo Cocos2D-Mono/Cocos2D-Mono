@@ -1,6 +1,7 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -88,14 +89,14 @@ public interface ICCTableViewDataSource
  */
 public class CCTableView : CCScrollView, ICCScrollViewDelegate
 {
-    protected CCTableViewCell _touchedCell;
+    protected CCTableViewCell? _touchedCell;
     protected CCTableViewVerticalFillOrder _vordering;
     protected List<int> _indices;
     protected List<float> _cellsPositions;
     protected CCArrayForObjectSorting _cellsUsed;
     protected CCArrayForObjectSorting _cellsFreed;
     protected ICCTableViewDataSource _dataSource;
-    protected ICCTableViewDelegate _tableViewDelegate;
+    protected ICCTableViewDelegate? _tableViewDelegate;
     protected CCScrollViewDirection _oldDirection;
 
     /**
@@ -110,7 +111,7 @@ public class CCTableView : CCScrollView, ICCScrollViewDelegate
     /**
      * delegate
      */
-    public new ICCTableViewDelegate Delegate
+    public new ICCTableViewDelegate? Delegate
     {
         get { return _tableViewDelegate; }
         set { _tableViewDelegate = value; }
@@ -119,6 +120,13 @@ public class CCTableView : CCScrollView, ICCScrollViewDelegate
     public CCTableView()
     {
         _oldDirection = CCScrollViewDirection.None;
+        // Callers using this constructor call InitWithViewSize and set DataSource straight after
+        // construction, which set these.
+        _cellsPositions = null!;
+        _cellsUsed = null!;
+        _cellsFreed = null!;
+        _indices = null!;
+        _dataSource = null!;
     }
 
     /**
@@ -140,15 +148,16 @@ public class CCTableView : CCScrollView, ICCScrollViewDelegate
      * @param container parent object for cells
      * @return table view
      */
-    public CCTableView(ICCTableViewDataSource dataSource, CCSize size, CCNode container)
+    public CCTableView(ICCTableViewDataSource dataSource, CCSize size, CCNode? container)
     {
         InitWithViewSize(size, container);
-        DataSource = dataSource;
+        _dataSource = dataSource;
         _updateCellPositions();
         _updateContentSize();
     }
 
-    public new bool InitWithViewSize(CCSize size, CCNode container)
+    [MemberNotNull(nameof(_cellsPositions), nameof(_cellsUsed), nameof(_cellsFreed), nameof(_indices))]
+    public new bool InitWithViewSize(CCSize size, CCNode? container)
     {
         if (base.InitWithViewSize(size, container))
         {
@@ -162,6 +171,7 @@ public class CCTableView : CCScrollView, ICCScrollViewDelegate
             base.Delegate = this;
             return true;
         }
+        Debug.Fail("CCScrollView.InitWithViewSize can't fail.");
         return false;
     }
 
@@ -223,13 +233,13 @@ public class CCTableView : CCScrollView, ICCScrollViewDelegate
      * @param idx index
      * @return a cell at a given index
      */
-    public CCTableViewCell CellAtIndex(int idx)
+    public CCTableViewCell? CellAtIndex(int idx)
     {
-        CCTableViewCell found = null;
+        CCTableViewCell? found = null;
 
         if (_indices.Contains(idx))
         {
-            found = (CCTableViewCell)_cellsUsed.ObjectWithObjectID(idx);
+            found = (CCTableViewCell?)_cellsUsed.ObjectWithObjectID(idx);
         }
 
         return found;
@@ -282,7 +292,7 @@ public class CCTableView : CCScrollView, ICCScrollViewDelegate
         }
 
         int newIdx;
-        CCTableViewCell cell = CellAtIndex(idx);
+        CCTableViewCell? cell = CellAtIndex(idx);
         if (cell == null)
         {
             return;
@@ -307,9 +317,9 @@ public class CCTableView : CCScrollView, ICCScrollViewDelegate
      *
      * @return free cell
      */
-    public CCTableViewCell DequeueCell()
+    public CCTableViewCell? DequeueCell()
     {
-        CCTableViewCell cell;
+        CCTableViewCell? cell;
 
         if (_cellsFreed.Count == 0)
         {
@@ -644,7 +654,8 @@ public class CCTableView : CCScrollView, ICCScrollViewDelegate
         if (_touchedCell != null)
         {
             CCRect bb = BoundingBox;
-            bb.Origin = Parent.ConvertToWorldSpace(bb.Origin);
+            // Without a parent, the bounding box is already in world space.
+            bb.Origin = Parent?.ConvertToWorldSpace(bb.Origin) ?? bb.Origin;
 
             if (bb.ContainsPoint(pTouch.Location) && _tableViewDelegate != null)
             {

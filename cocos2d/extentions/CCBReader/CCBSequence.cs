@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 
 namespace Cocos2D;
@@ -14,8 +13,8 @@ public class CCBSequence
     private string _name;
     private int _sequenceId;
     private int _chainedSequenceId;
-    private CCBSequenceProperty _callBackChannel;
-    private CCBSequenceProperty _soundChannel;
+    private CCBSequenceProperty? _callBackChannel;
+    private CCBSequenceProperty? _soundChannel;
 
     public float Duration
     {
@@ -41,13 +40,13 @@ public class CCBSequence
         set { _chainedSequenceId = value; }
     }
 
-    public CCBSequenceProperty CallBackChannel
+    public CCBSequenceProperty? CallBackChannel
     {
         get { return _callBackChannel; }
         set { _callBackChannel = value; }
     }
 
-    public CCBSequenceProperty SoundChannel
+    public CCBSequenceProperty? SoundChannel
     {
         get { return _soundChannel; }
         set { _soundChannel = value; }

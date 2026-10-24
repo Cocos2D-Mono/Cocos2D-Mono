@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 public class CCLayerLoader : CCNodeLoader
@@ -13,7 +12,7 @@ public class CCLayerLoader : CCNodeLoader
         return new CCLayer();
     }
 
-    protected override void OnHandlePropTypeCheck(CCNode node, CCNode parent, string propertyName, bool pCheck, CCBReader reader)
+    protected override void OnHandlePropTypeCheck(CCNode node, CCNode? parent, string propertyName, bool pCheck, CCBReader reader)
     {
         if (propertyName == PROPERTY_TOUCH_ENABLED)
         {

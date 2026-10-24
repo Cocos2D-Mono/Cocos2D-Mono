@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,20 +6,21 @@ namespace Cocos2D;
 
 public class BlockData
 {
-		public Action<object> mSELMenuHandler;
-    public object mTarget;
+		public Action<object>? mSELMenuHandler;
+    // The CCB reader sets the target and the handler when it makes a block.
+    public object mTarget = null!;
 }
 
 public class MenuItemBlockData : BlockData
 {
-    public Action<CCMenuItem> mSELMenuItemHandler;
+    public Action<CCMenuItem> mSELMenuItemHandler = null!;
 }
 
 public class BlockCCControlData
 {
     public CCControlEvent mControlEvents;
-		public Action<object, CCControlEvent> mSELCCControlHandler;
-    public object mTarget;
+		public Action<object, CCControlEvent> mSELCCControlHandler = null!;
+    public object mTarget = null!;
 }
 
 
@@ -50,7 +50,7 @@ public class CCNodeLoader
         return new CCNode ();
     }
 
-    public virtual CCNode LoadCCNode(CCNode parent, CCBReader reader)
+    public virtual CCNode LoadCCNode(CCNode? parent, CCBReader reader)
     {
         CCNode node = CreateCCNode();
         return node;
@@ -61,7 +61,7 @@ public class CCNodeLoader
         get { return _customProperties; }
     }
 
-    public virtual void ParseProperties(CCNode node, CCNode parent, CCBReader reader)
+    public virtual void ParseProperties(CCNode node, CCNode? parent, CCBReader reader)
     {
         int numRegularProps = reader.ReadInt(false);
         int numExturaProps = reader.ReadInt(false);
@@ -102,22 +102,14 @@ public class CCNodeLoader
                     node = ccbNode.FileNode;
 
                     // Skip properties that doesn't have a value to override
-                    var extraPropsNames = (List<string>) node.UserObject;
-                    bool bFound = false;
-                    foreach (var pObj in extraPropsNames)
-                    {
-                        if (pObj == propertyName)
-                        {
-                            bFound = true;
-                            break;
-                        }
-                    }
+                    var extraPropsNames = (List<string>?) node.UserObject;
+                    bool bFound = extraPropsNames != null && extraPropsNames.Contains(propertyName);
                     setProp &= bFound;
                 }
             }
             else if (isExtraProp && node == reader.AnimationManager.RootNode)
             {
-                var extraPropsNames = (List<string>) node.UserObject;
+                var extraPropsNames = (List<string>?) node.UserObject;
                 if (extraPropsNames == null)
                 {
                     extraPropsNames = new List<string>();
@@ -248,7 +240,7 @@ public class CCNodeLoader
                     }
                 case CCBPropertyType.SpriteFrame:
                     {
-                        CCSpriteFrame ccSpriteFrame = ParsePropTypeSpriteFrame(node, parent, reader, propertyName);
+                        CCSpriteFrame? ccSpriteFrame = ParsePropTypeSpriteFrame(node, parent, reader, propertyName);
                         if (setProp)
                         {
                             OnHandlePropTypeSpriteFrame(node, parent, propertyName, ccSpriteFrame, reader);
@@ -257,7 +249,7 @@ public class CCNodeLoader
                     }
                 case CCBPropertyType.Animation:
                     {
-                        CCAnimation ccAnimation = ParsePropTypeAnimation(node, parent, reader);
+                        CCAnimation? ccAnimation = ParsePropTypeAnimation(node, parent, reader);
                         if (setProp)
                         {
                             OnHandlePropTypeAnimation(node, parent, propertyName, ccAnimation, reader);
@@ -266,7 +258,7 @@ public class CCNodeLoader
                     }
                 case CCBPropertyType.Texture:
                     {
-                        CCTexture2D ccTexture2D = ParsePropTypeTexture(node, parent, reader);
+                        CCTexture2D? ccTexture2D = ParsePropTypeTexture(node, parent, reader);
                         if (setProp)
                         {
                             OnHandlePropTypeTexture(node, parent, propertyName, ccTexture2D, reader);
@@ -356,7 +348,7 @@ public class CCNodeLoader
                     }
                 case CCBPropertyType.Block:
                     {
-                        BlockData blockData = ParsePropTypeBlock(node, parent, reader);
+                        BlockData? blockData = ParsePropTypeBlock(node, parent, reader);
                         if (setProp)
                         {
                             OnHandlePropTypeBlock(node, parent, propertyName, blockData, reader);
@@ -365,7 +357,7 @@ public class CCNodeLoader
                     }
                 case CCBPropertyType.BlockCCControl:
                     {
-                        BlockCCControlData blockCCControlData = ParsePropTypeBlockCcControl(node, parent, reader);
+                        BlockCCControlData? blockCCControlData = ParsePropTypeBlockCcControl(node, parent, reader);
                         if (setProp && blockCCControlData != null)
                         {
                             OnHandlePropTypeBlockCcControl(node, parent, propertyName, blockCCControlData, reader);
@@ -374,7 +366,7 @@ public class CCNodeLoader
                     }
                 case CCBPropertyType.CCBFile:
                     {
-                        CCNode ccbFileNode = ParsePropTypeCcbFile(node, parent, reader);
+                        CCNode? ccbFileNode = ParsePropTypeCcbFile(node, parent, reader);
                         if (setProp)
                         {
                             OnHandlePropTypeCCBFile(node, parent, propertyName, ccbFileNode, reader);
@@ -388,7 +380,7 @@ public class CCNodeLoader
         }
     }
 
-    protected virtual CCPoint ParsePropTypePosition(CCNode node, CCNode parent, CCBReader reader, string propertyName)
+    protected virtual CCPoint ParsePropTypePosition(CCNode node, CCNode? parent, CCBReader reader, string propertyName)
     {
         float x = reader.ReadFloat();
         float y = reader.ReadFloat();
@@ -414,7 +406,7 @@ public class CCNodeLoader
         return pt;
     }
 
-    protected virtual CCPoint ParsePropTypePoint(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual CCPoint ParsePropTypePoint(CCNode node, CCNode? parent, CCBReader reader)
     {
         float x = reader.ReadFloat();
         float y = reader.ReadFloat();
@@ -422,7 +414,7 @@ public class CCNodeLoader
         return new CCPoint(x, y);
     }
 
-    protected virtual CCPoint ParsePropTypePointLock(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual CCPoint ParsePropTypePointLock(CCNode node, CCNode? parent, CCBReader reader)
     {
         float x = reader.ReadFloat();
         float y = reader.ReadFloat();
@@ -430,7 +422,7 @@ public class CCNodeLoader
         return new CCPoint(x, y);
     }
 
-    protected virtual CCSize ParsePropTypeSize(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual CCSize ParsePropTypeSize(CCNode node, CCNode? parent, CCBReader reader)
     {
         float width = reader.ReadFloat();
         float height = reader.ReadFloat();
@@ -486,7 +478,7 @@ public class CCNodeLoader
         return new CCSize(width, height);
     }
 
-    protected virtual float[] ParsePropTypeScaleLock(CCNode node, CCNode parent, CCBReader reader, string propertyName)
+    protected virtual float[] ParsePropTypeScaleLock(CCNode node, CCNode? parent, CCBReader reader, string propertyName)
     {
         float x = reader.ReadFloat();
         float y = reader.ReadFloat();
@@ -519,12 +511,12 @@ public class CCNodeLoader
         return scaleLock;
     }
 
-    protected virtual float ParsePropTypeFloat(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual float ParsePropTypeFloat(CCNode node, CCNode? parent, CCBReader reader)
     {
         return reader.ReadFloat();
     }
 
-    protected virtual float ParsePropTypeDegrees(CCNode node, CCNode parent, CCBReader reader, string propertyName)
+    protected virtual float ParsePropTypeDegrees(CCNode node, CCNode? parent, CCBReader reader, string propertyName)
     {
         float ret = reader.ReadFloat();
         if (reader.AnimatedProperties.Contains(propertyName))
@@ -536,7 +528,7 @@ public class CCNodeLoader
         return ret;
     }
 
-    protected virtual float ParsePropTypeFloatScale(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual float ParsePropTypeFloatScale(CCNode node, CCNode? parent, CCBReader reader)
     {
         float f = reader.ReadFloat();
 
@@ -550,17 +542,17 @@ public class CCNodeLoader
         return f;
     }
 
-    protected virtual int ParsePropTypeInteger(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual int ParsePropTypeInteger(CCNode node, CCNode? parent, CCBReader reader)
     {
         return reader.ReadInt(true);
     }
 
-    protected virtual int ParsePropTypeIntegerLabeled(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual int ParsePropTypeIntegerLabeled(CCNode node, CCNode? parent, CCBReader reader)
     {
         return reader.ReadInt(true);
     }
 
-    protected virtual float[] ParsePropTypeFloatVar(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual float[] ParsePropTypeFloatVar(CCNode node, CCNode? parent, CCBReader reader)
     {
         float f = reader.ReadFloat();
         float fVar = reader.ReadFloat();
@@ -572,7 +564,7 @@ public class CCNodeLoader
         return arr;
     }
 
-    protected virtual bool ParsePropTypeCheck(CCNode node, CCNode parent, CCBReader reader, string propertyName)
+    protected virtual bool ParsePropTypeCheck(CCNode node, CCNode? parent, CCBReader reader, string propertyName)
     {
         bool ret = reader.ReadBool();
 
@@ -585,20 +577,25 @@ public class CCNodeLoader
         return ret;
     }
 
-    protected virtual CCSpriteFrame ParsePropTypeSpriteFrame(CCNode node, CCNode parent, CCBReader reader, string propertyName)
+    protected virtual CCSpriteFrame? ParsePropTypeSpriteFrame(CCNode node, CCNode? parent, CCBReader reader, string propertyName)
     {
         string spriteSheet = reader.ReadCachedString();
         string spriteFile = reader.ReadCachedString();
 
-        CCSpriteFrame spriteFrame = null;
+        CCSpriteFrame? spriteFrame = null;
         if (spriteFile.Length != 0)
         {
             if (spriteSheet.Length == 0)
             {
                 spriteFile = reader.CCBRootPath + spriteFile;
-                CCTexture2D texture = CCTextureCache.SharedTextureCache.AddImage(CCFileUtils.RemoveExtension(spriteFile));
-                var bounds = new CCRect(0, 0, texture.ContentSize.Width, texture.ContentSize.Height);
-                spriteFrame = new CCSpriteFrame(texture, bounds);
+                // Like a sprite frame that isn't in the cache, a texture that couldn't be loaded
+                // gives no frame, which the loaders skip.
+                CCTexture2D? texture = CCTextureCache.SharedTextureCache.AddImage(CCFileUtils.RemoveExtension(spriteFile));
+                if (texture != null)
+                {
+                    var bounds = new CCRect(0, 0, texture.ContentSize.Width, texture.ContentSize.Height);
+                    spriteFrame = new CCSpriteFrame(texture, bounds);
+                }
             }
             else
             {
@@ -624,12 +621,12 @@ public class CCNodeLoader
         return spriteFrame;
     }
 
-    protected virtual CCAnimation ParsePropTypeAnimation(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual CCAnimation? ParsePropTypeAnimation(CCNode node, CCNode? parent, CCBReader reader)
     {
         string animationFile = reader.ReadCachedString();
         string animation = reader.ReadCachedString();
 
-        CCAnimation ccAnimation = null;
+        CCAnimation? ccAnimation = null;
 
         // Support for stripping relative file paths, since ios doesn't currently
         // know what to do with them, since its pulling from bundle.
@@ -649,7 +646,7 @@ public class CCNodeLoader
         return ccAnimation;
     }
 
-    protected virtual CCTexture2D ParsePropTypeTexture(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual CCTexture2D? ParsePropTypeTexture(CCNode node, CCNode? parent, CCBReader reader)
     {
         string spriteFile = reader.ReadCachedString();
 
@@ -660,7 +657,7 @@ public class CCNodeLoader
         return null;
     }
 
-    protected virtual byte ParsePropTypeByte(CCNode node, CCNode parent, CCBReader reader, string propertyName)
+    protected virtual byte ParsePropTypeByte(CCNode node, CCNode? parent, CCBReader reader, string propertyName)
     {
         byte ret = reader.ReadByte();
 
@@ -672,7 +669,7 @@ public class CCNodeLoader
         return ret;
     }
 
-    protected virtual CCColor3B ParsePropTypeColor3(CCNode node, CCNode parent, CCBReader reader, string propertyName)
+    protected virtual CCColor3B ParsePropTypeColor3(CCNode node, CCNode? parent, CCBReader reader, string propertyName)
     {
         byte red = reader.ReadByte();
         byte green = reader.ReadByte();
@@ -687,7 +684,7 @@ public class CCNodeLoader
         return color;
     }
 
-    protected virtual CCColor4F[] ParsePropTypeColor4FVar(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual CCColor4F[] ParsePropTypeColor4FVar(CCNode node, CCNode? parent, CCBReader reader)
     {
         float red = reader.ReadFloat();
         float green = reader.ReadFloat();
@@ -712,7 +709,7 @@ public class CCNodeLoader
         return colors;
     }
 
-    protected virtual bool[] ParsePropTypeFlip(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual bool[] ParsePropTypeFlip(CCNode node, CCNode? parent, CCBReader reader)
     {
         bool flipX = reader.ReadBool();
         bool flipY = reader.ReadBool();
@@ -724,7 +721,7 @@ public class CCNodeLoader
         return arr;
     }
 
-    protected virtual CCBlendFunc ParsePropTypeBlendFunc(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual CCBlendFunc ParsePropTypeBlendFunc(CCNode node, CCNode? parent, CCBReader reader)
     {
         int source = reader.ReadInt(false);
         int destination = reader.ReadInt(false);
@@ -736,22 +733,22 @@ public class CCNodeLoader
         return blendFunc;
     }
 
-    protected virtual string ParsePropTypeFntFile(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual string ParsePropTypeFntFile(CCNode node, CCNode? parent, CCBReader reader)
     {
         return reader.ReadCachedString();
     }
 
-    protected virtual string ParsePropTypeString(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual string ParsePropTypeString(CCNode node, CCNode? parent, CCBReader reader)
     {
         return reader.ReadCachedString();
     }
 
-    protected virtual string ParsePropTypeText(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual string ParsePropTypeText(CCNode node, CCNode? parent, CCBReader reader)
     {
         return reader.ReadCachedString();
     }
 
-    protected virtual string ParsePropTypeFontTTF(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual string ParsePropTypeFontTTF(CCNode node, CCNode? parent, CCBReader reader)
     {
         string fontTTF = reader.ReadCachedString();
 
@@ -769,14 +766,14 @@ public class CCNodeLoader
         return fontTTF;
     }
 
-    protected virtual BlockData ParsePropTypeBlock(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual BlockData? ParsePropTypeBlock(CCNode node, CCNode? parent, CCBReader reader)
     {
         string selectorName = reader.ReadCachedString();
         var selectorTarget = (CCBTargetType) reader.ReadInt(false);
 
         if (selectorTarget != CCBTargetType.None)
         {
-            object target = null;
+            object? target = null;
             if (!reader.IsJSControlled())
             {
                 if (selectorTarget == CCBTargetType.DocumentRoot)
@@ -793,7 +790,7 @@ public class CCNodeLoader
                      */
                     if (reader._hasScriptingOwner)
                     {
-                        var proxy = (ICCBScriptOwnerProtocol) reader.Owner;
+                        var proxy = (ICCBScriptOwnerProtocol?) reader.Owner;
                         if (proxy != null)
                         {
                             target = proxy.CreateNew() as object;
@@ -805,7 +802,7 @@ public class CCNodeLoader
                 {
                     if (selectorName.Length > 0)
                     {
-                        Action<CCMenuItem> selMenuHandler = null;
+                        Action<CCMenuItem>? selMenuHandler = null;
 
                         var targetAsCCBSelectorResolver = target as ICCBSelectorResolver;
 
@@ -816,7 +813,7 @@ public class CCNodeLoader
                         }
                         if (selMenuHandler == null)
                         {
-                            ICCBSelectorResolver ccbSelectorResolver = reader.SelectorResolver;
+                            ICCBSelectorResolver? ccbSelectorResolver = reader.SelectorResolver;
                             if (ccbSelectorResolver != null)
                             {
                                 selMenuHandler = ccbSelectorResolver.OnResolveCCBCCMenuItemSelector(target,
@@ -868,7 +865,7 @@ public class CCNodeLoader
         return null;
     }
 
-    protected virtual BlockCCControlData ParsePropTypeBlockCcControl(CCNode node, CCNode parent, CCBReader reader)
+    protected virtual BlockCCControlData? ParsePropTypeBlockCcControl(CCNode node, CCNode? parent, CCBReader reader)
     {
         string selectorName = reader.ReadCachedString();
         var selectorTarget = (CCBTargetType) reader.ReadInt(false);
@@ -878,7 +875,7 @@ public class CCNodeLoader
         {
             if (!reader.IsJSControlled())
             {
-                object target = null;
+                object? target = null;
                 if (selectorTarget == CCBTargetType.DocumentRoot)
                 {
                     target = reader.AnimationManager.RootNode;
@@ -892,7 +889,7 @@ public class CCNodeLoader
                 {
                     if (selectorName.Length > 0)
                     {
-                        Action<object, CCControlEvent> selCCControlHandler = null;
+                        Action<object, CCControlEvent>? selCCControlHandler = null;
 
                         var targetAsCCBSelectorResolver = target as ICCBSelectorResolver;
                         if (targetAsCCBSelectorResolver != null)
@@ -902,7 +899,7 @@ public class CCNodeLoader
                         }
                         if (selCCControlHandler == null)
                         {
-                            ICCBSelectorResolver ccbSelectorResolver = reader.SelectorResolver;
+                            ICCBSelectorResolver? ccbSelectorResolver = reader.SelectorResolver;
                             if (ccbSelectorResolver != null)
                             {
                                 selCCControlHandler = ccbSelectorResolver.OnResolveCCBCCControlSelector(target,
@@ -955,7 +952,7 @@ public class CCNodeLoader
         return null;
     }
 
-    protected virtual CCNode ParsePropTypeCcbFile(CCNode node, CCNode parent, CCBReader pCCBReader)
+    protected virtual CCNode? ParsePropTypeCcbFile(CCNode node, CCNode? parent, CCBReader pCCBReader)
     {
         string ccbFileName = pCCBReader.ReadCachedString();
 
@@ -969,7 +966,7 @@ public class CCNodeLoader
         byte[] pBytes = CCFileUtils.GetFileBytes(path);
         var reader = new CCBReader(pCCBReader);
 
-        reader.AnimationManager.RootContainerSize = parent.ContentSize;
+        reader.AnimationManager.RootContainerSize = pCCBReader.AnimationManager.GetContainerSize(parent);
 
         reader._bytes = pBytes;
         reader._currentByte = 0;
@@ -978,7 +975,7 @@ public class CCNodeLoader
 
         reader.AnimationManager._owner = reader._owner;
 
-        CCNode ccbFileNode = reader.ReadFileWithCleanUp(false, pCCBReader.AnimationManagers);
+        CCNode? ccbFileNode = reader.ReadFileWithCleanUp(false, pCCBReader.AnimationManagers);
 
         if (ccbFileNode != null && reader.AnimationManager.AutoPlaySequenceId != -1)
         {
@@ -1022,7 +1019,7 @@ public class CCNodeLoader
         return ccbFileNode;
     }
 
-    protected virtual float[] ParsePropTypeFloatXY(CCNode pNode, CCNode pParent, CCBReader ccbReader)
+    protected virtual float[] ParsePropTypeFloatXY(CCNode pNode, CCNode? pParent, CCBReader ccbReader)
     {
         float x = ccbReader.ReadFloat();
         float y = ccbReader.ReadFloat();
@@ -1035,7 +1032,7 @@ public class CCNodeLoader
     }
 
 
-    protected virtual void OnHandlePropTypePosition(CCNode node, CCNode parent, string propertyName, CCPoint pPosition, CCBReader reader)
+    protected virtual void OnHandlePropTypePosition(CCNode node, CCNode? parent, string propertyName, CCPoint pPosition, CCBReader reader)
     {
         if (propertyName == PROPERTY_POSITION)
         {
@@ -1048,7 +1045,7 @@ public class CCNodeLoader
         }
     }
 
-    protected virtual void OnHandlePropTypePoint(CCNode node, CCNode parent, string propertyName, CCPoint point, CCBReader reader)
+    protected virtual void OnHandlePropTypePoint(CCNode node, CCNode? parent, string propertyName, CCPoint point, CCBReader reader)
     {
         if (propertyName == PROPERTY_ANCHORPOINT)
         {
@@ -1061,13 +1058,13 @@ public class CCNodeLoader
         }
     }
 
-    protected virtual void OnHandlePropTypePointLock(CCNode node, CCNode parent, string propertyName, CCPoint pPointLock, CCBReader reader)
+    protected virtual void OnHandlePropTypePointLock(CCNode node, CCNode? parent, string propertyName, CCPoint pPointLock, CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);
     }
 
-    protected virtual void OnHandlePropTypeSize(CCNode node, CCNode parent, string propertyName, CCSize pSize, CCBReader reader)
+    protected virtual void OnHandlePropTypeSize(CCNode node, CCNode? parent, string propertyName, CCSize pSize, CCBReader reader)
     {
         if (propertyName == PROPERTY_CONTENTSIZE)
         {
@@ -1080,7 +1077,7 @@ public class CCNodeLoader
         }
     }
 
-    protected virtual void OnHandlePropTypeScaleLock(CCNode node, CCNode parent, string propertyName, float[] pScaleLock, CCBReader reader)
+    protected virtual void OnHandlePropTypeScaleLock(CCNode node, CCNode? parent, string propertyName, float[] pScaleLock, CCBReader reader)
     {
         if (propertyName == PROPERTY_SCALE)
         {
@@ -1094,14 +1091,14 @@ public class CCNodeLoader
         }
     }
 
-    protected virtual void OnHandlePropTypeFloat(CCNode node, CCNode parent, string propertyName, float pFloat, CCBReader reader)
+    protected virtual void OnHandlePropTypeFloat(CCNode node, CCNode? parent, string propertyName, float pFloat, CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
          // It may be a custom property, add it to custom property dictionary.
         _customProperties.Add(propertyName, new CCBValue(pFloat));
     }
 
-    protected virtual void OnHandlePropTypeDegrees(CCNode node, CCNode parent, string propertyName, float pDegrees, CCBReader reader)
+    protected virtual void OnHandlePropTypeDegrees(CCNode node, CCNode? parent, string propertyName, float pDegrees, CCBReader reader)
     {
         if (propertyName == PROPERTY_ROTATION)
         {
@@ -1122,13 +1119,13 @@ public class CCNodeLoader
         }
     }
 
-    protected virtual void OnHandlePropTypeFloatScale(CCNode node, CCNode parent, string propertyName, float floatScale, CCBReader reader)
+    protected virtual void OnHandlePropTypeFloatScale(CCNode node, CCNode? parent, string propertyName, float floatScale, CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);
     }
 
-    protected virtual void OnHandlePropTypeInteger(CCNode node, CCNode parent, string propertyName, int pInteger, CCBReader reader)
+    protected virtual void OnHandlePropTypeInteger(CCNode node, CCNode? parent, string propertyName, int pInteger, CCBReader reader)
     {
         if (propertyName == PROPERTY_TAG)
         {
@@ -1143,20 +1140,20 @@ public class CCNodeLoader
         }
     }
 
-    protected virtual void OnHandlePropTypeIntegerLabeled(CCNode node, CCNode parent, string propertyName, int pIntegerLabeled,
+    protected virtual void OnHandlePropTypeIntegerLabeled(CCNode node, CCNode? parent, string propertyName, int pIntegerLabeled,
                                                           CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);
     }
 
-    protected virtual void OnHandlePropTypeFloatVar(CCNode node, CCNode parent, string propertyName, float[] pFoatVar, CCBReader reader)
+    protected virtual void OnHandlePropTypeFloatVar(CCNode node, CCNode? parent, string propertyName, float[] pFoatVar, CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);
     }
 
-    protected virtual void OnHandlePropTypeFloatXY(CCNode pNode, CCNode pParent, string pPropertyName,
+    protected virtual void OnHandlePropTypeFloatXY(CCNode pNode, CCNode? pParent, string pPropertyName,
                                                    float[] pFoatVar, CCBReader ccbReader)
     {
         if (pPropertyName == PROPERTY_SKEW)
@@ -1171,7 +1168,7 @@ public class CCNodeLoader
         }
     }
 
-    protected virtual void OnHandlePropTypeCheck(CCNode node, CCNode parent, string propertyName, bool pCheck, CCBReader reader)
+    protected virtual void OnHandlePropTypeCheck(CCNode node, CCNode? parent, string propertyName, bool pCheck, CCBReader reader)
     {
         if (propertyName == PROPERTY_VISIBLE)
         {
@@ -1190,41 +1187,41 @@ public class CCNodeLoader
         }
     }
 
-    protected virtual void OnHandlePropTypeSpriteFrame(CCNode node, CCNode parent, string propertyName, CCSpriteFrame spriteFrame,
+    protected virtual void OnHandlePropTypeSpriteFrame(CCNode node, CCNode? parent, string propertyName, CCSpriteFrame? spriteFrame,
                                                        CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);
     }
 
-    protected virtual void OnHandlePropTypeAnimation(CCNode node, CCNode parent, string propertyName, CCAnimation animation,
+    protected virtual void OnHandlePropTypeAnimation(CCNode node, CCNode? parent, string propertyName, CCAnimation? animation,
                                                      CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);
     }
 
-    protected virtual void OnHandlePropTypeTexture(CCNode node, CCNode parent, string propertyName, CCTexture2D texture,
+    protected virtual void OnHandlePropTypeTexture(CCNode node, CCNode? parent, string propertyName, CCTexture2D? texture,
                                                    CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);
     }
 
-    protected virtual void OnHandlePropTypeByte(CCNode node, CCNode parent, string propertyName, byte pByte, CCBReader reader)
+    protected virtual void OnHandlePropTypeByte(CCNode node, CCNode? parent, string propertyName, byte pByte, CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);
     }
 
-    protected virtual void OnHandlePropTypeColor3(CCNode node, CCNode parent, string propertyName, CCColor3B color, CCBReader reader)
+    protected virtual void OnHandlePropTypeColor3(CCNode node, CCNode? parent, string propertyName, CCColor3B color, CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);
     }
 
 
-    protected virtual void OnHandlePropTypeColor4FVar(CCNode node, CCNode parent, string propertyName, CCColor4F[] colorVar,
+    protected virtual void OnHandlePropTypeColor4FVar(CCNode node, CCNode? parent, string propertyName, CCColor4F[] colorVar,
                                                       CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
@@ -1232,14 +1229,14 @@ public class CCNodeLoader
     }
 
 
-    protected virtual void OnHandlePropTypeFlip(CCNode node, CCNode parent, string propertyName, bool[] pFlip, CCBReader reader)
+    protected virtual void OnHandlePropTypeFlip(CCNode node, CCNode? parent, string propertyName, bool[] pFlip, CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);
     }
 
 
-    protected virtual void OnHandlePropTypeBlendFunc(CCNode node, CCNode parent, string propertyName, CCBlendFunc blendFunc,
+    protected virtual void OnHandlePropTypeBlendFunc(CCNode node, CCNode? parent, string propertyName, CCBlendFunc blendFunc,
                                                      CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
@@ -1247,13 +1244,13 @@ public class CCNodeLoader
     }
 
 
-    protected virtual void OnHandlePropTypeFntFile(CCNode node, CCNode parent, string propertyName, string pFntFile, CCBReader reader)
+    protected virtual void OnHandlePropTypeFntFile(CCNode node, CCNode? parent, string propertyName, string pFntFile, CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);
     }
 
-    protected virtual void OnHandlePropTypeString(CCNode node, CCNode parent, string propertyName, string pString, CCBReader reader)
+    protected virtual void OnHandlePropTypeString(CCNode node, CCNode? parent, string propertyName, string pString, CCBReader reader)
     {
 //            CCLog.Log("Unexpected property type: '{0}'!", propertyName);
 //            Debug.Assert(false);
@@ -1261,32 +1258,32 @@ public class CCNodeLoader
         _customProperties.Add(propertyName, new CCBValue(pString));
     }
 
-    protected virtual void OnHandlePropTypeText(CCNode node, CCNode parent, string propertyName, string pText, CCBReader reader)
+    protected virtual void OnHandlePropTypeText(CCNode node, CCNode? parent, string propertyName, string pText, CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);
     }
 
-    protected virtual void OnHandlePropTypeFontTTF(CCNode node, CCNode parent, string propertyName, string fontTTF, CCBReader reader)
+    protected virtual void OnHandlePropTypeFontTTF(CCNode node, CCNode? parent, string propertyName, string fontTTF, CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);
     }
 
-    protected virtual void OnHandlePropTypeBlock(CCNode node, CCNode parent, string propertyName, BlockData pBlockData, CCBReader reader)
+    protected virtual void OnHandlePropTypeBlock(CCNode node, CCNode? parent, string propertyName, BlockData? pBlockData, CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);
     }
 
-    protected virtual void OnHandlePropTypeBlockCcControl(CCNode node, CCNode parent, string propertyName,
+    protected virtual void OnHandlePropTypeBlockCcControl(CCNode node, CCNode? parent, string propertyName,
                                                           BlockCCControlData blockControlData, CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);
     }
 
-    protected virtual void OnHandlePropTypeCCBFile(CCNode node, CCNode parent, string propertyName, CCNode fileNode, CCBReader reader)
+    protected virtual void OnHandlePropTypeCCBFile(CCNode node, CCNode? parent, string propertyName, CCNode? fileNode, CCBReader reader)
     {
         CCLog.Log("Unexpected property type: '{0}'!", propertyName);
         Debug.Assert(false);

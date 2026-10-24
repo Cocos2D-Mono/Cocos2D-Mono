@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 internal class CCBFileLoader : CCNodeLoader
@@ -10,7 +9,7 @@ internal class CCBFileLoader : CCNodeLoader
         return new CCBFile();
     }
 
-    protected override void OnHandlePropTypeCCBFile(CCNode node, CCNode parent, string propertyName, CCNode fileNode, CCBReader reader)
+    protected override void OnHandlePropTypeCCBFile(CCNode node, CCNode? parent, string propertyName, CCNode? fileNode, CCBReader reader)
     {
         if (propertyName == PROPERTY_CCBFILE)
         {

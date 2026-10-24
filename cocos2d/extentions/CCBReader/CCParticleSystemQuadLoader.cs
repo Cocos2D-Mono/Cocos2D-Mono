@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 internal class CCParticleSystemQuadLoader : CCNodeLoader
@@ -31,7 +30,7 @@ internal class CCParticleSystemQuadLoader : CCNodeLoader
         return new CCParticleSystemQuad();
     }
 
-    protected override void OnHandlePropTypeIntegerLabeled(CCNode node, CCNode parent, string propertyName, int pIntegerLabeled,
+    protected override void OnHandlePropTypeIntegerLabeled(CCNode node, CCNode? parent, string propertyName, int pIntegerLabeled,
                                                            CCBReader reader)
     {
         if (propertyName == PROPERTY_EMITERMODE)
@@ -44,7 +43,7 @@ internal class CCParticleSystemQuadLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypePoint(CCNode node, CCNode parent, string propertyName, CCPoint point, CCBReader reader)
+    protected override void OnHandlePropTypePoint(CCNode node, CCNode? parent, string propertyName, CCPoint point, CCBReader reader)
     {
         if (propertyName == PROPERTY_POSVAR)
         {
@@ -60,7 +59,7 @@ internal class CCParticleSystemQuadLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeFloat(CCNode node, CCNode parent, string propertyName, float pFloat, CCBReader reader)
+    protected override void OnHandlePropTypeFloat(CCNode node, CCNode? parent, string propertyName, float pFloat, CCBReader reader)
     {
         if (propertyName == PROPERTY_EMISSIONRATE)
         {
@@ -76,7 +75,7 @@ internal class CCParticleSystemQuadLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeInteger(CCNode node, CCNode parent, string propertyName, int pInteger, CCBReader reader)
+    protected override void OnHandlePropTypeInteger(CCNode node, CCNode? parent, string propertyName, int pInteger, CCBReader reader)
     {
         if (propertyName == PROPERTY_TOTALPARTICLES)
         {
@@ -88,7 +87,7 @@ internal class CCParticleSystemQuadLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeFloatVar(CCNode node, CCNode parent, string propertyName, float[] pFloatVar, CCBReader reader)
+    protected override void OnHandlePropTypeFloatVar(CCNode node, CCNode? parent, string propertyName, float[] pFloatVar, CCBReader reader)
     {
         if (propertyName == PROPERTY_LIFE)
         {
@@ -156,7 +155,7 @@ internal class CCParticleSystemQuadLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeColor4FVar(CCNode node, CCNode parent, string propertyName, CCColor4F[] colorVar,
+    protected override void OnHandlePropTypeColor4FVar(CCNode node, CCNode? parent, string propertyName, CCColor4F[] colorVar,
                                                        CCBReader reader)
     {
         if (propertyName == PROPERTY_STARTCOLOR)
@@ -175,7 +174,7 @@ internal class CCParticleSystemQuadLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeBlendFunc(CCNode node, CCNode parent, string propertyName, CCBlendFunc blendFunc,
+    protected override void OnHandlePropTypeBlendFunc(CCNode node, CCNode? parent, string propertyName, CCBlendFunc blendFunc,
                                                       CCBReader reader)
     {
         if (propertyName == PROPERTY_BLENDFUNC)
@@ -188,7 +187,7 @@ internal class CCParticleSystemQuadLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeTexture(CCNode node, CCNode parent, string propertyName, CCTexture2D texture,
+    protected override void OnHandlePropTypeTexture(CCNode node, CCNode? parent, string propertyName, CCTexture2D? texture,
                                                     CCBReader reader)
     {
         if (propertyName == PROPERTY_TEXTURE)

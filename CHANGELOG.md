@@ -97,6 +97,17 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     `CCControlSaturationBrightnessPicker` made with the parameterless constructor needs its init
     method to run before it's used. Its sprites and labels aren't nullable, though they're null
     until then.
+- **Nullable annotations for the scroll views** (`CCScrollView`, `CCTableView`,
+  `CCTableViewCell` and `CCArrayForObjectSorting`). The visible changes:
+  - `CCScrollView.Delegate` and `CCTableView.Delegate` are nullable: a view has no delegate
+    until one is set.
+  - `CCTableView.CellAtIndex` and `DequeueCell` are nullable, because they return null when
+    there's no such cell. So is `CCArrayForObjectSorting.ObjectWithObjectID`.
+  - The `CCScrollView` and `CCTableView` constructors that take a container accept null, which
+    makes a default one, as the constructors without a container do.
+  - A `CCTableView` made with the parameterless constructor needs `InitWithViewSize` to run and
+    `DataSource` to be set before it's used. `DataSource` isn't nullable, though it's null until
+    then.
 - **Sprite frame, sprite sheet, animation and particle plists that lack a value they need**
   throw an `InvalidDataException` that says what's missing. So does one whose root isn't a
   dictionary. Before, most of these threw `NullReferenceException`, `NotSupportedException` or
@@ -189,6 +200,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - `CCScale9Sprite` throws `ArgumentException` for a sprite frame name that isn't in the sprite
   frame cache, and for a sprite frame or sprite without a texture. Before, these threw
   `NullReferenceException`.
+- `CCTableView.TouchEnded` reports the touched cell for a table view without a parent, instead
+  of throwing `NullReferenceException`.
 
 ## 2.8.0 - 2026-10-23
 

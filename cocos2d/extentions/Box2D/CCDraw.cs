@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -35,7 +34,7 @@ public class CCBox2dDraw : b2Draw
     public CCBox2dDraw(string spriteFontName)
     {
         _primitiveBatch = new CCPrimitiveBatch(CCDrawManager.GraphicsDevice, 5000);
-        _spriteFont = CCApplication.SharedApplication.Content.Load<SpriteFont>(spriteFontName);
+        _spriteFont = CCContentManager.SharedContentManager.Load<SpriteFont>(spriteFontName);
         _stringData = new List<StringData>();
         _stringBuilder = new StringBuilder();
     }

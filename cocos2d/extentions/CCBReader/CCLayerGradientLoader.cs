@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 internal class CCLayerGradientLoader : CCLayerLoader
@@ -15,7 +14,7 @@ internal class CCLayerGradientLoader : CCLayerLoader
         return new CCLayerGradient((byte)255,(byte)255);
     }
 
-    protected override void OnHandlePropTypeColor3(CCNode node, CCNode parent, string propertyName, CCColor3B color, CCBReader reader)
+    protected override void OnHandlePropTypeColor3(CCNode node, CCNode? parent, string propertyName, CCColor3B color, CCBReader reader)
     {
         if (propertyName == PROPERTY_STARTCOLOR)
         {
@@ -31,7 +30,7 @@ internal class CCLayerGradientLoader : CCLayerLoader
         }
     }
 
-    protected override void OnHandlePropTypeByte(CCNode node, CCNode parent, string propertyName, byte pByte, CCBReader reader)
+    protected override void OnHandlePropTypeByte(CCNode node, CCNode? parent, string propertyName, byte pByte, CCBReader reader)
     {
         if (propertyName == PROPERTY_STARTOPACITY)
         {
@@ -47,7 +46,7 @@ internal class CCLayerGradientLoader : CCLayerLoader
         }
     }
 
-    protected override void OnHandlePropTypePoint(CCNode node, CCNode parent, string propertyName, CCPoint point, CCBReader reader)
+    protected override void OnHandlePropTypePoint(CCNode node, CCNode? parent, string propertyName, CCPoint point, CCBReader reader)
     {
         if (propertyName == PROPERTY_VECTOR)
         {
@@ -62,7 +61,7 @@ internal class CCLayerGradientLoader : CCLayerLoader
         }
     }
 
-    protected override void OnHandlePropTypeBlendFunc(CCNode node, CCNode parent, string propertyName, CCBlendFunc blendFunc,
+    protected override void OnHandlePropTypeBlendFunc(CCNode node, CCNode? parent, string propertyName, CCBlendFunc blendFunc,
                                                       CCBReader reader)
     {
         if (propertyName == PROPERTY_BLENDFUNC)

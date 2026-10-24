@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +16,7 @@ public class CCMenuItemImageLoader : CCMenuItemLoader
         return new CCMenuItemImage();
     }
 
-    protected override void OnHandlePropTypeSpriteFrame(CCNode node, CCNode parent, string propertyName, CCSpriteFrame spriteFrame,
+    protected override void OnHandlePropTypeSpriteFrame(CCNode node, CCNode? parent, string propertyName, CCSpriteFrame? spriteFrame,
                                                         CCBReader reader)
     {
         if (propertyName == PROPERTY_NORMALDISPLAYFRAME)

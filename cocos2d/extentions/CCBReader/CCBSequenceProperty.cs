@@ -1,5 +1,5 @@
-#nullable disable
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cocos2D;
 
@@ -11,6 +11,7 @@ public class CCBSequenceProperty
         Init();
     }
 
+    [MemberNotNull(nameof(_keyframes))]
     private bool Init()
     {
         _keyframes = new List<CCBKeyframe>();

@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +17,7 @@ public class CCScrollViewLoader : CCNodeLoader
         return new CCScrollView();
     }
 
-    protected override void OnHandlePropTypeSize(CCNode node, CCNode parent, string propertyName, CCSize pSize, CCBReader reader)
+    protected override void OnHandlePropTypeSize(CCNode node, CCNode? parent, string propertyName, CCSize pSize, CCBReader reader)
     {
         if (propertyName == PROPERTY_CONTENTSIZE)
         {
@@ -30,7 +29,7 @@ public class CCScrollViewLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeCheck(CCNode node, CCNode parent, string propertyName, bool pCheck, CCBReader reader)
+    protected override void OnHandlePropTypeCheck(CCNode node, CCNode? parent, string propertyName, bool pCheck, CCBReader reader)
     {
         if (propertyName == PROPERTY_CLIPSTOBOUNDS)
         {
@@ -46,11 +45,15 @@ public class CCScrollViewLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeCCBFile(CCNode node, CCNode parent, string propertyName, CCNode fileNode, CCBReader reader)
+    protected override void OnHandlePropTypeCCBFile(CCNode node, CCNode? parent, string propertyName, CCNode? fileNode, CCBReader reader)
     {
         if (propertyName == PROPERTY_CONTAINER)
         {
-            ((CCScrollView) node).Container = fileNode;
+            // The container setter ignores null, so a file that couldn't be read leaves the default one.
+            if (fileNode != null)
+            {
+                ((CCScrollView) node).Container = fileNode;
+            }
             ((CCScrollView) node).UpdateInset();
         }
         else
@@ -59,7 +62,7 @@ public class CCScrollViewLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeFloat(CCNode node, CCNode parent, string propertyName, float pFloat, CCBReader reader)
+    protected override void OnHandlePropTypeFloat(CCNode node, CCNode? parent, string propertyName, float pFloat, CCBReader reader)
     {
         if (propertyName == PROPERTY_SCALE)
         {
@@ -71,7 +74,7 @@ public class CCScrollViewLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeIntegerLabeled(CCNode node, CCNode parent, string propertyName, int pIntegerLabeled,
+    protected override void OnHandlePropTypeIntegerLabeled(CCNode node, CCNode? parent, string propertyName, int pIntegerLabeled,
                                                            CCBReader reader)
     {
         if (propertyName == PROPERTY_DIRECTION)

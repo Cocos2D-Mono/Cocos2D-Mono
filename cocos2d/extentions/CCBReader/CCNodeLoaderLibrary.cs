@@ -1,11 +1,10 @@
-#nullable disable
 using System.Collections.Generic;
 
 namespace Cocos2D;
 
 public class CCNodeLoaderLibrary 
 {
-    private static CCNodeLoaderLibrary _instance;
+    private static CCNodeLoaderLibrary? _instance;
     
     private Dictionary<string, CCNodeLoader> _nodeLoaders = new Dictionary<string, CCNodeLoader>();
 
@@ -58,8 +57,8 @@ public class CCNodeLoaderLibrary
         {
             if (_instance == null)
             {
+                // The constructor registers the default loaders.
                 _instance = new CCNodeLoaderLibrary();
-                _instance.RegisterDefaultCCNodeLoaders();
             }
             return _instance;
         }

@@ -1,4 +1,3 @@
-#nullable disable
 #if DESKTOPGL || WINDOWS || WINDOWSGL || MACOS || LINUX
 using System;
 using Microsoft.Xna.Framework;
@@ -186,7 +185,7 @@ public partial class CCGameView
             // Normal single-scene rendering
             if (CCDrawManager.BeginDraw())
             {
-                CCScene runningScene = RunningScene;
+                CCScene? runningScene = RunningScene;
 
                 if (runningScene != null)
                 {
@@ -302,7 +301,7 @@ public partial class CCGameView
         canDispose = false;
     }
 
-    partial void PlatformGetServiceProvider(ref IServiceProvider serviceProvider)
+    partial void PlatformGetServiceProvider(ref IServiceProvider? serviceProvider)
     {
         // On desktop, use the Game's service provider if available
         if (_game != null && _game.Services != null)

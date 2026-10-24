@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
@@ -12,7 +11,7 @@ namespace Cocos2D;
 
 public abstract class CCApplication : DrawableGameComponent
 {
-    protected static CCApplication s_pSharedApplication;
+    protected static CCApplication? s_pSharedApplication;
     private readonly List<CCTouch> endedTouches = new List<CCTouch>();
     private readonly Dictionary<int, LinkedListNode<CCTouch>> _touchMap = new Dictionary<int, LinkedListNode<CCTouch>>();
     private readonly LinkedList<CCTouch> _touches = new LinkedList<CCTouch>();
@@ -24,9 +23,9 @@ public abstract class CCApplication : DrawableGameComponent
     private MouseState _prevMouseState;
 #endif
     protected bool m_bCaptured;
-    protected ICCEGLTouchDelegate m_pDelegate;
+    protected ICCEGLTouchDelegate? m_pDelegate;
 
-    public GameTime GameTime;
+    public GameTime? GameTime;
 
     private bool _initialized;
 
@@ -54,7 +53,7 @@ public abstract class CCApplication : DrawableGameComponent
 
     protected bool HandleMediaStateAutomatically { get; set; }
 
-    private void GameActivated(object sender, EventArgs e)
+    private void GameActivated(object? sender, EventArgs e)
     {
         // Clear out the prior gamepad state because we don't want it anymore.
         _priorGamePadState.Clear();
@@ -67,7 +66,7 @@ public abstract class CCApplication : DrawableGameComponent
         ApplicationWillEnterForeground();
     }
 
-    private void GameDeactivated(object sender, EventArgs e)
+    private void GameDeactivated(object? sender, EventArgs e)
     {
         ApplicationDidEnterBackground();
 #if !IOS
@@ -78,7 +77,7 @@ public abstract class CCApplication : DrawableGameComponent
 #endif
     }
 
-    void GameExiting(object sender, EventArgs e)
+    void GameExiting(object? sender, EventArgs e)
     {
         CCDirector.SharedDirector.End();
     }
@@ -93,7 +92,7 @@ public abstract class CCApplication : DrawableGameComponent
         set { Game.TargetElapsedTime = TimeSpan.FromTicks((int) (value * 10000000)); }
     }
 
-    public ICCEGLTouchDelegate TouchDelegate
+    public ICCEGLTouchDelegate? TouchDelegate
     {
         set { m_pDelegate = value; }
     }
@@ -230,7 +229,7 @@ public abstract class CCApplication : DrawableGameComponent
 
     public delegate void OnGestureDelegate(CCGesture g);
 
-    public event OnGestureDelegate OnGesture;
+    public event OnGestureDelegate? OnGesture;
 
     private void ProcessGestures(List<GestureSample> gestures)
     {
@@ -273,11 +272,11 @@ public abstract class CCApplication : DrawableGameComponent
     #endregion
 
     #region GamePad Support
-    public event CCGamePadButtonDelegate GamePadButtonUpdate;
-    public event CCGamePadDPadDelegate GamePadDPadUpdate;
-    public event CCGamePadStickUpdateDelegate GamePadStickUpdate;
-    public event CCGamePadTriggerDelegate GamePadTriggerUpdate;
-    public event CCGamePadConnectionDelegate GamePadConnectionUpdate;
+    public event CCGamePadButtonDelegate? GamePadButtonUpdate;
+    public event CCGamePadDPadDelegate? GamePadDPadUpdate;
+    public event CCGamePadStickUpdateDelegate? GamePadStickUpdate;
+    public event CCGamePadTriggerDelegate? GamePadTriggerUpdate;
+    public event CCGamePadConnectionDelegate? GamePadConnectionUpdate;
 
     private Dictionary<PlayerIndex, GamePadState> _priorGamePadState = new Dictionary<PlayerIndex, GamePadState>();
 
@@ -481,9 +480,9 @@ public abstract class CCApplication : DrawableGameComponent
             {
                 pos = CCDrawManager.ScreenToWorld(_lastMouseState.X, _lastMouseState.Y);
                 _lastMouseId++;
-                _touches.AddLast(new CCTouch(_lastMouseId, pos.X, pos.Y));
-                _touchMap.Add(_lastMouseId, _touches.Last);
-                newTouches.Add(_touches.Last.Value);
+                LinkedListNode<CCTouch> mouseTouch = _touches.AddLast(new CCTouch(_lastMouseId, pos.X, pos.Y));
+                _touchMap.Add(_lastMouseId, mouseTouch);
+                newTouches.Add(mouseTouch.Value);
 
                 m_bCaptured = true;
             }
@@ -560,14 +559,14 @@ public abstract class CCApplication : DrawableGameComponent
                         {
                             pos = CCDrawManager.ScreenToWorld(touch.Position.X, touch.Position.Y);
 
-                            _touches.AddLast(new CCTouch(touch.Id, pos.X, pos.Y));
-                            _touchMap.Add(touch.Id, _touches.Last);
-                            newTouches.Add(_touches.Last.Value);
+                            LinkedListNode<CCTouch> newTouch = _touches.AddLast(new CCTouch(touch.Id, pos.X, pos.Y));
+                            _touchMap.Add(touch.Id, newTouch);
+                            newTouches.Add(newTouch.Value);
                         }
                         break;
 
                     case TouchLocationState.Moved:
-                        LinkedListNode<CCTouch> existingTouch;
+                        LinkedListNode<CCTouch>? existingTouch;
                         if (_touchMap.TryGetValue(touch.Id, out existingTouch))
                         {
                             pos = CCDrawManager.ScreenToWorld(touch.Position.X, touch.Position.Y);
@@ -611,7 +610,7 @@ public abstract class CCApplication : DrawableGameComponent
         }
     }
 
-    private CCTouch GetTouchBasedOnId(int nID)
+    private CCTouch? GetTouchBasedOnId(int nID)
     {
         if (_touchMap.ContainsKey(nID))
         {
@@ -635,7 +634,7 @@ public abstract class CCApplication : DrawableGameComponent
     /// Get current applicaiton instance.
     /// </summary>
     /// <value> Current application instance pointer. </value>
-    public static CCApplication SharedApplication
+    public static CCApplication? SharedApplication
     {
         get { return s_pSharedApplication; }
     }

@@ -54,6 +54,22 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     for an element without any. Implementations should declare `string[]? atts`.
   - `CCDictMaker`'s public fields are nullable, and so are the dictionaries and arrays it
     returns, including `CCFileUtils.DictionaryWithContentsOfFile`'s.
+- **Nullable annotations for the runtime classes** (`CCDrawManager`, `CCApplication`,
+  `CCFocusManager`, `CCAccelerometer`, `CCRawList`, `CCTask`, `CCLog` and the rest of
+  `cocos2d/platform`). The visible changes:
+  - `CCApplication.SharedApplication` is nullable, because a `CCGameView` has no application.
+    So are `CCApplication.GameTime` until the first update, `TouchDelegate`, and the game pad
+    and gesture events.
+  - `CCDrawManager.BindTexture` and both `SetRenderTarget` overloads accept null, which they
+    already handled, and `GetRenderTarget` returns null while drawing goes to the screen.
+  - `CCDrawManager.GraphicsDevice`, `spriteBatch`, `PrimitiveEffect` and `AlphaTestEffect`
+    aren't nullable, though they're null before `CCDrawManager.Init` and after
+    `PurgeDrawManager`.
+  - `CCAccelerometer.SetDelegate` accepts null, which removes the delegate.
+  - `CCFocusManager.ItemWithFocus` is nullable, and so is the previous item that
+    `OnFocusChanged` passes when nothing had focus.
+  - `CCLog.Log`'s format arguments can be null. `CCTask.RunAsync`'s completion callback is
+    nullable, and it receives null.
 - **Sprite frame, sprite sheet, animation and particle plists that lack a value they need**
   throw an `InvalidDataException` that says what's missing. So does one whose root isn't a
   dictionary. Before, most of these threw `NullReferenceException`, `NotSupportedException` or
@@ -116,6 +132,19 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - `CCContentManager.Load<string>` no longer returns null for a content file without any text.
   It tries the raw file instead, as it does when the content file can't be read, and throws
   `ContentLoadException` if that fails too.
+- A node with the game pad enabled no longer throws `NullReferenceException` when it enters or
+  exits a scene in a `CCGameView`, which has no `CCApplication` to raise game pad events.
+- `CCFocusManager.FocusNextItem` and `FocusPreviousItem` no longer throw
+  `NullReferenceException` after the focused item is removed when it was the only one. No item
+  gets focus.
+- A pooled `CCRawList` can be added to after `Clear(true)`. Returning its buffer to the pool
+  left the list without one, so the next `Add` threw `NullReferenceException`.
+- `CCDrawManager.SetOrientation` throws `InvalidOperationException` when `InitializeDisplay`
+  hasn't run, as in a `CCGameView`, instead of `NullReferenceException`.
+- Reinitializing or disposing the graphics resources, as a device reset does, no longer throws
+  `NullReferenceException` when the garbage collector frees a resource partway through.
+- On iOS, a `CCLabel` with a `.ttf` font finds the content directory in a `CCGameView` instead
+  of throwing `NullReferenceException`.
 
 ## 2.8.0 - 2026-10-23
 

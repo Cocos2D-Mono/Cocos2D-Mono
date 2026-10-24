@@ -317,7 +317,6 @@ public class CCLayer : CCNode, ICCAccelerometerDelegate
         base.OnEnter();
 
         CCDirector director = CCDirector.SharedDirector;
-        CCApplication application = CCApplication.SharedApplication;
 
         // add this layer to concern the Accelerometer Sensor
         if (_isAccelerometerEnabled)

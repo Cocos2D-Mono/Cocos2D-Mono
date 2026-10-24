@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,11 +5,11 @@ using System.Text;
 
 namespace Cocos2D;
 
-public delegate void CCFocusChangeDelegate(ICCFocusable prev, ICCFocusable current);
+public delegate void CCFocusChangeDelegate(ICCFocusable? prev, ICCFocusable current);
 
 public class CCFocusManager
 {
-    public event CCFocusChangeDelegate OnFocusChanged;
+    public event CCFocusChangeDelegate? OnFocusChanged;
 
     /// <summary>
     /// The list of nodes that can receive focus
@@ -19,7 +18,7 @@ public class CCFocusManager
     /// <summary>
     /// The current node with focus
     /// </summary>
-    private LinkedListNode<ICCFocusable> _Current = null;
+    private LinkedListNode<ICCFocusable>? _Current = null;
 
     /// <summary>
     /// Removes the given focusable node
@@ -66,9 +65,10 @@ public class CCFocusManager
     /// </summary>
     public void FocusNextItem()
     {
-        if (_Current == null && _FocusList.Count > 0)
+        LinkedListNode<ICCFocusable>? first = _FocusList.First;
+        if (_Current == null && first != null)
         {
-            _Current = _FocusList.First;
+            _Current = first;
             _Current.Value.HasFocus = true;
             if (OnFocusChanged != null)
             {
@@ -79,8 +79,8 @@ public class CCFocusManager
         {
             ICCFocusable lostItem = _Current.Value;
             // Search for the next node.
-            LinkedListNode<ICCFocusable> nextItem = null;
-            for (LinkedListNode<ICCFocusable> p = _Current.Next; p != null; p = p.Next)
+            LinkedListNode<ICCFocusable>? nextItem = null;
+            for (LinkedListNode<ICCFocusable>? p = _Current.Next; p != null; p = p.Next)
             {
                 if (p.Value.CanReceiveFocus)
                 {
@@ -93,13 +93,17 @@ public class CCFocusManager
             }
             else
             {
-                _Current = _FocusList.First;
+                // No item gets focus when the focused item was removed and was the last one.
+                _Current = first;
             }
             lostItem.HasFocus = false;
-            _Current.Value.HasFocus = true;
-            if (OnFocusChanged != null)
+            if (_Current != null)
             {
-                OnFocusChanged(lostItem, _Current.Value);
+                _Current.Value.HasFocus = true;
+                if (OnFocusChanged != null)
+                {
+                    OnFocusChanged(lostItem, _Current.Value);
+                }
             }
         }
         else
@@ -113,9 +117,10 @@ public class CCFocusManager
     /// </summary>
     public void FocusPreviousItem()
     {
-        if (ItemWithFocus == null && _FocusList.Count > 0)
+        LinkedListNode<ICCFocusable>? last = _FocusList.Last;
+        if (ItemWithFocus == null && last != null)
         {
-            _Current = _FocusList.Last;
+            _Current = last;
             _Current.Value.HasFocus = true;
             if (OnFocusChanged != null)
             {
@@ -125,8 +130,8 @@ public class CCFocusManager
         else if (_Current != null)
         {
             ICCFocusable lostItem = _Current.Value;
-            LinkedListNode<ICCFocusable> nextItem = null;
-            for (LinkedListNode<ICCFocusable> p = _Current.Previous; p != null; p = p.Previous)
+            LinkedListNode<ICCFocusable>? nextItem = null;
+            for (LinkedListNode<ICCFocusable>? p = _Current.Previous; p != null; p = p.Previous)
             {
                 if (p.Value.CanReceiveFocus)
                 {
@@ -139,13 +144,17 @@ public class CCFocusManager
             }
             else
             {
-                _Current = _FocusList.Last;
+                // No item gets focus when the focused item was removed and was the last one.
+                _Current = last;
             }
             lostItem.HasFocus = false;
-            _Current.Value.HasFocus = true;
-            if (OnFocusChanged != null)
+            if (_Current != null)
             {
-                OnFocusChanged(lostItem, _Current.Value);
+                _Current.Value.HasFocus = true;
+                if (OnFocusChanged != null)
+                {
+                    OnFocusChanged(lostItem, _Current.Value);
+                }
             }
         }
         else
@@ -158,7 +167,7 @@ public class CCFocusManager
     /// Returns the item with the current focus. This test will create a copy 
     /// of the master item list.
     /// </summary>
-    public ICCFocusable ItemWithFocus
+    public ICCFocusable? ItemWithFocus
     {
         get
         {

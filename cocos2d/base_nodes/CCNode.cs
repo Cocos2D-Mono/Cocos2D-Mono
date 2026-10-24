@@ -1580,13 +1580,16 @@ public class CCNode : ICCSelectorProtocol, ICCFocusable, ICCTargetedTouchDelegat
                 _gamePadDelegatesInited = true;
             }
 
-            CCApplication application = CCApplication.SharedApplication;
-
-            application.GamePadButtonUpdate += _onGamePadButtonUpdateDelegate;
-            application.GamePadConnectionUpdate += _onGamePadConnectionUpdateDelegate;
-            application.GamePadDPadUpdate += _onGamePadDPadUpdateDelegate;
-            application.GamePadStickUpdate += _onGamePadStickUpdateDelegate;
-            application.GamePadTriggerUpdate += _onGamePadTriggerUpdateDelegate;
+            // Only CCApplication raises game pad events. A CCGameView has no application.
+            CCApplication? application = CCApplication.SharedApplication;
+            if (application != null)
+            {
+                application.GamePadButtonUpdate += _onGamePadButtonUpdateDelegate;
+                application.GamePadConnectionUpdate += _onGamePadConnectionUpdateDelegate;
+                application.GamePadDPadUpdate += _onGamePadDPadUpdateDelegate;
+                application.GamePadStickUpdate += _onGamePadStickUpdateDelegate;
+                application.GamePadTriggerUpdate += _onGamePadTriggerUpdateDelegate;
+            }
         }
 
         if (!_initialized)
@@ -1654,12 +1657,15 @@ public class CCNode : ICCSelectorProtocol, ICCFocusable, ICCTargetedTouchDelegat
 
         if (GamePadEnabled && director.GamePadEnabled)
         {
-            CCApplication application = CCApplication.SharedApplication;
-            application.GamePadButtonUpdate -= _onGamePadButtonUpdateDelegate;
-            application.GamePadConnectionUpdate -= _onGamePadConnectionUpdateDelegate;
-            application.GamePadDPadUpdate -= _onGamePadDPadUpdateDelegate;
-            application.GamePadStickUpdate -= _onGamePadStickUpdateDelegate;
-            application.GamePadTriggerUpdate -= _onGamePadTriggerUpdateDelegate;
+            CCApplication? application = CCApplication.SharedApplication;
+            if (application != null)
+            {
+                application.GamePadButtonUpdate -= _onGamePadButtonUpdateDelegate;
+                application.GamePadConnectionUpdate -= _onGamePadConnectionUpdateDelegate;
+                application.GamePadDPadUpdate -= _onGamePadDPadUpdateDelegate;
+                application.GamePadStickUpdate -= _onGamePadStickUpdateDelegate;
+                application.GamePadTriggerUpdate -= _onGamePadTriggerUpdateDelegate;
+            }
         }
 
         PauseSchedulerAndActions();

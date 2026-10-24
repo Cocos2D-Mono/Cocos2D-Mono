@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Threading.Tasks;
 
@@ -84,7 +83,7 @@ public static class CCTask
     /// <param name="action">The action to run in the background.</param>
     /// <param name="taskCompleted">Optional callback invoked on the scheduler after the action completes.</param>
     /// <returns>The started background task.</returns>
-    public static object RunAsync(Action action, Action<object> taskCompleted)
+    public static object RunAsync(Action action, Action<object?>? taskCompleted)
     {
         var task = new Task(
             () =>

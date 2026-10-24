@@ -13,8 +13,9 @@ public partial class CCGameView
 
     bool _touchEnabled;
 
-    // Made here as well as when input handling initialises, so a touch that arrives first has
-    // somewhere to go.
+    // Made here so that a touch before the game starts, which iOS can deliver, doesn't throw.
+    // InitialiseMobileInputHandling replaces them, so the game starts with no stale touches, such
+    // as a tap that ended while it was loading.
     Dictionary<int, CCTouch> _touchMap = new Dictionary<int, CCTouch>();
     List<CCTouch> _incomingNewTouches = new List<CCTouch>();
     List<CCTouch> _incomingMoveTouches = new List<CCTouch>();

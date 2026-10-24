@@ -156,8 +156,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   of throwing `NullReferenceException`.
 - On Android, setting `CCGameView.Paused` after `StartGame`, but before the view's own game
   has initialised, no longer throws `NullReferenceException`.
-- On iOS, a touch that reaches a `CCGameView` before its game starts no longer throws
-  `NullReferenceException`.
+- On iOS, a touch that reaches a `CCGameView` before its game starts is ignored instead of
+  throwing `NullReferenceException`.
 - `CCGameView.ViewCreated` handlers get `EventArgs.Empty` instead of null.
 
 ## 2.8.0 - 2026-10-23

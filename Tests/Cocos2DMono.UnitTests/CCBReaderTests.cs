@@ -99,6 +99,16 @@ public class CCBReaderTests
     }
 
     [Fact]
+    public void ReadNodeGraphFromData_WithAnIncompleteHeader_ReturnsNull()
+    {
+        // The header check read all four magic bytes from a shorter file, which threw
+        // IndexOutOfRangeException.
+        var reader = new CCBReader(CCNodeLoaderLibrary.SharedInstance);
+
+        Assert.Null(reader.ReadNodeGraphFromData(new[] { (byte) 'i', (byte) 'b', (byte) 'c' }, null, ParentSize));
+    }
+
+    [Fact]
     public void CreateSceneWithNodeGraphFromFile_ForAFileItCannotRead_ThrowsInvalidDataException()
     {
         // The reader returns no node for a file it can't read, and the scene added that null as

@@ -450,7 +450,9 @@ public class CCBAnimationManager
         {
             // Use base value (no animation)
             object? baseValue = GetBaseValue(node, pSeqProp.Name);
-            Debug.Assert(baseValue != null, "No baseValue found for property");
+            // A sprite frame that couldn't be found leaves a null base value, which
+            // SetAnimatedProperty skips.
+            Debug.Assert(baseValue != null || pSeqProp.Name == "displayFrame", "No baseValue found for property");
             SetAnimatedProperty(pSeqProp.Name, node, baseValue, fTweenDuration);
         }
         else
@@ -684,7 +686,10 @@ public class CCBAnimationManager
 
     public void RunAnimationsForSequenceIdTweenDuration(int nSeqId, float fTweenDuration)
     {
-        Debug.Assert(nSeqId != -1, "Sequence id couldn't be found");
+        // Look the sequence up first, so a request for one that doesn't exist leaves the running
+        // animation alone.
+        CCBSequence seq = GetSequence(nSeqId)
+            ?? throw new ArgumentException("There's no sequence with the ID " + nSeqId + ".", nameof(nSeqId));
 
         Debug.Assert(_rootNode != null, "The CCB reader sets the root node before animations run.");
         _rootNode.StopAllActions();
@@ -734,8 +739,6 @@ public class CCBAnimationManager
         }
 
         // Make callback at end of sequence
-        CCBSequence seq = GetSequence(nSeqId)
-            ?? throw new ArgumentException("There's no sequence with the ID " + nSeqId + ".", nameof(nSeqId));
         CCAction completeAction = new CCSequence (
             new CCDelayTime (seq.Duration + fTweenDuration),
             new CCCallFunc(SequenceCompleted)

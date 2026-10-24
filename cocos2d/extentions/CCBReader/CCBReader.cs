@@ -862,8 +862,8 @@ public class CCBReader
 
     private bool ReadHeader()
     {
-        /* If no bytes loaded, don't crash about it. */
-        if (_bytes.Length == 0)
+        /* If the magic bytes aren't all there, don't crash about it. */
+        if (_bytes.Length < _currentByte + 4)
         {
             return false;
         }

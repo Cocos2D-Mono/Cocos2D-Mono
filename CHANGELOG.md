@@ -233,14 +233,16 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   `NullReferenceException`.
 - When a sequence finishes, `CCBAnimationManager` tells its delegate the sequence's name, instead
   of throwing `NullReferenceException`.
-- `CCBAnimationManager.RunAnimationsForSequenceIdTweenDuration` throws `ArgumentException` for a
-  sequence ID that doesn't exist, instead of `NullReferenceException`.
+- `CCBAnimationManager.RunAnimationsForSequenceIdTweenDuration`, and the methods that run a
+  sequence by name, throw `ArgumentException` for a sequence that doesn't exist and leave the
+  running sequence alone. Before, they threw `NullReferenceException` after stopping it.
 - A sprite frame or texture that a CCB file uses but that can't be found is skipped. Before, a
   missing texture threw `NullReferenceException` while the file loaded, and so did a missing
   frame for a `CCScale9Sprite`. A missing frame in an animation threw when its keyframe played.
 - `CCBReader.CreateSceneWithNodeGraphFromFile` throws `InvalidDataException` for a file it can't
-  read, and so does reading a CCB file node whose own file can't be read. Before, these threw
-  `NullReferenceException`.
+  read: no file name, a file without the CCB header, or one of another version. So does reading a
+  CCB file node whose own file can't be read. Before, these threw `NullReferenceException`, and a
+  file shorter than the header threw `IndexOutOfRangeException`.
 - Setting an extra property on an embedded CCB file that declares none no longer throws
   `NullReferenceException`. The property is skipped, as in cocos2d-x.
 - `CCBox2dDraw` loads its font in a `CCGameView`, which has no `CCApplication`, instead of

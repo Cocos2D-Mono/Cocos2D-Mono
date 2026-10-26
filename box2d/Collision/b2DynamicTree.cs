@@ -1,4 +1,3 @@
-#nullable disable
 /*
 * Copyright (c) 2009 Erin Catto http://www.box2d.org
 *
@@ -50,7 +49,8 @@ public class b2DynamicTree<T>
         /// Enlarged AABB
         public b2AABB aabb;
 
-        public T userData;
+        // Set for leaves; internal nodes have none.
+        public T? userData;
         public int parentOrNext;
         //        public int parent;
         //        public int next;
@@ -832,7 +832,8 @@ public class b2DynamicTree<T>
         Validate();
     }
 
-    public T GetUserData(int proxyId)
+    // Only a proxy has user data, so this returns the default for any other ID, as Box2D does.
+    public T? GetUserData(int proxyId)
     {
         Debug.Assert(0 <= proxyId && proxyId < m_nodeCapacity);
         return m_nodes[proxyId].userData;

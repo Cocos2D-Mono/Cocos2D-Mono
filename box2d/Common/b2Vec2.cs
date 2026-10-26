@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,10 +15,9 @@ public struct b2Vec2
         return (x == o.x && y == o.y);
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
-        b2Vec2 o = (b2Vec2)obj;
-        return (x == o.x && y == o.y);
+        return obj is b2Vec2 o && Equals(o);
     }
 
     public override int GetHashCode()

@@ -1,6 +1,6 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using Box2D.Common;
@@ -24,13 +24,15 @@ public class b2ChainShape : b2Shape
     {
         ShapeType = b2ShapeType.e_chain;
         Radius = b2Settings.b2_polygonRadius;
-        Vertices = null;
+        // Callers run CreateLoop or CreateChain straight after construction, which set them.
+        Vertices = null!;
         Count = 0;
         HasPrevVertex = false;
         HasNextVertex = false;
     }
 
 
+    [MemberNotNull(nameof(Vertices))]
     public virtual void CreateLoop(b2Vec2[] vertices, int count)
     {
         Count = count + 1;
@@ -43,6 +45,7 @@ public class b2ChainShape : b2Shape
         HasNextVertex = true;
     }
 
+    [MemberNotNull(nameof(Vertices))]
     public virtual void CreateChain(b2Vec2[] vertices, int count)
     {
         Count = count;

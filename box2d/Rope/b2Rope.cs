@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,12 +28,13 @@ public class b2Rope
     public b2Rope()
     {
         m_count = 0;
-        m_ps = null;
-        m_p0s = null;
-        m_vs = null;
-        m_ims = null;
-        m_Ls = null;
-        m_as = null;
+        // No points until Initialize. Every loop runs to the point count, so nothing reads these.
+        m_ps = Array.Empty<b2Vec2>();
+        m_p0s = Array.Empty<b2Vec2>();
+        m_vs = Array.Empty<b2Vec2>();
+        m_ims = Array.Empty<float>();
+        m_Ls = Array.Empty<float>();
+        m_as = Array.Empty<float>();
         m_gravity.SetZero();
         m_k2 = 1.0f;
         m_k3 = 0.1f;

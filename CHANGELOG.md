@@ -298,6 +298,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   throwing `NullReferenceException`.
 - `b2Body.CompareTo(null)` returns a positive number, as `IComparable<T>` requires, instead of
   throwing `NullReferenceException`.
+- `b2World.Step` unlocks the world when a callback throws, such as a contact listener that
+  creates a body. Before, the world stayed locked until a later `Step` finished, so changes such
+  as creating or destroying a body failed or did nothing.
 - `b2Body.CreateFixture` throws `ArgumentException` for a fixture definition without a shape,
   instead of `NullReferenceException`.
 - `b2World.CreateJoint` throws `ArgumentException` for a definition without both bodies, a gear

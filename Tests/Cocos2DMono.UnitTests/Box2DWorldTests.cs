@@ -59,6 +59,23 @@ public class Box2DWorldTests
     }
 
     [Fact]
+    public void Step_WhenACallbackThrows_UnlocksTheWorld()
+    {
+        // The world stayed locked when an exception escaped from a callback, so creating a body
+        // threw until a later Step finished.
+        b2World world = NewWorld();
+        world.CreateBody(DynamicBody(0, 0)).CreateFixture(Circle(), 1);
+        world.CreateBody(DynamicBody(0.5f, 0)).CreateFixture(Circle(), 1);
+        world.SetContactListener(new ThrowingListener(world));
+
+        Assert.Throws<InvalidOperationException>(() => world.Step(1 / 60f, 8, 3));
+
+        Assert.False(world.IsLocked);
+        world.CreateBody(new b2BodyDef());
+        Assert.Equal(3, world.BodyCount);
+    }
+
+    [Fact]
     public void DrawShapeAndDrawJoint_WithoutADebugDraw_DoNothing()
     {
         // They drew with the world's debug draw without checking that it had one, as
@@ -141,6 +158,25 @@ public class Box2DWorldTests
                 Record.Exception(() => _ball.CreateFixture(Circle(), 1)),
                 Record.Exception(() => _world.CreateJoint(jointDef)),
             };
+        }
+
+        public override void PreSolve(b2Contact contact, b2Manifold oldManifold) { }
+        public override void PostSolve(b2Contact contact, ref b2ContactImpulse impulse) { }
+    }
+
+    // Creates a body from inside a contact callback, and lets the exception escape from Step.
+    private sealed class ThrowingListener : b2ContactListener
+    {
+        private readonly b2World _world;
+
+        public ThrowingListener(b2World world)
+        {
+            _world = world;
+        }
+
+        public override void BeginContact(b2Contact contact)
+        {
+            _world.CreateBody(new b2BodyDef());
         }
 
         public override void PreSolve(b2Contact contact, b2Manifold oldManifold) { }

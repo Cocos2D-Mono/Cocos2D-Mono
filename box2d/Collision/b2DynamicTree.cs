@@ -832,12 +832,11 @@ public class b2DynamicTree<T>
         Validate();
     }
 
-    public T GetUserData(int proxyId)
+    // Only a proxy has user data, so this returns the default for any other ID, as Box2D does.
+    public T? GetUserData(int proxyId)
     {
         Debug.Assert(0 <= proxyId && proxyId < m_nodeCapacity);
-        T? userData = m_nodes[proxyId].userData;
-        Debug.Assert(userData != null, "A proxy is a leaf, and CreateProxy gives it user data.");
-        return userData;
+        return m_nodes[proxyId].userData;
     }
 
     public void GetFatAABB(int proxyId, out b2AABB output)

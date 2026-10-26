@@ -133,8 +133,10 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     null until a file fills them.
 - **Nullable annotations for Box2D's collision, math and rope code** (`box2d/Collision`,
   `box2d/Common` and `box2d/Rope`). The visible changes:
-  - `b2DynamicTree<T>.b2TreeNode.userData` is nullable, because only a leaf has user data.
-    `GetUserData` isn't, because it's only called for a proxy, which is a leaf.
+  - `b2DynamicTree<T>.b2TreeNode.userData` and `b2DynamicTree<T>.GetUserData` are nullable,
+    because only a leaf has user data. `GetUserData` returns the default for an ID that isn't a
+    proxy, as in Box2D. `b2BroadPhase.GetUserData` isn't nullable, because its tree's user data
+    is a struct.
   - `b2ChainShape.Vertices` isn't nullable, though it's null until `CreateLoop` or `CreateChain`
     runs.
 - **Nullable annotations for Box2D's world, bodies and fixtures** (`b2World`, `b2Body`,

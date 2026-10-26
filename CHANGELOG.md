@@ -161,6 +161,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   `InvalidOperationException` while the world is stepping**, for example in a contact callback.
   Before, they returned null, which usually led to a `NullReferenceException` later. Create
   bodies, joints and fixtures after `Step` returns.
+- **`b2World.Step` throws `InvalidOperationException` while the world is stepping**, for example
+  in a contact callback. Before, it ran a whole step in the middle of the current one, and
+  unlocked the world when it finished.
 - **Sprite frame, sprite sheet, animation and particle plists that lack a value they need**
   throw an `InvalidDataException` that says what's missing. So does one whose root isn't a
   dictionary. Before, most of these threw `NullReferenceException`, `NotSupportedException` or

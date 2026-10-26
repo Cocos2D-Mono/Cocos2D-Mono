@@ -76,6 +76,24 @@ public class Box2DWorldTests
     }
 
     [Fact]
+    public void Step_WhileTheWorldIsStepping_ThrowsInvalidOperationException()
+    {
+        // A nested Step ran a whole step in the middle of the outer one, and unlocked the world
+        // when it finished, so the rest of the outer step ran unlocked.
+        b2World world = NewWorld();
+        world.CreateBody(DynamicBody(0, 0)).CreateFixture(Circle(), 1);
+        world.CreateBody(DynamicBody(0.5f, 0)).CreateFixture(Circle(), 1);
+        var listener = new SteppingListener(world);
+        world.SetContactListener(listener);
+
+        world.Step(1 / 60f, 8, 3);
+
+        Assert.IsType<InvalidOperationException>(listener.Error);
+        Assert.True(listener.LockedAfterward, "The nested Step unlocked the world.");
+        Assert.False(world.IsLocked);
+    }
+
+    [Fact]
     public void DrawShapeAndDrawJoint_WithoutADebugDraw_DoNothing()
     {
         // They drew with the world's debug draw without checking that it had one, as
@@ -158,6 +176,29 @@ public class Box2DWorldTests
                 Record.Exception(() => _ball.CreateFixture(Circle(), 1)),
                 Record.Exception(() => _world.CreateJoint(jointDef)),
             };
+        }
+
+        public override void PreSolve(b2Contact contact, b2Manifold oldManifold) { }
+        public override void PostSolve(b2Contact contact, ref b2ContactImpulse impulse) { }
+    }
+
+    // Steps the world from inside a contact callback, and checks the lock after the nested call.
+    private sealed class SteppingListener : b2ContactListener
+    {
+        private readonly b2World _world;
+
+        public SteppingListener(b2World world)
+        {
+            _world = world;
+        }
+
+        public Exception? Error { get; private set; }
+        public bool LockedAfterward { get; private set; }
+
+        public override void BeginContact(b2Contact contact)
+        {
+            Error = Record.Exception(() => _world.Step(1 / 60f, 8, 3));
+            LockedAfterward = _world.IsLocked;
         }
 
         public override void PreSolve(b2Contact contact, b2Manifold oldManifold) { }

@@ -1042,6 +1042,12 @@ public class b2World
 
     public void Step(float dt, int velocityIterations, int positionIterations)
     {
+        if (IsLocked)
+        {
+            throw new InvalidOperationException(
+                "Step can't be called while the world is stepping, for example in a contact callback.");
+        }
+
 #if PROFILING
         b2Timer stepTimer = new b2Timer();
 #endif

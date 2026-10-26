@@ -1055,69 +1055,76 @@ public class b2World
 
         m_flags |= b2WorldFlags.e_locked;
 
-        b2TimeStep step = new b2TimeStep();
-        step.dt = dt;
-        step.velocityIterations = velocityIterations;
-        step.positionIterations = positionIterations;
-        if (dt > 0.0f)
+        // Unlock even when a callback throws, for example by creating a body. Otherwise the world
+        // stays locked until a later Step finishes.
+        try
         {
-            step.inv_dt = 1.0f / dt;
-        }
-        else
-        {
-            step.inv_dt = 0.0f;
-        }
+            b2TimeStep step = new b2TimeStep();
+            step.dt = dt;
+            step.velocityIterations = velocityIterations;
+            step.positionIterations = positionIterations;
+            if (dt > 0.0f)
+            {
+                step.inv_dt = 1.0f / dt;
+            }
+            else
+            {
+                step.inv_dt = 0.0f;
+            }
 
-        step.dtRatio = m_inv_dt0 * dt;
+            step.dtRatio = m_inv_dt0 * dt;
 
-        step.warmStarting = m_warmStarting;
+            step.warmStarting = m_warmStarting;
 
 #if PROFILING
-        b2Timer timer = new b2Timer();
+            b2Timer timer = new b2Timer();
 #endif
-        // Update contacts. This is where some contacts are destroyed.
-        {
-            m_contactManager.Collide();
+            // Update contacts. This is where some contacts are destroyed.
+            {
+                m_contactManager.Collide();
 #if PROFILING
-            m_profile.collide = timer.GetMilliseconds();
+                m_profile.collide = timer.GetMilliseconds();
 #endif
-        }
+            }
 
-        // Integrate velocities, solve velocityraints, and integrate positions.
-        if (m_stepComplete && step.dt > 0.0f)
-        {
+            // Integrate velocities, solve velocityraints, and integrate positions.
+            if (m_stepComplete && step.dt > 0.0f)
+            {
 #if PROFILING
-            timer.Reset();
+                timer.Reset();
 #endif
-            Solve(step);
+                Solve(step);
 #if PROFILING
-            m_profile.solve = timer.GetMilliseconds();
+                m_profile.solve = timer.GetMilliseconds();
 #endif
-        }
+            }
 
-        // Handle TOI events.
-        if (m_continuousPhysics && step.dt > 0.0f)
-        {
+            // Handle TOI events.
+            if (m_continuousPhysics && step.dt > 0.0f)
+            {
 #if PROFILING
-            timer.Reset();
+                timer.Reset();
 #endif
-            SolveTOI(step);
+                SolveTOI(step);
 #if PROFILING
-            m_profile.solveTOI = timer.GetMilliseconds();
+                m_profile.solveTOI = timer.GetMilliseconds();
 #endif
-        }
+            }
 
-        if (step.dt > 0.0f)
+            if (step.dt > 0.0f)
+            {
+                m_inv_dt0 = step.inv_dt;
+            }
+
+            if ((m_flags & b2WorldFlags.e_clearForces) != 0)
+            {
+                ClearForces();
+            }
+        }
+        finally
         {
-            m_inv_dt0 = step.inv_dt;
+            m_flags &= ~b2WorldFlags.e_locked;
         }
-
-        if ((m_flags & b2WorldFlags.e_clearForces) != 0)
-        {
-            ClearForces();
-        }
-
-        m_flags &= ~b2WorldFlags.e_locked;
 #if PROFILING
         m_profile.step = stepTimer.GetMilliseconds();
 #endif

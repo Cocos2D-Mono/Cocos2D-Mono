@@ -1,4 +1,3 @@
-#nullable disable
 /*
 * Copyright (c) 2009 Erin Catto http://www.box2d.org
 *
@@ -50,7 +49,8 @@ public class b2DynamicTree<T>
         /// Enlarged AABB
         public b2AABB aabb;
 
-        public T userData;
+        // Set for leaves; internal nodes have none.
+        public T? userData;
         public int parentOrNext;
         //        public int parent;
         //        public int next;
@@ -835,7 +835,9 @@ public class b2DynamicTree<T>
     public T GetUserData(int proxyId)
     {
         Debug.Assert(0 <= proxyId && proxyId < m_nodeCapacity);
-        return m_nodes[proxyId].userData;
+        T? userData = m_nodes[proxyId].userData;
+        Debug.Assert(userData != null, "A proxy is a leaf, and CreateProxy gives it user data.");
+        return userData;
     }
 
     public void GetFatAABB(int proxyId, out b2AABB output)

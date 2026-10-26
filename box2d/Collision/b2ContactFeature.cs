@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,10 +41,9 @@ public struct b2ContactFeature
         typeB = cf.typeB;
     }
 
-    public override bool Equals(object o)
+    public override bool Equals(object? o)
     {
-        b2ContactFeature bcf = (b2ContactFeature)o;
-        return (indexA == bcf.indexA && indexB == bcf.indexB && typeA == bcf.typeA && typeB == bcf.typeB);
+        return o is b2ContactFeature bcf && Equals(ref bcf);
     }
 
     public bool Equals(ref b2ContactFeature bcf)

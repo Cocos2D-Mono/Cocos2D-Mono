@@ -131,6 +131,12 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   - `CCBReader.CCBRootPath` is empty instead of null until it's set, as in cocos2d-x. The
     reader's lists of owner outlets, owner callbacks and animation managers are empty instead of
     null until a file fills them.
+- **Nullable annotations for Box2D's collision, math and rope code** (`box2d/Collision`,
+  `box2d/Common` and `box2d/Rope`). The visible changes:
+  - `b2DynamicTree<T>.b2TreeNode.userData` is nullable, because only a leaf has user data.
+    `GetUserData` isn't, because it's only called for a proxy, which is a leaf.
+  - `b2ChainShape.Vertices` isn't nullable, though it's null until `CreateLoop` or `CreateChain`
+    runs.
 - **Sprite frame, sprite sheet, animation and particle plists that lack a value they need**
   throw an `InvalidDataException` that says what's missing. So does one whose root isn't a
   dictionary. Before, most of these threw `NullReferenceException`, `NotSupportedException` or
@@ -247,6 +253,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   `NullReferenceException`. The property is skipped, as in cocos2d-x.
 - `CCBox2dDraw` loads its font in a `CCGameView`, which has no `CCApplication`, instead of
   throwing `NullReferenceException`.
+- `b2Vec2`, `b2AABB` and `b2ContactFeature` `Equals(object)` return false for null or a value of
+  another type, instead of throwing.
 
 ## 2.8.0 - 2026-10-23
 

@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,10 +16,10 @@ public class b2GearJointDef : b2JointDef
     }
 
     /// The first revolute/prismatic joint attached to the gear joint.
-    public b2Joint joint1;
+    public b2Joint? joint1;
 
     /// The second revolute/prismatic joint attached to the gear joint.
-    public b2Joint joint2;
+    public b2Joint? joint2;
 
     /// The gear ratio.
     /// @see b2GearJoint for explanation.

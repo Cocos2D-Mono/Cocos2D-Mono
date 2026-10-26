@@ -1,4 +1,3 @@
-#nullable disable
 /*
 * Copyright (c) 2006-2009 Erin Catto http://www.box2d.org
 *
@@ -19,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Box2D.Collision;
 using Box2D.Collision.Shapes;
 using Box2D.Common;
@@ -52,12 +52,19 @@ public struct b2ContactRegister
 /// </summary>
 public class b2ContactEdge
 {
+    public b2ContactEdge()
+    {
+        // b2Contact.Init sets these straight after b2Contact makes the edge.
+        Other = null!;
+        Contact = null!;
+    }
+
     public b2Body Other;            //< provides quick access to the other body attached.
     public b2Contact Contact;        //< the contact
     public bool hasPrev;
-    public b2ContactEdge Prev;    //< the previous contact edge in the body's contact list
+    public b2ContactEdge? Prev;    //< the previous contact edge in the body's contact list
     public bool hasNext;
-    public b2ContactEdge Next;    //< the next contact edge in the body's contact list
+    public b2ContactEdge? Next;    //< the next contact edge in the body's contact list
 }
 
 [Flags]
@@ -87,8 +94,8 @@ public class b2Contact : b2ReusedObject<b2Contact>
     public b2ContactFlags Flags;
 
     // World pool and list pointers.
-    public b2Contact Prev;
-    public b2Contact Next;
+    public b2Contact? Prev;
+    public b2Contact? Next;
 
     // Nodes for connecting bodies.
     public b2ContactEdge NodeA;
@@ -114,6 +121,9 @@ public class b2Contact : b2ReusedObject<b2Contact>
 
     public b2Contact()
     {
+        // b2Contact.Create calls Init straight after construction, which sets these.
+        FixtureA = null!;
+        FixtureB = null!;
         m_manifold = new b2Manifold();
         NodeA = new b2ContactEdge();
         NodeB = new b2ContactEdge();
@@ -229,10 +239,12 @@ public class b2Contact : b2ReusedObject<b2Contact>
     }
 
     public b2Contact(b2Fixture fA, int indexA, b2Fixture fB, int indexB)
+        : this()
     {
         Init(fA, indexA, fB, indexB);
     }
 
+    [MemberNotNull(nameof(FixtureA), nameof(FixtureB))]
     protected void Init(b2Fixture fA, int indexA, b2Fixture fB, int indexB)
     {
         Flags = b2ContactFlags.e_enabledFlag;
@@ -248,15 +260,17 @@ public class b2Contact : b2ReusedObject<b2Contact>
         Prev = null;
         Next = null;
 
-        NodeA.Contact = null;
+        // An edge's contact and other body aren't nullable, so they get the values that
+        // b2ContactManager.AddPair gives them when it adds the contact to its bodies' lists.
+        NodeA.Contact = this;
         NodeA.hasPrev = false;
         NodeA.hasNext = false;
-        NodeA.Other = null;
+        NodeA.Other = FixtureB.Body;
 
-        NodeB.Contact = null;
+        NodeB.Contact = this;
         NodeB.hasPrev = false;
         NodeB.hasNext = false;
-        NodeB.Other = null;
+        NodeB.Other = FixtureA.Body;
 
         m_toiCount = 0;
 
@@ -269,7 +283,7 @@ public class b2Contact : b2ReusedObject<b2Contact>
 
     // Update the contact manifold and touching status.
     // Note: do not assume the fixture AABBs are overlapping or are valid.
-    public virtual void Update(b2ContactListener listener)
+    public virtual void Update(b2ContactListener? listener)
     {
         oldManifold.CopyFrom(m_manifold);
 
@@ -397,12 +411,12 @@ public class b2Contact : b2ReusedObject<b2Contact>
         return (Flags & b2ContactFlags.e_touchingFlag) != 0;
     }
 
-    public virtual b2Contact GetNext()
+    public virtual b2Contact? GetNext()
     {
         return Next;
     }
 
-    public virtual b2Contact GetPrev()
+    public virtual b2Contact? GetPrev()
     {
         return Prev;
     }

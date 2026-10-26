@@ -1,4 +1,3 @@
-#nullable disable
 /*
 * Copyright (c) 2006-2007 Erin Catto http://www.box2d.org
 *
@@ -25,8 +24,8 @@ namespace Box2D.Dynamics.Joints;
 public class b2Joint
 {
     protected b2JointType m_type;
-    public b2Joint Prev;
-    public b2Joint Next;
+    public b2Joint? Prev;
+    public b2Joint? Next;
     public b2JointEdge m_edgeA;
     public b2JointEdge m_edgeB;
     public b2Body m_bodyA;
@@ -37,7 +36,7 @@ public class b2Joint
     public bool m_islandFlag;
     protected bool m_collideConnected;
 
-    protected object m_userData;
+    protected object? m_userData;
 
     public int Index
     {
@@ -47,7 +46,7 @@ public class b2Joint
 
     public static b2Joint Create(b2JointDef def)
     {
-        b2Joint joint = null;
+        b2Joint joint;
 
         switch (def.JointType)
         {
@@ -112,8 +111,9 @@ public class b2Joint
                 break;
 
             default:
-                Debug.Assert(false);
-                break;
+                throw new ArgumentException(
+                    $"Can't create a joint of type {def.JointType}. Use the definition for the joint you want, such as b2RevoluteJointDef.",
+                    nameof(def));
         }
 
         return joint;
@@ -121,13 +121,15 @@ public class b2Joint
 
     public b2Joint(b2JointDef def)
     {
-        Debug.Assert(def.BodyA != def.BodyB);
+        b2Body bodyA = def.BodyA ?? throw new ArgumentException("The joint definition has no BodyA.", nameof(def));
+        b2Body bodyB = def.BodyB ?? throw new ArgumentException("The joint definition has no BodyB.", nameof(def));
+        Debug.Assert(bodyA != bodyB);
 
         m_type = def.JointType;
         Prev = null;
         Next = null;
-        m_bodyA = def.BodyA;
-        m_bodyB = def.BodyB;
+        m_bodyA = bodyA;
+        m_bodyB = bodyB;
         m_index = 0;
         m_collideConnected = def.CollideConnected;
         m_islandFlag = false;
@@ -156,17 +158,17 @@ public class b2Joint
         return m_bodyB;
     }
 
-    public virtual b2Joint GetNext()
+    public virtual b2Joint? GetNext()
     {
         return Next;
     }
 
-    public virtual object GetUserData()
+    public virtual object? GetUserData()
     {
         return m_userData;
     }
 
-    public virtual void SetUserData(object data)
+    public virtual void SetUserData(object? data)
     {
         m_userData = data;
     }

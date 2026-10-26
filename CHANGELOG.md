@@ -161,6 +161,19 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   `InvalidOperationException` while the world is stepping**, for example in a contact callback.
   Before, they returned null, which usually led to a `NullReferenceException` later. Create
   bodies, joints and fixtures after `Step` returns.
+- **Nullable annotations for Box2D's contacts and joints** (`box2d/Dynamics/Contacts` and
+  `box2d/Dynamics/Joints`). With these, all of Box2D is annotated. The visible changes:
+  - The lists end with null, so these are nullable: `b2Contact.Next` and `Prev`,
+    `b2ContactEdge.Next` and `Prev`, `b2Joint.Next` and `Prev`, `b2JointEdge.Next` and `Prev`,
+    and what `b2Contact.GetNext` and `GetPrev` and `b2Joint.GetNext` return.
+  - `b2JointDef.BodyA`, `BodyB` and `UserData`, `b2GearJointDef.joint1` and `joint2`, and a
+    joint's user data (`GetUserData` and `SetUserData`) are nullable. A new definition has no
+    bodies or joints until they're set.
+  - `b2ContactEdge.Contact` and `Other` and `b2JointEdge.Joint` and `Other` aren't nullable. A
+    joint edge's are null until `b2World.CreateJoint` adds the joint to its bodies' lists.
+  - `b2ContactConstraint.BodyA`, `BodyB` and `contact` aren't nullable, though they're null in a
+    constraint that no step has used yet.
+  - `b2Contact.Update` accepts a null listener.
 - **Sprite frame, sprite sheet, animation and particle plists that lack a value they need**
   throw an `InvalidDataException` that says what's missing. So does one whose root isn't a
   dictionary. Before, most of these threw `NullReferenceException`, `NotSupportedException` or
@@ -287,6 +300,13 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   throwing `NullReferenceException`.
 - `b2Body.CreateFixture` throws `ArgumentException` for a fixture definition without a shape,
   instead of `NullReferenceException`.
+- `b2World.CreateJoint` throws `ArgumentException` for a definition without both bodies, a gear
+  joint definition without both joints, and a definition whose type it can't create, such as a
+  plain `b2JointDef`. Before, these threw `NullReferenceException` or failed an assert, and a
+  definition without `BodyB` left the joint half-added to the world.
+- `b2Contact`'s public four-argument constructor no longer throws `NullReferenceException`. It
+  still makes a circle contact whatever the shapes are, so use `b2Contact.Create` for other
+  shapes.
 
 ## 2.8.0 - 2026-10-23
 

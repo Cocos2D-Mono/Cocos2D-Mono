@@ -317,6 +317,12 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   still makes a circle contact whatever the shapes are, so use `b2Contact.Create` for other
   shapes.
 
+### Documentation
+
+- `CONTRIBUTING.md` and the roadmap say that nullable annotations cover the engine and Box2D.
+  Every file is converted except the deprecated zlib port, which keeps `#nullable disable`
+  until 3.0 removes it.
+
 ## 2.8.0 - 2026-10-23
 
 More nullable reference type annotations, continuing 2.7.0. The menus, the misc nodes

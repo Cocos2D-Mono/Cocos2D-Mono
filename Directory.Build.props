@@ -118,4 +118,39 @@
     <Cocos2DTargetFrameworks Condition="'$(Cocos2DIncludeMacCatalyst)' == 'true'">$(Cocos2DTargetFrameworks);$(Cocos2DMacCatalystTfm)</Cocos2DTargetFrameworks>
     <Cocos2DTargetFrameworks Condition="'$(Cocos2DIncludeTvos)' == 'true'">$(Cocos2DTargetFrameworks);$(Cocos2DTvosTfm)</Cocos2DTargetFrameworks>
   </PropertyGroup>
+
+  <!--
+    ==================== Warnings as errors in CI (C2D-198) ====================
+
+    In CI ($(CI) is true: GitHub Actions sets it in every workflow, pack.yml included), a
+    compiler, analyzer or NuGet warning fails the build, except for the codes listed below.
+    Those still have warnings to clear. Each C2D-198 slice that clears a code deletes it
+    here, so don't add codes. Local builds keep warnings as warnings; build with
+    -p:CI=true to see what CI will do.
+
+    NuGet's audit warnings (NU1901-NU1904) fail it too, for direct and transitive
+    packages. Update the package, or review the advisory and add a NuGetAuditSuppress
+    item for it.
+  -->
+  <PropertyGroup Condition="'$(CI)' == 'true'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- XML doc comments -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS1570;CS1572;CS1587;CS1711</WarningsNotAsErrors>
+    <!-- Members that hide inherited ones, and `new` modifiers that hide nothing -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0108;CS0114;CS0109</WarningsNotAsErrors>
+    <!-- == and != without Equals and GetHashCode -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0659;CS0660;CS0661</WarningsNotAsErrors>
+    <!-- Unused fields and locals, unreachable code, a duplicate using -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0105;CS0162;CS0168;CS0169;CS0219;CS0414;CS0649</WarningsNotAsErrors>
+    <!-- Value types compared with null, and an inexact Stream.Read -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0472;CS8073;CA2022</WarningsNotAsErrors>
+    <!-- Android APIs obsoleted in later versions -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CA1422</WarningsNotAsErrors>
+    <!-- A package that .NET 10 provides anyway (System.Drawing.Common on WindowsDX) -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1510</WarningsNotAsErrors>
+    <!-- Test analyzers: xUnit's, and WinForms' check of the integration tests' high-DPI manifest -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);xUnit1026;xUnit1031;WFO0003</WarningsNotAsErrors>
+    <!-- Trim analysis, which waits for the 3.0 trim-safety work -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);IL2026;IL2057;IL2060;IL2111</WarningsNotAsErrors>
+  </PropertyGroup>
 </Project>

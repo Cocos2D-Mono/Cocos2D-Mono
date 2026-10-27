@@ -55,6 +55,11 @@ After a PR merges, sync `dev` locally and delete the feature branch.
 
 - The solution builds clean, with **no new warnings**. Note that incremental builds can
   hide warnings from unchanged files — confirm warning claims with `--no-incremental`.
+- CI treats warnings as errors. The only exceptions are the codes listed in
+  `WarningsNotAsErrors` in the repo-root `Directory.Build.props`, which still have warnings
+  to clear, so don't add to that list. NuGet's vulnerability warnings count too: update the
+  package, or review the advisory and add a `NuGetAuditSuppress` item for it. Build with
+  `-p:CI=true` to see what CI will do.
 - Unit tests pass: `dotnet test Tests/Cocos2DMono.UnitTests/Cocos2DMono.UnitTests.csproj`
 - Behavior changes come with a regression test where one can reasonably be written.
 

@@ -291,6 +291,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - `b2World.Step` unlocks the world when a callback throws, such as a contact listener that
   creates a body. Before, the world stayed locked until a later `Step` finished, so changes such
   as creating or destroying a body failed or did nothing.
+- `b2World.Step` locks the world while it looks for new contacts, as it does for the rest of the
+  step. Before, a contact filter called then could change the world or step it again, and a
+  nested step could add the same contact twice.
 - `b2Body.CreateFixture` throws `ArgumentException` for a fixture definition without a shape,
   instead of `NullReferenceException`.
 

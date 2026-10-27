@@ -29,9 +29,6 @@
          (the cocos2d desktop / Core projects were on 1.3.3). -->
     <PackageVersion Include="SharpZipLib" Version="1.4.2" />
 
-    <!-- Build / publish niceties (used by the consolidated csprojs under src/) -->
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
-
     <!-- Test / benchmark -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="xunit" Version="2.9.2" />

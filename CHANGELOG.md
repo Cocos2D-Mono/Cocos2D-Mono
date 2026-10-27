@@ -317,6 +317,13 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   still makes a circle contact whatever the shapes are, so use `b2Contact.Create` for other
   shapes.
 
+### Security
+
+- The packages are built with the .NET SDK's own Source Link instead of the
+  `Microsoft.SourceLink.GitHub` 8.0.0 package, whose `Microsoft.Build.Tasks.Git` dependency has
+  an information disclosure vulnerability (CVE-2026-62900). The Source Link information in the
+  packages is unchanged. Building the engine from source needs .NET SDK 10.0.303 or later.
+
 ### Documentation
 
 - `CONTRIBUTING.md` and the roadmap say that nullable annotations cover the engine and Box2D.

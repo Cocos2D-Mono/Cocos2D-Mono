@@ -115,10 +115,6 @@
     </Reference>
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
-  </ItemGroup>
-
   <!-- Pack content -->
   <ItemGroup>
     <None Include="..\..\Logos\logo-small.png" Pack="True" PackagePath="" Visible="false" />

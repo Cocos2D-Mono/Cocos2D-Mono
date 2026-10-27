@@ -131,6 +131,10 @@
     NuGet's audit warnings (NU1901-NU1904) fail it too, for direct and transitive
     packages. Update the package, or review the advisory and add a NuGetAuditSuppress
     item for it.
+
+    Warnings from other MSBuild tasks stay warnings: MSBuildTreatWarningsAsErrors is off.
+    The engine build logs one from MonoGame's content task ("No Content References
+    Found") that has no code, so MSBuildWarningsNotAsErrors couldn't exempt it.
   -->
   <PropertyGroup Condition="'$(CI)' == 'true'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

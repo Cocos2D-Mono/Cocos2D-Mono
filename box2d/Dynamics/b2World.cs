@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Box2D.Collision;
@@ -321,6 +322,7 @@ public class b2World
             j.m_bodyB.JointList.Prev = j.m_edgeB;
         j.m_bodyB.JointList = j.m_edgeB;
 
+        Debug.Assert(def.BodyA != null && def.BodyB != null, "b2Joint's constructor checks that the definition has both bodies.");
         b2Body bodyA = def.BodyA;
         b2Body bodyB = def.BodyB;
 

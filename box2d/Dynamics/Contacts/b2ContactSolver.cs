@@ -1,4 +1,3 @@
-#nullable disable
 /*
 * Copyright (c) 2006-2011 Erin Catto http://www.box2d.org
 *
@@ -142,6 +141,15 @@ public class b2ConstraintPoint
 
 public class b2ContactConstraint
 {
+    public b2ContactConstraint()
+    {
+        // b2ContactSolver's Init sets these for each constraint that a step uses, and the solver
+        // reads only those.
+        BodyA = null!;
+        BodyB = null!;
+        contact = null!;
+    }
+
     public b2Body BodyA;
     public b2Body BodyB;
     public float invMassA, invMassB;
@@ -179,7 +187,9 @@ internal class b2ContactSolver : b2ReusedObject<b2ContactSolver>
     public b2TimeStep m_step;
     //private b2Velocity[] m_velocities;
     //private b2Position[] m_positions;
-    public b2ContactConstraint[] m_constraints;
+    // Init grows the array when a step has more contacts than it holds, and every loop over it
+    // runs to m_count.
+    public b2ContactConstraint[] m_constraints = Array.Empty<b2ContactConstraint>();
     //public b2Contact[] m_contacts;
     public int m_count;
 
@@ -192,10 +202,10 @@ internal class b2ContactSolver : b2ReusedObject<b2ContactSolver>
 
     private void Init(ref b2ContactSolverDef def)
     {
-        if (m_constraints == null || def.count > m_constraints.Length)
+        if (def.count > m_constraints.Length)
         {
             var count = def.count;
-            var oldCount = 0;
+            var oldCount = m_constraints.Length;
 
             var capacity = 4;
             while (capacity < count)
@@ -203,15 +213,7 @@ internal class b2ContactSolver : b2ReusedObject<b2ContactSolver>
                 capacity *= 2;
             }
 
-            if (m_constraints == null)
-            {
-                m_constraints = new b2ContactConstraint[capacity];
-            }
-            else
-            {
-                oldCount = m_constraints.Length;
-                Array.Resize(ref m_constraints, capacity);
-            }
+            Array.Resize(ref m_constraints, capacity);
 
             for (int i = oldCount; i < capacity; i++)
             {

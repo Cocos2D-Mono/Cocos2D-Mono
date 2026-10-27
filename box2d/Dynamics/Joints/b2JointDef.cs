@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -48,6 +47,13 @@ public struct b2Jacobian
 /// </summary>
 public class b2JointEdge
 {
+    public b2JointEdge()
+    {
+        // b2World.CreateJoint sets these straight after b2Joint.Create makes the joint.
+        Other = null!;
+        Joint = null!;
+    }
+
     /// <summary>
     /// provides quick access to the other body attached.
     /// </summary>
@@ -59,11 +65,11 @@ public class b2JointEdge
     /// <summary>
     /// the previous joint edge in the body's joint list
     /// </summary>
-    public b2JointEdge Prev;
+    public b2JointEdge? Prev;
     /// <summary>
     /// the next joint edge in the body's joint list
     /// </summary>
-    public b2JointEdge Next;
+    public b2JointEdge? Next;
 };
 
 
@@ -81,13 +87,13 @@ public class b2JointDef
     public b2JointType JointType;
 
     /// Use this to attach application specific data to your joints.
-    public object UserData;
+    public object? UserData;
 
     /// The first attached body.
-    public b2Body BodyA;
+    public b2Body? BodyA;
 
     /// The second attached body.
-    public b2Body BodyB;
+    public b2Body? BodyB;
 
     /// Set this flag to true if the attached bodies should collide.
     public bool CollideConnected;

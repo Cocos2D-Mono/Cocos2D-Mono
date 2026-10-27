@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +9,13 @@ namespace Box2D.Dynamics;
 
 public class b2WorldRayCastWrapper : Ib2RayCastCallback
 {
+    public b2WorldRayCastWrapper()
+    {
+        // b2World.RayCast sets BroadPhase and Callback straight after construction.
+        broadPhase = null!;
+        callback = null!;
+    }
+
     public float RayCastCallback(ref b2RayCastInput input, int proxyId)
     {
         b2FixtureProxy proxy = broadPhase.GetUserData(proxyId);

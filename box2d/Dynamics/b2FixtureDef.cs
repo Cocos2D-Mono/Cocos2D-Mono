@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,10 +40,10 @@ public class b2FixtureDef
 
     /// The shape, this must be set. The shape will be cloned, so you
     /// can create the shape on the stack.
-    public b2Shape shape;
+    public b2Shape? shape;
 
     /// Use this to store application specific fixture data.
-    public object userData;
+    public object? userData;
 
     /// The friction coefficient, usually in the range [0,1].
     public float friction;

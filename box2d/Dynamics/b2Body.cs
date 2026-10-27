@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -113,18 +112,18 @@ public class b2Body : IComparable<b2Body>
     public float Torque;
 
     public b2World World;
-    public b2Body Prev;
-    public b2Body Next;
+    public b2Body? Prev;
+    public b2Body? Next;
 
     /// <summary>
     /// A linked list of fixtures.
     /// </summary>
-    public b2Fixture FixtureList;
+    public b2Fixture? FixtureList;
 
     public int FixtureCount;
 
-    public b2JointEdge JointList;
-    public b2ContactEdge ContactList;
+    public b2JointEdge? JointList;
+    public b2ContactEdge? ContactList;
 
     public float Mass, InvertedMass;
 
@@ -145,15 +144,19 @@ public class b2Body : IComparable<b2Body>
 
     public float SleepTime;
 
-    public object UserData;
+    public object? UserData;
 
     internal b2Velocity InternalVelocity;
     internal b2Position InternalPosition;
 
     #region IComparable Members
 
-    public int CompareTo(b2Body b2)
+    public int CompareTo(b2Body? b2)
     {
+        if (b2 is null)
+        {
+            return 1;
+        }
         if (BodyType != b2.BodyType)
         {
             return BodyType - b2.BodyType;
@@ -502,7 +505,7 @@ public class b2Body : IComparable<b2Body>
         Torque = 0.0f;
 
         // Since the body type changed, we need to flag contacts for filtering.
-        for (b2Fixture f = FixtureList; f != null; f = f.Next)
+        for (b2Fixture? f = FixtureList; f != null; f = f.Next)
         {
             f.Refilter();
         }
@@ -512,7 +515,8 @@ public class b2Body : IComparable<b2Body>
     {
         if (World.IsLocked == true)
         {
-            return null;
+            throw new InvalidOperationException(
+                "Fixtures can't be created while the world is stepping, for example in a contact callback.");
         }
 
         b2Fixture fixture = new b2Fixture();
@@ -571,8 +575,8 @@ public class b2Body : IComparable<b2Body>
         }
         else
         {
-            var node = FixtureList;
-            while (node.Next != null)
+            b2Fixture? node = FixtureList;
+            while (node != null && node.Next != null)
             {
                 if (node.Next == fixture)
                 {
@@ -580,6 +584,7 @@ public class b2Body : IComparable<b2Body>
                     found = true;
                     break;
                 }
+                node = node.Next;
             }
         }
 
@@ -587,7 +592,7 @@ public class b2Body : IComparable<b2Body>
         Debug.Assert(found);
 
         // Destroy any contacts associated with the fixture.
-        b2ContactEdge edge = ContactList;
+        b2ContactEdge? edge = ContactList;
         while (edge != null)
         {
             b2Contact c = edge.Contact;
@@ -613,7 +618,8 @@ public class b2Body : IComparable<b2Body>
 
         fixture.Destroy();
 
-        fixture.Body = null;
+        // A destroyed fixture is back in the state it had before Create, and nothing may use it.
+        fixture.Body = null!;
         fixture.Next = null;
 
         --FixtureCount;
@@ -644,7 +650,7 @@ public class b2Body : IComparable<b2Body>
 
         // Accumulate mass over all fixtures.
         b2Vec2 localCenter = b2Math.b2Vec2_zero;
-        for (b2Fixture f = FixtureList; f != null; f = f.Next)
+        for (b2Fixture? f = FixtureList; f != null; f = f.Next)
         {
             if (f.Density == 0.0f)
             {
@@ -746,7 +752,7 @@ public class b2Body : IComparable<b2Body>
         }
 
         // Does a joint prevent collision?
-        for (b2JointEdge jn = JointList; jn != null; jn = jn.Next)
+        for (b2JointEdge? jn = JointList; jn != null; jn = jn.Next)
         {
             if (jn.Other == other)
             {
@@ -777,7 +783,7 @@ public class b2Body : IComparable<b2Body>
         Sweep.a0 = angle;
 
         b2BroadPhase broadPhase = World.ContactManager.BroadPhase;
-        for (b2Fixture f = FixtureList; f != null; f = f.Next)
+        for (b2Fixture? f = FixtureList; f != null; f = f.Next)
         {
             f.Synchronize(broadPhase, ref Transform, ref Transform);
         }
@@ -806,7 +812,7 @@ public class b2Body : IComparable<b2Body>
         xf1.p.y = Sweep.c0.y - (xf1.q.s * Sweep.localCenter.x + xf1.q.c * Sweep.localCenter.y);
 
         b2BroadPhase broadPhase = World.ContactManager.BroadPhase;
-        for (b2Fixture f = FixtureList; f != null; f = f.Next)
+        for (b2Fixture? f = FixtureList; f != null; f = f.Next)
         {
             f.Synchronize(broadPhase, ref xf1, ref Transform);
         }
@@ -826,7 +832,7 @@ public class b2Body : IComparable<b2Body>
 
             // Create all proxies.
             b2BroadPhase broadPhase = World.ContactManager.BroadPhase;
-            for (b2Fixture f = FixtureList; f != null; f = f.Next)
+            for (b2Fixture? f = FixtureList; f != null; f = f.Next)
             {
                 f.CreateProxies(broadPhase, Transform);
             }
@@ -839,13 +845,13 @@ public class b2Body : IComparable<b2Body>
 
             // Destroy all proxies.
             b2BroadPhase broadPhase = World.ContactManager.BroadPhase;
-            for (b2Fixture f = FixtureList; f != null; f = f.Next)
+            for (b2Fixture? f = FixtureList; f != null; f = f.Next)
             {
                 f.DestroyProxies(broadPhase);
             }
 
             // Destroy the attached contacts.
-            b2ContactEdge ce = ContactList;
+            b2ContactEdge? ce = ContactList;
             while (ce != null)
             {
                 b2ContactEdge ce0 = ce;
@@ -877,7 +883,7 @@ public class b2Body : IComparable<b2Body>
         System.Diagnostics.Debug.WriteLine("  bd.gravityScale = {0:N5};", GravityScale);
         System.Diagnostics.Debug.WriteLine("  bodies[{0}] = m_world.CreateBody(bd);", IslandIndex);
         System.Diagnostics.Debug.WriteLine("");
-        for (b2Fixture f = FixtureList; f != null; f = f.Next)
+        for (b2Fixture? f = FixtureList; f != null; f = f.Next)
         {
             System.Diagnostics.Debug.WriteLine("  {");
             f.Dump(bodyIndex);

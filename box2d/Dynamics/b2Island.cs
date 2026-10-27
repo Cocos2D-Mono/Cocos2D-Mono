@@ -1,4 +1,3 @@
-#nullable disable
 /*
 * Copyright (c) 2006-2011 Erin Catto http://www.box2d.org
 *
@@ -148,11 +147,12 @@ namespace Box2D.Dynamics;
 public class b2Island
 {
 
-    public b2ContactListener m_listener;
+    public b2ContactListener? m_listener;
 
-    public b2Body[] m_bodies;
-    public b2Contact[] m_contacts;
-    public b2Joint[] m_joints;
+    // Reset makes the arrays when a capacity grows, and every loop over them runs to a count.
+    public b2Body[] m_bodies = Array.Empty<b2Body>();
+    public b2Contact[] m_contacts = Array.Empty<b2Contact>();
+    public b2Joint[] m_joints = Array.Empty<b2Joint>();
 
     //public b2Position[] m_positions;
     //public b2Velocity[] m_velocities;
@@ -197,7 +197,7 @@ public class b2Island
         int bodyCapacity,
         int contactCapacity,
         int jointCapacity,
-        b2ContactListener listener)
+        b2ContactListener? listener)
     {
         Reset(bodyCapacity, contactCapacity, jointCapacity, listener);
     }
@@ -205,7 +205,7 @@ public class b2Island
     public void Reset(int bodyCapacity,
         int contactCapacity,
         int jointCapacity,
-        b2ContactListener listener)
+        b2ContactListener? listener)
     {
         if (m_bodyCapacity < bodyCapacity)
         {

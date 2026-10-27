@@ -139,6 +139,31 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     is a struct.
   - `b2ChainShape.Vertices` isn't nullable, though it's null until `CreateLoop` or `CreateChain`
     runs.
+- **Nullable annotations for Box2D's world, bodies and fixtures** (`b2World`, `b2Body`,
+  `b2Fixture`, `b2ContactManager`, `b2Island` and the definitions, listeners and callbacks in
+  `box2d/Dynamics`). The visible changes:
+  - The lists of bodies, joints, fixtures and contacts end with null, so these are nullable:
+    `b2World.BodyList` and `JointList`; `b2Body.Next`, `Prev`, `FixtureList`, `JointList` and
+    `ContactList`; `b2Fixture.Next`; and `b2ContactManager.ContactList`.
+  - A world has no destruction listener, contact filter, contact listener or debug draw until
+    one is set. `b2World.SetDestructionListener`, `SetContactFilter`, `SetContactListener` and
+    `SetDebugDraw` accept null, and `b2ContactManager.ContactFilter` and `ContactListener` are
+    nullable. So is `b2ContactListener.b2_defaultListener`, which nothing sets.
+  - `b2BodyDef.userData`, `b2FixtureDef.userData`, `b2Body.UserData` and `b2Fixture.UserData`
+    are nullable. So is `b2FixtureDef.shape`, though `b2Body.CreateFixture` needs one.
+  - `b2Fixture.Body` and `Shape` aren't nullable, though they're null until `Create` runs and
+    after the fixture is destroyed. `b2Body.CreateFixture` runs `Create`. The `BroadPhase` and
+    `Callback` of `b2WorldQueryWrapper` and `b2WorldRayCastWrapper` aren't nullable either,
+    though they're null until they're set.
+  - `b2Island.m_bodies`, `m_contacts` and `m_joints` are empty instead of null when the island
+    is made with a capacity of 0 for them.
+- **`b2World.CreateBody`, `b2World.CreateJoint` and `b2Body.CreateFixture` throw
+  `InvalidOperationException` while the world is stepping**, for example in a contact callback.
+  Before, they returned null, which usually led to a `NullReferenceException` later. Create
+  bodies, joints and fixtures after `Step` returns.
+- **`b2World.Step` throws `InvalidOperationException` while the world is stepping**, for example
+  in a contact callback. Before, it ran a whole step in the middle of the current one, and
+  unlocked the world when it finished.
 - **Sprite frame, sprite sheet, animation and particle plists that lack a value they need**
   throw an `InvalidDataException` that says what's missing. So does one whose root isn't a
   dictionary. Before, most of these threw `NullReferenceException`, `NotSupportedException` or
@@ -257,6 +282,20 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   throwing `NullReferenceException`.
 - `b2Vec2`, `b2AABB` and `b2ContactFeature` `Equals(object)` return false for null or a value of
   another type, instead of throwing.
+- `b2Body.DestroyFixture` no longer hangs. It looped forever for any fixture but the body's two
+  newest.
+- `b2World.DrawShape` and `DrawJoint` do nothing for a world without a debug draw, instead of
+  throwing `NullReferenceException`.
+- `b2Body.CompareTo(null)` returns a positive number, as `IComparable<T>` requires, instead of
+  throwing `NullReferenceException`.
+- `b2World.Step` unlocks the world when a callback throws, such as a contact listener that
+  creates a body. Before, the world stayed locked until a later `Step` finished, so changes such
+  as creating or destroying a body failed or did nothing.
+- `b2World.Step` locks the world while it looks for new contacts, as it does for the rest of the
+  step. Before, a contact filter called then could change the world or step it again, and a
+  nested step could add the same contact twice.
+- `b2Body.CreateFixture` throws `ArgumentException` for a fixture definition without a shape,
+  instead of `NullReferenceException`.
 
 ## 2.8.0 - 2026-10-23
 

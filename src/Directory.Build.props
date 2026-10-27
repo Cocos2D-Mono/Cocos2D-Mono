@@ -51,6 +51,8 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 
     <!-- ==================== Symbol packages & source link ==================== -->
+    <!-- Source Link comes with the .NET SDK and is updated with it. Don't add the
+         Microsoft.SourceLink.GitHub package, which would replace the SDK's copy (C2D-341). -->
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>

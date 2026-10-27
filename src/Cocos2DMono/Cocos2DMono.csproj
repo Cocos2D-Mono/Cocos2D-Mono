@@ -255,11 +255,6 @@
     </Reference>
   </ItemGroup>
 
-  <!-- Source Link (all TFMs) -->
-  <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
-  </ItemGroup>
-
   <!-- ============================================================
        Project references
        ============================================================ -->

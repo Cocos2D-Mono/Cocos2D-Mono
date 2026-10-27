@@ -44,6 +44,11 @@ jobs:
         with:
           global-json-file: global.json
 
+      # With global.json's rollForward, a newer SDK on the runner image wins over the
+      # one installed above, so log the SDK that builds.
+      - name: Show the .NET SDK version
+        run: dotnet --version
+
       - name: Install mobile workloads
         run: dotnet workload install android ios --ignore-failed-sources
 

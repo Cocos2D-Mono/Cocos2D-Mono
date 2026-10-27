@@ -1054,19 +1054,19 @@ public class b2World
         b2Timer stepTimer = new b2Timer();
 #endif
 
-        // If new fixtures were added, we need to find the new contacts.
-        if ((m_flags & b2WorldFlags.e_newFixture) != 0)
-        {
-            m_contactManager.FindNewContacts();
-            m_flags &= ~b2WorldFlags.e_newFixture;
-        }
-
+        // The world is locked for the whole step, including the search for new contacts, which
+        // calls the contact filter. It's unlocked even when a callback throws, for example by
+        // creating a body. Otherwise it would stay locked until a later Step finished.
         m_flags |= b2WorldFlags.e_locked;
-
-        // Unlock even when a callback throws, for example by creating a body. Otherwise the world
-        // stays locked until a later Step finishes.
         try
         {
+            // If new fixtures were added, we need to find the new contacts.
+            if ((m_flags & b2WorldFlags.e_newFixture) != 0)
+            {
+                m_contactManager.FindNewContacts();
+                m_flags &= ~b2WorldFlags.e_newFixture;
+            }
+
             b2TimeStep step = new b2TimeStep();
             step.dt = dt;
             step.velocityIterations = velocityIterations;

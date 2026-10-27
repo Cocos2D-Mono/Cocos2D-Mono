@@ -94,6 +94,26 @@ public class Box2DWorldTests
     }
 
     [Fact]
+    public void Step_LocksTheWorldWhileItFindsNewContacts()
+    {
+        // Step looked for the new fixtures' contacts before it locked the world, so the contact
+        // filter could step the world again in the middle of adding a contact. The nested step
+        // added the same contact first, so the pair had two.
+        b2World world = NewWorld();
+        world.CreateBody(DynamicBody(0, 0)).CreateFixture(Circle(), 1);
+        world.CreateBody(DynamicBody(0.5f, 0)).CreateFixture(Circle(), 1);
+        var filter = new SteppingFilter(world);
+        world.SetContactFilter(filter);
+
+        world.Step(1 / 60f, 8, 3);
+
+        Assert.Equal(1, world.ContactCount);
+        Assert.True(filter.LockedWhenCalled, "The world wasn't locked when the filter ran.");
+        Assert.IsType<InvalidOperationException>(filter.Error);
+        Assert.False(world.IsLocked);
+    }
+
+    [Fact]
     public void DrawShapeAndDrawJoint_WithoutADebugDraw_DoNothing()
     {
         // They drew with the world's debug draw without checking that it had one, as
@@ -203,6 +223,35 @@ public class Box2DWorldTests
 
         public override void PreSolve(b2Contact contact, b2Manifold oldManifold) { }
         public override void PostSolve(b2Contact contact, ref b2ContactImpulse impulse) { }
+    }
+
+    // Steps the world from inside the contact filter, the first time the filter is called. The
+    // step is long, so a nested step that ran would move the fixtures out of their fat AABBs and
+    // find their pair again.
+    private sealed class SteppingFilter : b2ContactFilter
+    {
+        private readonly b2World _world;
+
+        public SteppingFilter(b2World world)
+        {
+            _world = world;
+        }
+
+        public bool Called { get; private set; }
+        public bool LockedWhenCalled { get; private set; }
+        public Exception? Error { get; private set; }
+
+        public override bool ShouldCollide(b2Fixture fixtureA, b2Fixture fixtureB)
+        {
+            if (!Called)
+            {
+                Called = true;
+                LockedWhenCalled = _world.IsLocked;
+                Error = Record.Exception(() => _world.Step(1, 8, 3));
+            }
+
+            return base.ShouldCollide(fixtureA, fixtureB);
+        }
     }
 
     // Creates a body from inside a contact callback, and lets the exception escape from Step.

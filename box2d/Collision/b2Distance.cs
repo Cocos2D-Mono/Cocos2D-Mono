@@ -43,10 +43,13 @@ namespace Box2D.Collision;
         return (obj);
     }
 
-		public float metric;        ///< length or area
+		/// length or area
+		public float metric;
 		public int count;
-		public int[] indexA;    ///< vertices on shape A
-		public int[] indexB;    ///< vertices on shape B
+		/// vertices on shape A
+		public int[] indexA;
+		/// vertices on shape B
+		public int[] indexB;
 	}
 	/// Input for b2Math.b2Distance.
 	/// You have to option to use the shape radii
@@ -74,10 +77,13 @@ namespace Box2D.Collision;
 	/// Output for b2Math.b2Distance.
 	public struct b2DistanceOutput
 	{
-		public b2Vec2 pointA;        ///< closest point on shapeA
-		public b2Vec2 pointB;        ///< closest point on shapeB
+		/// closest point on shapeA
+		public b2Vec2 pointA;
+		/// closest point on shapeB
+		public b2Vec2 pointB;
 		public float distance;
-		public int iterations;    ///< number of GJK iterations used
+		/// number of GJK iterations used
+		public int iterations;
 	};
 	
 	

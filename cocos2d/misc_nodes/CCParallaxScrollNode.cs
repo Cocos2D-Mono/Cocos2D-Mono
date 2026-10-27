@@ -206,7 +206,7 @@ public class CCParallaxScrollNode : CCNode
     /// </summary>
     /// <param name="objects"></param>
     /// <param name="z"></param>
-    /// <param name="p"></param>
+    /// <param name="ratio"></param>
     /// <param name="pos"></param>
     /// <param name="dir"></param>
     public void AddInfiniteScrollWithObjects(CCSprite[] objects, int z, CCPoint ratio, CCPoint pos, CCPoint dir)

@@ -117,7 +117,6 @@ internal class CCTGAlib
     /// <summary>
     /// load the image header fields. We only keep those that matter!
     /// </summary>
-    /// <param name="?"></param>
     /// <returns></returns>
     public static bool LoadHeader(byte[] buffer, int bufSize, CCImageTGA psInfo)
     {
@@ -248,7 +247,6 @@ internal class CCTGAlib
 /// <summary>
     /// this is the function to call when we want to load an image
     /// </summary>
-    /// <param name="?"></param>
     /// <returns>Always null: the port of the loader below is commented out.</returns>
     public static CCImageTGA? Load(string pszFilename)
     {

@@ -13,8 +13,8 @@ public class b2Settings
     public static float b2_pi = (float)Math.PI;
     public static float b2_epsilonSqrd = b2_epsilon * b2_epsilon;
 
-    /// Global tuning constants based on meters-kilograms-seconds (MKS) units.
-    ///
+    // Global tuning constants based on meters-kilograms-seconds (MKS) units.
+    //
 
     // Collision
 
@@ -114,9 +114,12 @@ public class b2Settings
 /// Version numbering scheme.
 public struct b2Version
 {
-    public int major;        ///< significant changes
-    public int minor;        ///< incremental changes
-    public int revision;        ///< bug fixes
+    /// significant changes
+    public int major;
+    /// incremental changes
+    public int minor;
+    /// bug fixes
+    public int revision;
     public b2Version(int m, int i, int r)
     {
         major = m;

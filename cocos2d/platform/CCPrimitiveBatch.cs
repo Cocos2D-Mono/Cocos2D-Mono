@@ -86,8 +86,6 @@ public class CCPrimitiveBatch : IDisposable
     /// Begin is called to tell the PrimitiveBatch what kind of primitives will be
     /// drawn, and to prepare the graphics card to render those primitives.
     /// </summary>
-    /// <param name="projection">The projection.</param>
-    /// <param name="view">The view.</param>
     public void Begin()
     {
         if (_hasBegun)

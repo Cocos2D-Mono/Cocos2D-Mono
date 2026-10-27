@@ -138,8 +138,6 @@
   -->
   <PropertyGroup Condition="'$(CI)' == 'true'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <!-- XML doc comments -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS1570;CS1572;CS1587;CS1711</WarningsNotAsErrors>
     <!-- Members that hide inherited ones, and `new` modifiers that hide nothing -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0108;CS0114;CS0109</WarningsNotAsErrors>
     <!-- == and != without Equals and GetHashCode -->

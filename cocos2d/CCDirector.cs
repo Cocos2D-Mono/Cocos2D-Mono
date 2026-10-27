@@ -1039,7 +1039,7 @@ public abstract class CCDirector
     /** Pops out all scenes from the queue until it reaches `level`.
      *   If level is 0, it will end the director.
      *   If level is 1, it will pop all scenes until it reaches to root scene.
-     *   If level is <= than the current stack level, it won't do anything.
+     *   If level is &lt;= than the current stack level, it won't do anything.
      */
     public void PopToSceneStackLevel(int level)
     {

@@ -169,7 +169,6 @@ public class CCFileUtils
     /// In android, if you want to read file other than apk, you shoud use invoke getFileData(), and pass the 
     /// absolute path.
     /// </summary>
-    /// <param name="?"></param>
     public static void SetResourcePath(string pszResourcePath)
     {
         throw new NotSupportedException ("Not supported in XNA");
@@ -180,9 +179,6 @@ public class CCFileUtils
     /// @param   pFileName  The file name of *.plist file
     /// @return  The CCDictionary pointer generated from the file
     /// </summary>
-    /// <typeparam name="?"></typeparam>
-    /// <typeparam name="?"></typeparam>
-    /// <param name="?"></param>
     /// <returns></returns>
     public static Dictionary<string, object>? DictionaryWithContentsOfFile(string pFileName)
     {

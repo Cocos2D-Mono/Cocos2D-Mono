@@ -85,7 +85,7 @@ public abstract class CCApplication : DrawableGameComponent
     /// <summary>
     /// Callback by CCDirector for limit FPS
     /// </summary>
-    /// <param name="interval">The time, which expressed in seconds, between current frame and next. </param>
+    /// <value>The time, which expressed in seconds, between current frame and next.</value>
     public virtual double AnimationInterval
     {
         get { return Game.TargetElapsedTime.Milliseconds / 10000000f; }

@@ -418,7 +418,7 @@ public class CCProgressTimer : CCNode
         UpdateColor();
     }
 
-    ///
+    //
     //    Update does the work of mapping the texture onto the triangles
     //    It now doesn't occur the cost of free/alloc data every update cycle.
     //    It also only changes the percentage point but no other points if they have not

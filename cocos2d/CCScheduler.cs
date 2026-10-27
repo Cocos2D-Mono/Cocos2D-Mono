@@ -171,19 +171,18 @@ namespace Cocos2D
     }
 }
 
-/** @brief Scheduler is responsible for triggering the scheduled callbacks.
-    You should not use NSTimer. Instead use this class.
-
-    There are 2 different types of callbacks (selectors):
-
-    - update selector: the 'update' selector will be called every frame. You can customize the priority.
-    - custom selector: A custom selector will be called every frame, or with a custom interval of time
-
-    The 'custom selectors' should be avoided when possible. It is faster, and consumes less memory to use the 'update selector'.
-    */
-
 namespace Cocos2D
 {
+    /** @brief Scheduler is responsible for triggering the scheduled callbacks.
+        You should not use NSTimer. Instead use this class.
+
+        There are 2 different types of callbacks (selectors):
+
+        - update selector: the 'update' selector will be called every frame. You can customize the priority.
+        - custom selector: A custom selector will be called every frame, or with a custom interval of time
+
+        The 'custom selectors' should be avoided when possible. It is faster, and consumes less memory to use the 'update selector'.
+        */
     public class CCScheduler
     {
         public const uint kCCRepeatForever = uint.MaxValue;

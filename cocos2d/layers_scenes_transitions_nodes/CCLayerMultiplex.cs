@@ -38,7 +38,6 @@ public class CCLayerMultiplex : CCLayerRGBA
     ///  creates a CCLayerMultiplex with one or more layers using a variable argument list. 
     /// </summary>
     /// <param name="layer"></param>
-    /// <param name="?"></param>
     /// <returns></returns>
     public CCLayerMultiplex (params CCLayer[] layer)
     {

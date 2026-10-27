@@ -120,7 +120,7 @@ public class CCShuffleTiles : CCTiledGrid3DAction
         int i, j;
         int k;
 
-        /**
+        /*
          * Use k to loop. Because m_nTilesCount is unsigned int,
          * and i is used later for int.
          */

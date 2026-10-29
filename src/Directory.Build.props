@@ -21,9 +21,9 @@
   <PropertyGroup>
     <!-- ==================== Toolchain ==================== -->
     <LangVersion>latest</LangVersion>
-    <!-- Nullable reference types are on for new code (C2D-194). Files that start with
-         `#nullable disable` have not been converted yet; removing that line, fixing
-         the file's warnings and annotating its API is the C2D-195 work. -->
+    <!-- Nullable reference types are on (C2D-194), and every file is converted except the
+         deprecated platform/Zlib port, which keeps `#nullable disable` until 3.0 removes
+         it (C2D-195). In CI, nullable warnings are errors (C2D-198). -->
     <Nullable>enable</Nullable>
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>

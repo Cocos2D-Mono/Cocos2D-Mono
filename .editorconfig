@@ -3,8 +3,9 @@
 # Establishes formatting + C# code-style conventions for the modernization effort.
 # IMPORTANT: these are IDE / `dotnet format` conventions only - they do NOT change
 # the build. `EnforceCodeStyleInBuild` is intentionally left off, so no new build
-# warnings are introduced on the existing code. CI enforcement (warnings-as-errors),
-# the Hungarian-field naming rules (Phase 3), and StyleCop are deliberate later steps.
+# warnings are introduced on the existing code. CI treats build warnings as errors
+# (see the repo-root Directory.Build.props), but these style rules aren't part of the
+# build. The Hungarian-field naming rules (Phase 3) and StyleCop are deliberate later steps.
 #
 # Line endings are governed by .gitattributes (`* text=auto`), so end_of_line is
 # intentionally not set here.

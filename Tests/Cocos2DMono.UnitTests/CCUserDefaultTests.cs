@@ -13,11 +13,11 @@ public class CCUserDefaultTests
     /// <summary>In-memory ICCUserDefaultStorage: OpenWrite captures bytes on dispose.</summary>
     private sealed class MemoryUserDefaultStorage : ICCUserDefaultStorage
     {
-        private byte[] data;
+        private byte[]? data;
 
         public bool Exists() { return data != null; }
 
-        public Stream OpenRead() { return new MemoryStream(data, writable: false); }
+        public Stream OpenRead() { return new MemoryStream(data ?? throw new FileNotFoundException(), writable: false); }
 
         public Stream OpenWrite() { return new CaptureStream(this); }
 

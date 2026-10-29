@@ -20,8 +20,8 @@
     <Product>Cocos2D-Mono.Box2D</Product>
     <Description>Box2D physics engine (managed C# port) used by Cocos2D-Mono. Multi-targets net10.0 (DesktopGL/Linux/macOS), net10.0-windows7.0 (WindowsDX), net10.0-android36.0, and net10.0-ios26.0.</Description>
     <PackageReleaseNotes>
+2.9.0 - Nullable reference type annotations for all of Box2D, plus fixes found while converting: b2Body.DestroyFixture no longer hangs, and b2World.Step unlocks the world when a callback throws. Creating a body, joint or fixture, or calling Step, while the world is stepping now throws InvalidOperationException, instead of returning null or running a nested step. Apart from nullability, no public API changed. Read the CHANGELOG's Upgrading notes before updating.
 2.8.0 - No Box2D changes; version aligned with the Cocos2D-Mono 2.8.0 release line. Box2D isn't annotated for nullable reference types yet.
-2.7.0 - No Box2D changes; version aligned with the Cocos2D-Mono 2.7.0 release line. Box2D isn't annotated for nullable reference types yet.
 - See https://github.com/Cocos2D-Mono/cocos2d-mono for the full changelog.
     </PackageReleaseNotes>
     <PackageIcon>logo-small.png</PackageIcon>

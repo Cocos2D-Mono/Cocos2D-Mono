@@ -28,6 +28,12 @@ public struct b2AABB
         return obj is b2AABB o && Equals(o);
     }
 
+    // From the coordinates, whose hash codes treat 0 and -0 alike, as == does.
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(LowerBound.x, LowerBound.y, UpperBound.x, UpperBound.y);
+    }
+
     public static bool operator ==(b2AABB a, b2AABB b)
     {
         return (a.Equals(b));

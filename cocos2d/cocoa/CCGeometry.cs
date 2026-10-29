@@ -288,7 +288,7 @@ public struct CCPoint
      @return bool 
         indicating successful intersection of a line
         note that to truly test intersection for segments we have to make 
-        sure that s & t lie within [0..1] and for rays, make sure s & t > 0
+        sure that s &amp; t lie within [0..1] and for rays, make sure s &amp; t > 0
         the hit point is		p3 + t * (p4 - p3);
         the hit point also is	p1 + s * (p2 - p1);
      @since v0.99.1
@@ -521,7 +521,7 @@ public struct CCPoint
         return pt;
     }
 
-    /** Calculates perpendicular of v, rotated 90 degrees clockwise -- cross(v, rperp(v)) <= 0
+    /** Calculates perpendicular of v, rotated 90 degrees clockwise -- cross(v, rperp(v)) &lt;= 0
         @return CCPoint
         @since v0.7.2
     */

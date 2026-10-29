@@ -128,7 +128,7 @@ public class ZipUtils
         //d_stream.next_out = *out;
         //d_stream.avail_out = bufferSize;
 
-        ///* window size to hold 256k */
+        // /* window size to hold 256k */
         //if( (err = inflateInit2(&d_stream, 15 + 32)) != Z_OK )
         //    return err;
 

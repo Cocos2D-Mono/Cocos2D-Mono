@@ -71,9 +71,12 @@ public struct b2Sweep
         a -= d;
     }
 
-    public b2Vec2 localCenter;    ///< local center of mass position
-    public b2Vec2 c0, c;        ///< center world positions
-    public float a0, a;        ///< world angles
+    /// local center of mass position
+    public b2Vec2 localCenter;
+    /// center world positions
+    public b2Vec2 c0, c;
+    /// world angles
+    public float a0, a;
 
     /// Fraction of the current time step in the range [0,1]
     /// c0 and a0 are the positions at alpha0.

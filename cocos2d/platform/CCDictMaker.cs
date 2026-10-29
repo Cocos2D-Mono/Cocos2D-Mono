@@ -45,7 +45,10 @@ public class CCDictMaker : ICCSAXDelegator
     public Dictionary<string, Object>? m_pRootDict;
     public Dictionary<string, Object>? m_pCurDict;
     public Stack<Dictionary<string, Object>> m_tDictStack=new Stack<Dictionary<string,object>>();
-    public string? m_sCurKey;///< parsed key
+    /// <summary>
+    /// The parsed key.
+    /// </summary>
+    public string? m_sCurKey;
     public CCSAXState m_tState;
     public List<Object>? m_pArray;
 

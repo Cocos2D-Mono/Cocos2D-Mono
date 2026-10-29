@@ -13,7 +13,7 @@ public struct b2Rot
     /// Initialize from an angle in radians
     public b2Rot(float angle)
     {
-        /// TODO_ERIN optimize
+        // TODO_ERIN optimize
         s = (float)Math.Sin(angle);
         c = (float)Math.Cos(angle);
     }
@@ -21,7 +21,7 @@ public struct b2Rot
     /// Set using an angle in radians.
     public void Set(float angle)
     {
-        /// TODO_ERIN optimize
+        // TODO_ERIN optimize
         s = (float)Math.Sin(angle);
         c = (float)Math.Cos(angle);
     }

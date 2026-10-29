@@ -355,7 +355,7 @@ public class CCParticleBatchNode : CCNode, ICCTextureProtocol
 
     /// <summary>
     /// Linearly search from start to end, exclusive of end, to find a position
-    /// in [start,end) where the given z < z[index+1].
+    /// in [start,end) where the given z &lt; z[index+1].
     /// </summary>
     /// <param name="start">The start of the search range</param>
     /// <param name="end">The end of the search range</param>

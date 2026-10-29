@@ -280,7 +280,7 @@ public struct CCAffineTransform
         d = scaleY * (float)Math.Cos(rotY - rotX + rotation);
     }
 
-    /// Set the scale & rotation part of the CCAffineTransform. angle in radians.
+    /// Set the scale &amp; rotation part of the CCAffineTransform. angle in radians.
     public void SetScaleRotation(float scaleX, float scaleY, float angle)
     {
         var cosa = (float)Math.Cos(angle);

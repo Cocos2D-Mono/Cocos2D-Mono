@@ -26,7 +26,7 @@
  */
 
 
-/**
+/*
  * @addtogroup GUI
  * @{
  * @addtogroup control_extension
@@ -311,7 +311,7 @@ public class CCControl : CCLayerRGBA
         return bBox.ContainsPoint(touchLocation);
     }
 
-    /**
+    /*
      * Returns an CCInvocation object able to construct messages using a given 
      * target-action pair. (The invocation may optionnaly include the sender and
      * the event as parameters, in that order)

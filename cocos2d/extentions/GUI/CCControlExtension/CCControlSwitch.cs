@@ -43,6 +43,7 @@ public class CCControlSwitch : CCControl
     /** A Boolean value that determines the off/on state of the switch. */
     protected bool _on;
     protected float _initialTouchXPosition;
+    /** Sprite which represents the view. */
     protected CCControlSwitchSprite _switchSprite;
 
     public event CCSwitchValueChangedDelegate? OnValueChanged;
@@ -241,8 +242,6 @@ public class CCControlSwitch : CCControl
             SetOn(!_on, true);
         }
     }
-
-    /** Sprite which represents the view. */
 }
 
 public class CCControlSwitchSprite : CCSprite, ICCActionTweenDelegate

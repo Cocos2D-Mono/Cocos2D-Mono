@@ -8,8 +8,6 @@ namespace tests;
 
 public class SpriteBatchNodeZVertex : SpriteTestDemo
 {
-    int m_dir;
-    float m_time;
     public override void OnEnter()
     {
         base.OnEnter();

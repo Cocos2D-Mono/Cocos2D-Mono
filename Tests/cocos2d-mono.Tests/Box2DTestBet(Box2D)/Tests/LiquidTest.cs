@@ -15,8 +15,6 @@ internal class LiquidTest : Test
 
     private b2Body bod;
 
-    private bool firstTime = true;
-
     private const int nParticles = 1000;
 
     private float totalMass = 10.0f;

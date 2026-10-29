@@ -10,8 +10,6 @@ namespace Cocos2D;
 public class TextInputTestScene : TestScene
 {
 
-    int kTextFieldTTFDefaultTest = 0;
-    int kTextFieldTTFActionTest = 1;
     int kTextInputTestsCount = 2;
 
     public static string FONT_NAME = "Thonburi";

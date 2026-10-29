@@ -45,8 +45,6 @@ public class BaseLayer : CCLayer, ICCBMemberVariableAssigner, ICCBSelectorResolv
 
     public bool OnAssignCCBCustomProperty(object pTarget, string pMemberVariableName, CCBValue pCCBValue)
     {
-        bool bRet = false;
-
         if (pTarget == this)
         {
             FieldInfo fieldInfo = GetType().GetField(pMemberVariableName);

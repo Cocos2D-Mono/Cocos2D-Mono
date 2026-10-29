@@ -21,7 +21,9 @@ public class TestController : CCLayer
     private CCGamePadDPadDelegate _GamePadDPadDelegate;
     private List<CCMenuItem> _Items = new List<CCMenuItem>();
     private int _CurrentItemIndex = 0;
+#if XBOX
     private CCSprite _menuIndicator;
+#endif
 
     public TestController()
     {
@@ -110,11 +112,14 @@ public class TestController : CCLayer
     }
 
     private CCPoint _HomePosition;
+#if XBOX
     private CCPoint _LastPosition;
+#endif
 
     private void SelectMenuItem()
     {
         _Items[_CurrentItemIndex].Selected();
+#if XBOX
         if (_menuIndicator != null)
         {
             _menuIndicator.Position = new CCPoint(
@@ -122,6 +127,7 @@ public class TestController : CCLayer
                 m_pItemMenu.Position.Y + _Items[_CurrentItemIndex].Position.Y
                 );
         }
+#endif
     }
 
     private void NextMenuItem() 

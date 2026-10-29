@@ -233,7 +233,6 @@ public class TextureTest : TextureMenuLayer
     public void performTestsPNG(string filename)
     {
         //struct timeval now;
-        DateTime now;
         CCTexture2D texture;
         CCTextureCache cache = CCTextureCache.SharedTextureCache;
 

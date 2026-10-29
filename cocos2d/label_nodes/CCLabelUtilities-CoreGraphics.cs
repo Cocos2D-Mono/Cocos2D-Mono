@@ -16,9 +16,6 @@ namespace Cocos2D
 	internal static partial class CCLabelUtilities
 	{
 
-		static CCVerticalTextAlignment vertical;
-		static CCTextAlignment horizontal;
-
 		// Used for debuggin purposes
 		internal static void SaveToFile (string fileName, CGBitmapContext bitmap)
 		{
@@ -143,31 +140,7 @@ namespace Cocos2D
 
 			var typesetter = new CTTypesetter(attributedString);
 
-			float baselineOffset = 0;
-
-			// First we need to calculate the offset for Vertical Alignment if we 
-			// are using anything but Top
-			if (vertical != CCVerticalTextAlignment.Top) {
-				while (start < length) {
-
-                    nint count = typesetter.SuggestLineBreak((int)start, (double)boundsWidth);
-
-                    var line = typesetter.GetLine (new NSRange(start, count));
-                    Debug.Assert(line != null, "The typesetter breaks lines within the string");
-
-					// Create and initialize some values from the bounds.
-					nfloat ascent;
-					nfloat descent;
-					nfloat leading;
-                    line.GetTypographicBounds(out ascent, out descent, out leading);
-                    baselineOffset += (float)Math.Ceiling ((float)(ascent + descent + leading + 1)); // +1 matches best to CTFramesetter's behavior  
-					line.Dispose ();
-					start += count;
-				}
-			}
-
-			start = 0;
-
+			// CCLabel sizes the bitmap to fit the string, so the lines are drawn flush left from the top.
 			while (start < length && textPosition.Y < insetBounds.Bottom)
 			{
 
@@ -184,23 +157,9 @@ namespace Cocos2D
 				nfloat leading;
 				line.GetTypographicBounds(out ascent, out descent, out leading);
 
-				// Calculate the string format if need be
-				var penFlushness = 0.0f;
-
-				if (horizontal == CCTextAlignment.Right)
-					penFlushness = (float)line.GetPenOffsetForFlush(1.0f, boundsWidth);
-				else if (horizontal == CCTextAlignment.Center)
-					penFlushness = (float)line.GetPenOffsetForFlush(0.5f, boundsWidth);
-
 				// initialize our Text Matrix or we could get trash in here
 				var textMatrix = CGAffineTransform.MakeIdentity();
-
-				if (vertical == CCVerticalTextAlignment.Top)
-					textMatrix.Translate(penFlushness, insetBounds.Height - textPosition.Y -(float)Math.Floor(ascent - 1));
-				if (vertical == CCVerticalTextAlignment.Center)
-					textMatrix.Translate(penFlushness, ((insetBounds.Height / 2) + (baselineOffset / 2)) - textPosition.Y -(float)Math.Floor(ascent - 1));
-				if (vertical == CCVerticalTextAlignment.Bottom)
-					textMatrix.Translate(penFlushness, baselineOffset - textPosition.Y -(float)Math.Floor(ascent - 1));
+				textMatrix.Translate(0f, insetBounds.Height - textPosition.Y -(float)Math.Floor(ascent - 1));
 
 				// Set our matrix
 				bitmapContext.TextMatrix = textMatrix;
@@ -354,8 +313,6 @@ namespace Cocos2D
 		//static CTFont nativeFont;
 		static bool underLine = false;
 		static bool strikeThrough = false;
-
-		static float dpiScale = 96f / 72f;
 
 
 		static internal CTFont CreateFont (string familyName, float emSize)

@@ -9,7 +9,6 @@ public class CCTapNode<T> : CCNode, IDisposable
     public event TapHandler? OnTapped;
     public delegate void TouchBeginHandler(T? data, CCNode node, CCPoint touchLocation);
     public event TouchBeginHandler? OnTouchBegin;
-    private bool _active;
     protected bool _disposed { get; private set; }
 
     public CCTapNode(bool isSwallowTouches = true)

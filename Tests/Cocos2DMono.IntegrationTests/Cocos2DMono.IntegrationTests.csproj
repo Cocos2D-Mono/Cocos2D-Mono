@@ -61,6 +61,10 @@
          accessibility). -->
     <DefineConstants>$(DefineConstants);WINDOWS;XNA</DefineConstants>
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- WinForms' analyzer asks for the manifest's high-DPI setting to move to
+         Application.SetHighDpiMode (WFO0003). The manifest stays: MonoGame makes the window
+         without that call, and the DesktopGL build, which has no WinForms, shares the manifest. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
     <MonoGamePlatform>Windows</MonoGamePlatform>
   </PropertyGroup>
 

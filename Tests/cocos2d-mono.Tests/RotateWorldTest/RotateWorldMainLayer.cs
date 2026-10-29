@@ -50,7 +50,7 @@ public class RotateWorldMainLayer : CCLayer
         white.RunAction((CCAction)(rot.Copy()));
     }
 
-    public static new RotateWorldMainLayer node()
+    public static RotateWorldMainLayer node()
     {
         RotateWorldMainLayer node = new RotateWorldMainLayer();
         return node;

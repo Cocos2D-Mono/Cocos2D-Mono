@@ -478,7 +478,6 @@ public class PolygonShape : Shape
                     //Completely dry
                     return 0;
                 }
-                break;
             case 1:
                 if (intoIndex == -1)
                 {

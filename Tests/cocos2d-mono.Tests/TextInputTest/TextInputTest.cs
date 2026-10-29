@@ -227,7 +227,7 @@ public class TextFieldTTFActionTest : KeyboardNotificationLayer
     // CCTextFieldDelegate
     public virtual bool onTextFieldAttachWithIME(CCTextFieldTTF pSender)
     {
-        if (m_bAction != null)
+        if (!m_bAction)
         {
             m_pTextField.RunAction(m_pTextFieldAction);
             m_bAction = true;
@@ -237,7 +237,7 @@ public class TextFieldTTFActionTest : KeyboardNotificationLayer
 
     public virtual bool onTextFieldDetachWithIME(CCTextFieldTTF pSender)
     {
-        if (m_bAction != null)
+        if (m_bAction)
         {
             m_pTextField.StopAction(m_pTextFieldAction);
             m_pTextField.Opacity = 255;

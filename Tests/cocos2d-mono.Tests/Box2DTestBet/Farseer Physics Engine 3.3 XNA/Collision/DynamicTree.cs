@@ -791,11 +791,6 @@ public class DynamicTree<T>
     private int _nodeCount;
     private TreeNode<T>[] _nodes;
 
-    /// <summary>
-    /// This is used incrementally traverse the tree for re-balancing.
-    /// </summary>
-    private int _path;
-
     private int _root;
 
     /// <summary>
@@ -821,8 +816,6 @@ public class DynamicTree<T>
         _nodes[_nodeCapacity - 1].ParentOrNext = NullNode;
         _nodes[_nodeCapacity - 1].Height = 1;
         _freeList = 0;
-
-        _path = 0;
 
         _insertionCount = 0;
     }

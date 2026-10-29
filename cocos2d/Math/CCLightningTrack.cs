@@ -13,7 +13,6 @@ public class CCLightningTrack
     private CCPoint _End;
     private List<CCPoint> _Track;
     private float _TrackLength = 0f;
-    private Dictionary<float, CCLightningTrack>? _Branches;
 
     public CCLightningTrack(CCPoint start, CCPoint end)
     {

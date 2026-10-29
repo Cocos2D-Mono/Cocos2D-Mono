@@ -14,7 +14,7 @@ namespace Cocos2DMono.UnitTests;
 public class Box2DWorldTests
 {
     [Fact]
-    public void DestroyFixture_ForAFixtureAfterTheSecondInTheList_Returns()
+    public async Task DestroyFixture_ForAFixtureAfterTheSecondInTheList_Returns()
     {
         // The loop that looks for the fixture never moved on to the next one, so it spun forever
         // unless the fixture was the first or second in the body's list. Bodies list their
@@ -24,9 +24,11 @@ public class Box2DWorldTests
         body.CreateFixture(Circle(), 1);
         body.CreateFixture(Circle(), 1);
 
-        bool returned = Task.Run(() => body.DestroyFixture(oldest)).Wait(TimeSpan.FromSeconds(5));
+        Task destroy = Task.Run(() => body.DestroyFixture(oldest));
+        bool returned = await Task.WhenAny(destroy, Task.Delay(TimeSpan.FromSeconds(5))) == destroy;
 
         Assert.True(returned, "DestroyFixture didn't return within 5 seconds.");
+        await destroy;
         Assert.Equal(2, body.FixtureCount);
         for (b2Fixture? f = body.FixtureList; f != null; f = f.Next)
         {

@@ -23,7 +23,7 @@ public class TestLayer : CCLayer
         AddChild(label);
     }
 
-    public static new TestLayer node()
+    public static TestLayer node()
     {
         TestLayer node = new TestLayer();
         return node;

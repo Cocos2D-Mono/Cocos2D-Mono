@@ -142,8 +142,6 @@
     <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0108;CS0114</WarningsNotAsErrors>
     <!-- == and != without Equals and GetHashCode -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0659;CS0660;CS0661</WarningsNotAsErrors>
-    <!-- Value types compared with null, and an inexact Stream.Read -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS8073;CA2022</WarningsNotAsErrors>
     <!-- Android APIs obsoleted in later versions -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);CA1422</WarningsNotAsErrors>
     <!-- Trim analysis, which waits for the 3.0 trim-safety work -->

@@ -260,143 +260,141 @@ public class CCTextFieldTTF : CCLabelTTF, ICCTargetedTouchDelegate
 
     public void HandleKeyboardInput()
     {
+        // KeyboardState is a struct, so there's always one. Before any input, no keys are pressed.
         var currentKeyboardState = CCInputState.Instance.CurrentKeyboardStates.FirstOrDefault();
-        if (currentKeyboardState != null)
+        var pressedKeyCount = currentKeyboardState.GetPressedKeyCount();
+        if (pressedKeyCount > 0 && canEdit)
         {
-            var pressedKeyCount = currentKeyboardState.GetPressedKeyCount();
-            if (pressedKeyCount > 0 && canEdit)
-            {
-                var pressedKeys = currentKeyboardState.GetPressedKeys();
-                var isHoldingShift = pressedKeys.Any(p => p == Keys.LeftShift || p == Keys.RightShift);
+            var pressedKeys = currentKeyboardState.GetPressedKeys();
+            var isHoldingShift = pressedKeys.Any(p => p == Keys.LeftShift || p == Keys.RightShift);
 
-                pressedKeys.ToList().ForEach(p =>
+            pressedKeys.ToList().ForEach(p =>
+            {
+                if (p == Keys.Back || p == Keys.Delete)
                 {
-                    if (p == Keys.Back || p == Keys.Delete)
-                    {
-                        Text = Text.Substring(0, Text.Length - 1);
-                        canEdit = false;
-                        return;
-                    }
-
-                    var keyChar = (char)p;
-
-                    if (IgnoredKeys.Any(ignoredKey => p == ignoredKey))
-                    {
-                        return;
-                    }
-
-                    if (AlteredKeys.Any(alteredKey => p == alteredKey))
-                    {
-                        var alteredKeyToAdd = "";
-                        switch(p)
-                        {
-                            case Keys.OemComma:
-                                alteredKeyToAdd = ",";
-                                if (isHoldingShift)
-                                {
-                                    alteredKeyToAdd = "<";
-                                }
-                                break;
-                            case Keys.OemSemicolon:
-                                alteredKeyToAdd = ";";
-                                if (isHoldingShift)
-                                {
-                                    alteredKeyToAdd = ":";
-                                }
-                                break;
-                            case Keys.OemQuestion:
-                                alteredKeyToAdd = "/";
-                                if (isHoldingShift)
-                                {
-                                    alteredKeyToAdd = "?";
-                                }
-                                break;
-                            case Keys.OemBackslash:
-                            case Keys.OemPipe:
-                                alteredKeyToAdd = "\\";
-                                if (isHoldingShift)
-                                {
-                                    alteredKeyToAdd = "|";
-                                }
-                                break;
-                            case Keys.OemCloseBrackets:
-                                alteredKeyToAdd = "]";
-                                if (isHoldingShift)
-                                {
-                                    alteredKeyToAdd = "}";
-                                }
-                                break;
-                            case Keys.OemPlus:
-                                alteredKeyToAdd = "=";
-                                if (isHoldingShift)
-                                {
-                                    alteredKeyToAdd = "+";
-                                }
-                                break;
-                            case Keys.OemMinus:
-                                alteredKeyToAdd = "-";
-                                if (isHoldingShift)
-                                {
-                                    alteredKeyToAdd = "_";
-                                }
-                                break;
-                            case Keys.OemPeriod:
-                                alteredKeyToAdd = ".";
-                                if (isHoldingShift)
-                                {
-                                    alteredKeyToAdd = ">";
-                                }
-                                break;
-                            case Keys.OemOpenBrackets:
-                                alteredKeyToAdd = "[";
-                                if (isHoldingShift)
-                                {
-                                    alteredKeyToAdd = "{";
-                                }
-                                break;
-                            case Keys.OemQuotes:
-                                alteredKeyToAdd = "'";
-                                if (isHoldingShift)
-                                {
-                                    alteredKeyToAdd = "\"";
-                                }
-                                break;
-                            case Keys.OemTilde:
-                                alteredKeyToAdd = "`";
-                                if (isHoldingShift)
-                                {
-                                    alteredKeyToAdd = "~";
-                                }
-                                break;
-                        }
-
-                        Text += alteredKeyToAdd;
-                        canEdit = false;
-                        return;
-                    }
-
-                    var keyToAdd = keyChar.ToString().ToLower();
-                    if (currentKeyboardState.CapsLock)
-                    {
-                        keyToAdd = keyToAdd.ToUpper();
-                        if (isHoldingShift)
-                        {
-                            keyToAdd = keyToAdd.ToLower();
-                        }
-                    } else if (isHoldingShift)
-                    {
-                        keyToAdd = keyToAdd.ToUpper();
-                    }
-
-                    Text += keyToAdd;
+                    Text = Text.Substring(0, Text.Length - 1);
                     canEdit = false;
-                });
+                    return;
+                }
 
-            } 
-            else if (pressedKeyCount == 0 || (pressedKeyCount == 1 && (currentKeyboardState.IsKeyDown(Keys.LeftShift) || currentKeyboardState.IsKeyDown(Keys.RightShift))))
-            {
-                canEdit = true;
-            }
+                var keyChar = (char)p;
+
+                if (IgnoredKeys.Any(ignoredKey => p == ignoredKey))
+                {
+                    return;
+                }
+
+                if (AlteredKeys.Any(alteredKey => p == alteredKey))
+                {
+                    var alteredKeyToAdd = "";
+                    switch(p)
+                    {
+                        case Keys.OemComma:
+                            alteredKeyToAdd = ",";
+                            if (isHoldingShift)
+                            {
+                                alteredKeyToAdd = "<";
+                            }
+                            break;
+                        case Keys.OemSemicolon:
+                            alteredKeyToAdd = ";";
+                            if (isHoldingShift)
+                            {
+                                alteredKeyToAdd = ":";
+                            }
+                            break;
+                        case Keys.OemQuestion:
+                            alteredKeyToAdd = "/";
+                            if (isHoldingShift)
+                            {
+                                alteredKeyToAdd = "?";
+                            }
+                            break;
+                        case Keys.OemBackslash:
+                        case Keys.OemPipe:
+                            alteredKeyToAdd = "\\";
+                            if (isHoldingShift)
+                            {
+                                alteredKeyToAdd = "|";
+                            }
+                            break;
+                        case Keys.OemCloseBrackets:
+                            alteredKeyToAdd = "]";
+                            if (isHoldingShift)
+                            {
+                                alteredKeyToAdd = "}";
+                            }
+                            break;
+                        case Keys.OemPlus:
+                            alteredKeyToAdd = "=";
+                            if (isHoldingShift)
+                            {
+                                alteredKeyToAdd = "+";
+                            }
+                            break;
+                        case Keys.OemMinus:
+                            alteredKeyToAdd = "-";
+                            if (isHoldingShift)
+                            {
+                                alteredKeyToAdd = "_";
+                            }
+                            break;
+                        case Keys.OemPeriod:
+                            alteredKeyToAdd = ".";
+                            if (isHoldingShift)
+                            {
+                                alteredKeyToAdd = ">";
+                            }
+                            break;
+                        case Keys.OemOpenBrackets:
+                            alteredKeyToAdd = "[";
+                            if (isHoldingShift)
+                            {
+                                alteredKeyToAdd = "{";
+                            }
+                            break;
+                        case Keys.OemQuotes:
+                            alteredKeyToAdd = "'";
+                            if (isHoldingShift)
+                            {
+                                alteredKeyToAdd = "\"";
+                            }
+                            break;
+                        case Keys.OemTilde:
+                            alteredKeyToAdd = "`";
+                            if (isHoldingShift)
+                            {
+                                alteredKeyToAdd = "~";
+                            }
+                            break;
+                    }
+
+                    Text += alteredKeyToAdd;
+                    canEdit = false;
+                    return;
+                }
+
+                var keyToAdd = keyChar.ToString().ToLower();
+                if (currentKeyboardState.CapsLock)
+                {
+                    keyToAdd = keyToAdd.ToUpper();
+                    if (isHoldingShift)
+                    {
+                        keyToAdd = keyToAdd.ToLower();
+                    }
+                } else if (isHoldingShift)
+                {
+                    keyToAdd = keyToAdd.ToUpper();
+                }
+
+                Text += keyToAdd;
+                canEdit = false;
+            });
+
+        } 
+        else if (pressedKeyCount == 0 || (pressedKeyCount == 1 && (currentKeyboardState.IsKeyDown(Keys.LeftShift) || currentKeyboardState.IsKeyDown(Keys.RightShift))))
+        {
+            canEdit = true;
         }
     }
 }

@@ -58,7 +58,6 @@ public class SpriteFrameTest : SpriteTestDemo
         var moreFrames = new List<CCSpriteFrame>(20);
         for (int i = 1; i < 15; i++)
         {
-            string temp;
             str = string.Format("grossini_dance_gray_{0:00}.png", i);
             CCSpriteFrame frame = cache.SpriteFrameByName(str);
             moreFrames.Add(frame);

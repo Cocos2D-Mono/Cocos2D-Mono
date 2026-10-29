@@ -6,7 +6,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
-using CoreGraphics;
 using System.Runtime.InteropServices;
 
 #if MACOS

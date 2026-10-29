@@ -13,7 +13,6 @@ public class Box2DView : CCLayer
 {
     private TestEntry m_entry;
     private Test m_test;
-    private int m_entryID;
 
     private GameSettings settings = new GameSettings();
 

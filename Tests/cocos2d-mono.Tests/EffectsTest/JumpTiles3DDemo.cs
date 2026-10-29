@@ -8,7 +8,7 @@ namespace tests;
 
 public class JumpTiles3DDemo : CCJumpTiles3D
 {
-    public new static CCActionInterval actionWithDuration(float t)
+    public static CCActionInterval actionWithDuration(float t)
     {
         CCSize size = CCDirector.SharedDirector.WinSize;
         return new CCJumpTiles3D(t, new CCGridSize(15, 10), 2, 30);

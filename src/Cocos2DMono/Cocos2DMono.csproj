@@ -225,7 +225,6 @@
   <ItemGroup Condition="'$(TargetFramework)' == '$(Cocos2DWindowsTfm)'">
     <PackageReference Include="MonoGame.Framework.WindowsDX" />
     <PackageReference Include="BitMiracle.LibTiff.NET" />
-    <PackageReference Include="System.Drawing.Common" />
   </ItemGroup>
 
   <!-- Android -->

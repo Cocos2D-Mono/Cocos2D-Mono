@@ -8,7 +8,7 @@ namespace tests;
 
 public class PageTurn3DDemo : CCPageTurn3D
 {
-    public new static CCActionInterval actionWithDuration(float t)
+    public static CCActionInterval actionWithDuration(float t)
     {
         CCDirector.SharedDirector.SetDepthTest(false);
         return new CCPageTurn3D (t, new CCGridSize(15, 10));

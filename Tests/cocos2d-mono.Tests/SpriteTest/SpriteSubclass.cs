@@ -8,11 +8,6 @@ namespace tests;
 
 internal class MySprite1 : CCSprite
 {
-    public MySprite1()
-    {
-        ivar = 10;
-    }
-
     public static MySprite1 Create(string pszSpriteFrameName)
     {
         CCSpriteFrame pFrame = CCSpriteFrameCache.SharedSpriteFrameCache.SpriteFrameByName(pszSpriteFrameName);
@@ -21,26 +16,16 @@ internal class MySprite1 : CCSprite
 
         return pobSprite;
     }
-
-    private int ivar;
 }
 
 internal class MySprite2 : CCSprite
 {
-
-    public MySprite2()
-    {
-        ivar = 10;
-    }
-
-    public new static MySprite2 Create(string pszName)
+    public static MySprite2 Create(string pszName)
     {
         MySprite2 pobSprite = new MySprite2();
         pobSprite.InitWithFile(pszName);
         return pobSprite;
     }
-
-    private int ivar;
 }
 
 public class SpriteSubclass : SpriteTestDemo

@@ -16,7 +16,8 @@ public class ExplosionTest : Test
     private Body[] _bodies = new Body[RowCount * ColumnCount];
     private Explosion _explosion;
     private int[] _indices = new int[RowCount * ColumnCount];
-    private Vector2 _mousePos;
+    // Stays at the origin: the testbed's screen-to-world conversion isn't ported (see Mouse).
+    private Vector2 _mousePos = Vector2.Zero;
     private float _power;
     private float _radius;
 

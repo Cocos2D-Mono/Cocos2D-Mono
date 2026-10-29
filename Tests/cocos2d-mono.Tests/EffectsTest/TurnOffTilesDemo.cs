@@ -8,7 +8,7 @@ namespace tests;
 
 public class TurnOffTilesDemo : CCTurnOffTiles
 {
-    public new static CCActionInterval actionWithDuration(float t)
+    public static CCActionInterval actionWithDuration(float t)
     {
         CCTurnOffTiles fadeout = new CCTurnOffTiles(t, new CCGridSize(48, 32), 25);
         CCFiniteTimeAction back = fadeout.Reverse();

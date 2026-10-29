@@ -9,14 +9,11 @@ namespace tests;
 public class SceneTestLayer2 : CCLayer
 {
     string s_pPathGrossini = "Images/grossini";
-    float m_timeCounter;
     private CCMenuItemFont _PopMenuItem;
     private CCMenu _TheMenu;
 
     public SceneTestLayer2()
     {
-        m_timeCounter = 0;
-
         CCMenuItemFont item1 = new CCMenuItemFont("(2) replaceScene", onReplaceScene);
         CCMenuItemFont item2 = new CCMenuItemFont("(2) replaceScene w/transition", onReplaceSceneTran);
         CCMenuItemFont item3 = new CCMenuItemFont("(2) Go Back", onGoBack);

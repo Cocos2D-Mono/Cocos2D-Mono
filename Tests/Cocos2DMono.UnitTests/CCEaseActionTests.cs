@@ -71,7 +71,7 @@ public class CCEaseActionTests : IDisposable
     {
         var reverse = wrap(new CCDelayTime(2)).Reverse();
 
-        Assert.NotNull(reverse);
+        Assert.True(reverse is not null, ease + " has no reverse.");
         Assert.Equal(2f, reverse.Duration, P);
     }
 

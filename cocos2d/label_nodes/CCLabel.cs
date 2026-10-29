@@ -109,7 +109,6 @@ public partial class CCLabel : CCLabelBMFont
     {
         _width = width;
         _height = height;
-        _depth = 4;
 
         m_pTexture?.Dispose();
         m_pTexture = new CCTexture2D();
@@ -417,7 +416,6 @@ public partial class CCLabel : CCLabelBMFont
     private static int _used;
     private static int _width;
     private static int _height;
-    private static int _depth;
     public static int[]? m_pData;
 
     private int Fit(int index, int width, int height)

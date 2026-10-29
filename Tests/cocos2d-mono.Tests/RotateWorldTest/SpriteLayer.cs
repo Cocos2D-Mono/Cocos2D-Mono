@@ -55,7 +55,7 @@ public class SpriteLayer : CCLayer
         spriteSister2.RunAction(new CCRepeat (new CCSequence((CCFiniteTimeAction)(rot2.Copy()), (CCFiniteTimeAction)(rot1.Copy())), 5));
     }
 
-    public static new SpriteLayer node()
+    public static SpriteLayer node()
     {
         SpriteLayer node = new SpriteLayer();
         return node;

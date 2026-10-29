@@ -26,7 +26,6 @@ class CCControlButtonTest_HelloVariableSize : CCControlScene
 				float total_width = 0, height = 0;
     
 				// For each title in the array
-				object pObj = null;
 			    int i = 0;
 				foreach(var title in stringArray)
 				{
@@ -122,7 +121,6 @@ class CCControlButtonTest_Inset : CCControlScene
             float total_width = 0, height = 0;
 
             // For each title in the array
-            object pObj = null;
             foreach (var title in stringArray)
             {
                 // Creates a button with this string as title

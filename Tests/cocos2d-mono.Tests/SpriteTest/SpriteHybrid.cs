@@ -83,7 +83,6 @@ public class SpriteHybrid : SpriteTestDemo
 
         ////----UXLOG("New parent is: %x", p2);
 
-        CCNode node;
         var children = p1.Children;
         foreach (var item in children)
         {

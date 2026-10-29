@@ -1,6 +1,5 @@
 #if ANDROID
 using System;
-using System.Threading;
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -26,8 +25,6 @@ public partial class CCGameView : IDisposable
     CCAndroidScreenReceiver? _screenLockHandler;
     Context _context;
     View? _androidView;
-    bool _renderLoopRunning;
-    Thread? _renderThread;
 
     #region Internal Game class for graphics initialization
 
@@ -265,8 +262,6 @@ public partial class CCGameView : IDisposable
 
             // Get the view immediately - it's created during Game construction
             _androidView = _internalGame.Services.GetService(typeof(View)) as View;
-
-            _renderLoopRunning = true;
         }
         else if (!_viewInitialised)
         {
@@ -341,8 +336,6 @@ public partial class CCGameView : IDisposable
 
     partial void PlatformDispose(bool disposing)
     {
-        _renderLoopRunning = false;
-
         if (_screenLockHandler != null)
         {
             try

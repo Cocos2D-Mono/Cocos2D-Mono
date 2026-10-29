@@ -9,12 +9,7 @@ namespace tests;
 public class MotionStreakTest1 : MotionStreakTest
 {
     string s_streak = "Images/streak";
-    string s_pPathB1 = "Images/b1";
-    string s_pPathB2 = "Images/b2";
     string s_pPathR1 = "Images/r1";
-    string s_pPathR2 = "Images/r2";
-    string s_pPathF1 = "Images/f1";
-    string s_pPathF2 = "Images/f2";
 
     protected CCNode m_root;
     protected CCNode m_target;

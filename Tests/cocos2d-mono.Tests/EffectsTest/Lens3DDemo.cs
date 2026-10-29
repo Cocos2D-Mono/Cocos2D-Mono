@@ -8,7 +8,7 @@ namespace tests;
 
 public class Lens3DDemo : CCLens3D
 {
-    public new static CCActionInterval actionWithDuration(float t)
+    public static CCActionInterval actionWithDuration(float t)
     {
         CCSize size = CCDirector.SharedDirector.WinSize;
         return new CCLens3D(t, new CCGridSize(15, 10), new CCPoint(size.Width / 4, size.Height / 4), 240);

@@ -9,7 +9,6 @@ namespace tests;
 public class LayerScaleTest : LayerTest
 {
     int kTagLayer = 1;
-    int kCCMenuTouchPriority = -128;
 
     public override void OnEnter()
     {

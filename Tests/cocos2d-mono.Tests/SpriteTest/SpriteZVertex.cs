@@ -8,8 +8,6 @@ namespace tests;
 
 public class SpriteZVertex : SpriteTestDemo
 {
-    int m_dir;
-    float m_time;
     public override void OnEnter()
     {
         base.OnEnter();
@@ -35,9 +33,6 @@ public class SpriteZVertex : SpriteTestDemo
         // The developer is resposible for ordering it's sprites according to it's Z if the sprite has
         // transparent parts.
         //
-
-        m_dir = 1;
-        m_time = 0;
 
         CCSize s = CCDirector.SharedDirector.WinSize;
         float step = s.Width / 12;

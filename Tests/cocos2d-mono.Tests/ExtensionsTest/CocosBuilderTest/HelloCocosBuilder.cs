@@ -73,8 +73,6 @@ public class HelloCocosBuilderLayer : BaseLayer
     public void onAnimationsTestClicked(object pSender, CCControlEvent pCCControlEvent)
     {
         // Load node graph (TestAnimations is a sub class of CCLayer) and retrieve the ccb action manager
-        CCBAnimationManager actionManager = null;
-
         /* Create an autorelease CCNodeLoaderLibrary. */
         CCNodeLoaderLibrary ccNodeLoaderLibrary = new CCNodeLoaderLibrary();
 

@@ -103,7 +103,7 @@ public static class Settings
     /// does not affect the engine itself, however, this uses extra memory. This behavior
     /// can be turned off by setting ConserveMemory to true.
     /// </summary>
-    public const bool ConserveMemory = false;
+    public static readonly bool ConserveMemory = false;
 
     /// <summary>
     /// The maximum number of contact points between two convex shapes.

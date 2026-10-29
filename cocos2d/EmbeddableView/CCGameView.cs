@@ -731,7 +731,7 @@ public partial class CCGameView : IDisposable
     /// <summary>
     /// Disposes the view and releases all resources.
     /// </summary>
-#if ANDROID || IOS || __IOS__
+#if IOS || __IOS__
     public new void Dispose()
 #else
     public void Dispose()
@@ -745,7 +745,7 @@ public partial class CCGameView : IDisposable
     /// Disposes the view and releases resources.
     /// </summary>
     /// <param name="disposing">True if called from Dispose(), false if called from finalizer.</param>
-#if ANDROID || IOS || __IOS__
+#if IOS || __IOS__
     protected new virtual void Dispose(bool disposing)
 #else
     protected virtual void Dispose(bool disposing)

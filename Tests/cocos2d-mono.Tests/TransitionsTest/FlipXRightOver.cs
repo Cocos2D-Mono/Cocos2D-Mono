@@ -13,7 +13,7 @@ public class FlipXRightOver : CCTransitionFlipX
 
     }
     [Obsolete("Use the parameter ctor instead.")]
-    public new static CCTransitionScene Create(float t, CCScene s)
+    public static CCTransitionScene Create(float t, CCScene s)
     {
         return (new FlipXRightOver(t, s));
 //            return CCTransitionFlipX.Create(t, s, tOrientation.kOrientationRightOver);

@@ -8,7 +8,9 @@ namespace tests.Extensions;
 
 internal class TimelineCallbackTestLayer : BaseLayer
 {
+#pragma warning disable CS0649 // BaseLayer.OnAssignCCBMemberVariable sets it by name from the CCB file.
     public CCLabelTTF helloLabel;
+#pragma warning restore CS0649
 
     public void onCallback1(CCNode sender)
     {

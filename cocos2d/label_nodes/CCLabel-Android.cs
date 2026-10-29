@@ -116,7 +116,10 @@ public partial class CCLabel
         //result.A = -bounds.Left;
         //result.B = bounds.Width() + bounds.Left;
 
+        // Only the advance width is measured, so there's no space before or after the glyph.
+        result.A = 0;
         result.B = widths[0];
+        result.C = 0;
         return result;
     }
 

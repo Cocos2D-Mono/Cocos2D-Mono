@@ -138,20 +138,14 @@
   -->
   <PropertyGroup Condition="'$(CI)' == 'true'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <!-- Members that hide inherited ones, and `new` modifiers that hide nothing -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0108;CS0114;CS0109</WarningsNotAsErrors>
+    <!-- Members that hide inherited ones -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0108;CS0114</WarningsNotAsErrors>
     <!-- == and != without Equals and GetHashCode -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0659;CS0660;CS0661</WarningsNotAsErrors>
-    <!-- Unused fields and locals, unreachable code, a duplicate using -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0105;CS0162;CS0168;CS0169;CS0219;CS0414;CS0649</WarningsNotAsErrors>
     <!-- Value types compared with null, and an inexact Stream.Read -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0472;CS8073;CA2022</WarningsNotAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS8073;CA2022</WarningsNotAsErrors>
     <!-- Android APIs obsoleted in later versions -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);CA1422</WarningsNotAsErrors>
-    <!-- A package that .NET 10 provides anyway (System.Drawing.Common on WindowsDX) -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1510</WarningsNotAsErrors>
-    <!-- Test analyzers: xUnit's, and WinForms' check of the integration tests' high-DPI manifest -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);xUnit1026;xUnit1031;WFO0003</WarningsNotAsErrors>
     <!-- Trim analysis, which waits for the 3.0 trim-safety work -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);IL2026;IL2057;IL2060;IL2111</WarningsNotAsErrors>
   </PropertyGroup>

@@ -273,6 +273,16 @@ public struct CCColor4B
     {
         return p1.R != p2.R || p1.G != p2.G || p1.B != p2.B || p1.A != p2.A;
     }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is CCColor4B other && this == other;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(R, G, B, A);
+    }
 }
 
 /// <summary>
@@ -373,6 +383,19 @@ public struct CCColor4F
     public static bool operator !=(CCColor4F p1, CCColor4F p2)
     {
         return p1.R != p2.R || p1.G != p2.G || p1.B != p2.B || p1.A != p2.A;
+    }
+
+    // As float.Equals does, Equals treats NaN as equal to itself, which == doesn't. Otherwise they
+    // agree, and float's hash codes treat 0 and -0 alike, as == does.
+    public override bool Equals(object? obj)
+    {
+        return obj is CCColor4F other
+            && R.Equals(other.R) && G.Equals(other.G) && B.Equals(other.B) && A.Equals(other.A);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(R, G, B, A);
     }
 }
 
@@ -573,6 +596,16 @@ public struct CCPointI
         return p1.X != p2.X || p1.Y != p2.Y;
     }
 
+    public override bool Equals(object? obj)
+    {
+        return obj is CCPointI other && this == other;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(X, Y);
+    }
+
     public static CCPointI operator -(CCPointI p1, CCPointI p2)
     {
         CCPointI pt;
@@ -740,6 +773,16 @@ public struct CCBoundingBoxI
     public static bool operator !=(CCBoundingBoxI b1, CCBoundingBoxI b2)
     {
         return b1.MinX != b2.MinX || b1.MaxX != b2.MaxX || b1.MinY != b2.MinY || b1.MaxY != b2.MaxY;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is CCBoundingBoxI other && this == other;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(MinX, MinY, MaxX, MaxY);
     }
 }
 

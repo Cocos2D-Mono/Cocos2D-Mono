@@ -193,7 +193,7 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
     protected bool m_bCascadeOpacityEnabled = true;
     protected bool m_bIsOpacityModifyRGB = false;
 
-    public virtual CCColor3B Color
+    public override CCColor3B Color
     {
         get { return m_tRealColor; }
         set
@@ -214,12 +214,12 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
         }
     }
 
-    public virtual CCColor3B DisplayedColor
+    public override CCColor3B DisplayedColor
     {
         get { return m_tDisplayedColor; }
     }
 
-    public virtual byte Opacity
+    public override byte Opacity
     {
         get { return m_cRealOpacity; }
         set
@@ -239,12 +239,12 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
         }
     }
 
-    public virtual byte DisplayedOpacity
+    public override byte DisplayedOpacity
     {
         get { return m_cDisplayedOpacity; }
     }
 
-    public virtual bool IsOpacityModifyRGB
+    public override bool IsOpacityModifyRGB
     {
         get { return m_bIsOpacityModifyRGB; }
         set
@@ -264,19 +264,19 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
         }
     }
 
-    public virtual bool CascadeColorEnabled
+    public override bool CascadeColorEnabled
     {
         get { return false; }
         set { m_bCascadeColorEnabled = value; }
     }
 
-    public virtual bool CascadeOpacityEnabled
+    public override bool CascadeOpacityEnabled
     {
         get { return false; }
         set { m_bCascadeOpacityEnabled = value; }
     }
 
-    public virtual void UpdateDisplayedColor(CCColor3B parentColor)
+    public override void UpdateDisplayedColor(CCColor3B parentColor)
     {
         m_tDisplayedColor.R = (byte) (m_tRealColor.R * parentColor.R / 255.0f);
         m_tDisplayedColor.G = (byte) (m_tRealColor.G * parentColor.G / 255.0f);
@@ -291,7 +291,7 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
         }
     }
 
-    public virtual void UpdateDisplayedOpacity(byte parentOpacity)
+    public override void UpdateDisplayedOpacity(byte parentOpacity)
     {
         m_cDisplayedOpacity = (byte) (m_cRealOpacity * parentOpacity / 255.0f);
 

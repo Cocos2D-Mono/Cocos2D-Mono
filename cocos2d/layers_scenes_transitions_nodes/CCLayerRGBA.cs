@@ -7,14 +7,17 @@ namespace Cocos2D;
 
 public class CCLayerRGBA : CCLayer, ICCRGBAProtocol
 {
-    protected byte _displayedOpacity;
-    protected byte _realOpacity;
-    protected CCColor3B _displayedColor;
-    protected CCColor3B _realColor;
-    protected bool _cascadeColorEnabled;
-    protected bool _cascadeOpacityEnabled;
+    // Copies of CCNode's fields. Layer subclasses built against earlier versions read and write
+    // these by name, so they stay until 3.0. The members below override CCNode's, so every call,
+    // through a CCNode or not, uses these copies.
+    protected new byte _displayedOpacity;
+    protected new byte _realOpacity;
+    protected new CCColor3B _displayedColor;
+    protected new CCColor3B _realColor;
+    protected new bool _cascadeColorEnabled;
+    protected new bool _cascadeOpacityEnabled;
 
-    public virtual CCColor3B Color
+    public override CCColor3B Color
     {
         get { return _realColor; }
         set
@@ -35,12 +38,12 @@ public class CCLayerRGBA : CCLayer, ICCRGBAProtocol
         }
     }
 
-    public virtual CCColor3B DisplayedColor
+    public override CCColor3B DisplayedColor
     {
         get { return _displayedColor; }
     }
 
-    public virtual byte Opacity
+    public override byte Opacity
     {
         get { return _realOpacity; }
         set
@@ -60,24 +63,24 @@ public class CCLayerRGBA : CCLayer, ICCRGBAProtocol
         }
     }
 
-    public virtual byte DisplayedOpacity
+    public override byte DisplayedOpacity
     {
         get { return _displayedOpacity; }
     }
 
-    public virtual bool IsOpacityModifyRGB
+    public override bool IsOpacityModifyRGB
     {
         get { return false; }
         set { }
     }
                         
-    public virtual bool CascadeColorEnabled
+    public override bool CascadeColorEnabled
     {
         get { return _cascadeColorEnabled; }
         set { _cascadeColorEnabled = value; }
     }
 
-    public virtual bool CascadeOpacityEnabled
+    public override bool CascadeOpacityEnabled
     {
         get { return _cascadeOpacityEnabled; }
         set { _cascadeOpacityEnabled = value; }
@@ -106,7 +109,7 @@ public class CCLayerRGBA : CCLayer, ICCRGBAProtocol
         return true;
     }
 
-    public virtual void UpdateDisplayedColor(CCColor3B parentColor)
+    public override void UpdateDisplayedColor(CCColor3B parentColor)
     {
         _displayedColor.R = (byte) (_realColor.R * parentColor.R / 255.0f);
         _displayedColor.G = (byte) (_realColor.G * parentColor.G / 255.0f);
@@ -128,7 +131,7 @@ public class CCLayerRGBA : CCLayer, ICCRGBAProtocol
         }
     }
 
-    public virtual void UpdateDisplayedOpacity(byte parentOpacity)
+    public override void UpdateDisplayedOpacity(byte parentOpacity)
     {
         _displayedOpacity = (byte) (_realOpacity * parentOpacity / 255.0f);
 

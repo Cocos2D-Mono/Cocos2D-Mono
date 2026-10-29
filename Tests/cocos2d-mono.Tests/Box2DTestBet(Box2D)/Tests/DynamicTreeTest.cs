@@ -337,6 +337,7 @@ public class DynamicTreeTest : Test, Ib2QueryCallback, Ib2RayCastCallback
     private b2RayCastOutput m_rayCastOutput;
     private Actor m_rayActor = new Actor();
     private Actor[] m_actors = new Actor[e_actorCount];
-    private int m_stepCount;
+    // Its own count, as in Box2D's testbed: Step doesn't call the base Step.
+    private new int m_stepCount;
     private bool m_automated;
 }

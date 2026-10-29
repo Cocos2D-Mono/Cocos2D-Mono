@@ -398,7 +398,9 @@ public class CCContentManager : ContentManager
         LoadedAssets.Clear();
     }
 #else
-    public void ReloadGraphicsAssets()
+    // CCDrawManager calls this when the device resets. MonoGame's own ReloadGraphicsAssets is
+    // protected, so this public one hides it rather than overriding it.
+    public new void ReloadGraphicsAssets()
     {
         foreach (var asset in _loadedAssets)
         {

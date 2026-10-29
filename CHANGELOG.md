@@ -4,7 +4,56 @@ All notable changes to Cocos2D-Mono are recorded here. This file was introduced 
 2.5.10; earlier releases are described in their GitHub release notes / git history.
 The project follows [Semantic Versioning](https://semver.org/) where practical.
 
-## Unreleased
+## 2.9.0 - 2026-10-30
+
+The last of the nullable reference type annotations that started in 2.7.0. The director and
+scheduler, the platform code (plists, content loading and the runtime classes), the embeddable
+view, the controls, the scroll views, the CCB reader and all of Box2D now say which of their
+members can be null. So every part of the engine and Box2D is annotated, except the deprecated
+zlib port. Converting them turned up the bugs fixed below, among them a
+`b2Body.DestroyFixture` that could hang and a Box2D world that stayed locked after a callback
+threw. Zlib-compressed TMX layers now decompress with .NET's `System.IO.Compression`, so the
+bundled zlib port is deprecated, and 3.0 removes it. The packages are also built with the .NET
+SDK's own Source Link, so the build no longer uses a package with a known vulnerability.
+
+### ⚠️ Upgrading
+
+Bump the package reference to 2.9.0. Apart from nullability and the zlib port's deprecation, no
+public API changed or went away since 2.8.0, so nothing stops compiling unless the build treats
+the new nullable or obsolete warnings as errors. Four things can still affect a game:
+
+- **New warnings in projects that enable nullable.** Using one of the newly annotated members
+  without a check, such as `CCDirector.RunningScene`, `CCTableView.CellAtIndex` or
+  `b2Body.Next`, now raises a nullable warning (CS86xx). As with 2.7.0 and 2.8.0,
+  `<WarningsNotAsErrors>nullable</WarningsNotAsErrors>` keeps them as warnings in a build with
+  `TreatWarningsAsErrors`. Code that implements or overrides a member whose parameters became
+  nullable is warned too, until its signature matches: an `ICCSAXDelegator.StartElement`
+  implementation should declare `string[]? atts`, and a custom CCB node loader's overrides
+  should declare `CCNode? parent`, as Changed describes.
+- **The bundled zlib port is obsolete.** Code that uses `Cocos2D.Compression.Zlib` gets an
+  obsolete warning (CS0618). Switch to `System.IO.Compression.ZLibStream` before 3.0 removes
+  the port.
+- **Some failures throw a more specific exception.** For example, a sprite frame, animation or
+  particle plist that lacks a value it needs throws `InvalidDataException`, and so does
+  `CCBReader.CreateSceneWithNodeGraphFromFile` for a file it can't read. `b2World.CreateJoint`
+  throws `ArgumentException` for a definition without both bodies. Before, most of these threw
+  `NullReferenceException`. Code that catches `NullReferenceException` from the engine should
+  handle the new exceptions; Changed and Fixed list each one.
+- **Some fixes change what existing code does.** Check code that worked around the old
+  behavior:
+  - `b2World.CreateBody`, `b2World.CreateJoint` and `b2Body.CreateFixture` throw
+    `InvalidOperationException` while the world is stepping, such as in a contact callback,
+    instead of returning null. So does `b2World.Step`, which used to run a whole step inside
+    the current one. Make these calls after `Step` returns.
+  - A particle plist without a `textureFileName` gets its embedded texture instead of the
+    default texture.
+  - `CCContentManager.Load<string>` no longer returns null for a content file without any
+    text. It tries the raw file, and throws `ContentLoadException` if that fails too.
+  - A corrupt zlib-compressed TMX layer throws `InvalidDataException` instead of the port's
+    `ZStreamException`.
+
+Building the engine from source needs .NET SDK 10.0.303 or later, as Security explains. Games
+that use the packages aren't affected.
 
 ### Changed
 
@@ -329,6 +378,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - `CONTRIBUTING.md` and the roadmap say that nullable annotations cover the engine and Box2D.
   Every file is converted except the deprecated zlib port, which keeps `#nullable disable`
   until 3.0 removes it.
+- 2.8.0's notes no longer say that the compiler warns about an override of `CCDrawNode.Init`
+  that doesn't call the base method. It can't, because the field that method sets is private.
+  Overrides of the other init methods those notes list are still warned.
 
 ## 2.8.0 - 2026-10-23
 

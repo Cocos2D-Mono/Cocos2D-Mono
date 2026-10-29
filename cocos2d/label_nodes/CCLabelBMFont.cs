@@ -568,12 +568,6 @@ public class CCLabelBMFont : CCSpriteBatchNode, ICCLabelProtocol, ICCRGBAProtoco
                 rect = fontDef.rect;
                 rect = rect.PixelsToPoints();
 
-                if (m_tImageOffset == null)
-                {
-                    CCLog.Log("cocos2d::CCLabelBMFont: m_tImageOffset is null");
-                    continue; // Or handle accordingly
-                }
-
                 rect.Origin.X += m_tImageOffset.X;
                 rect.Origin.Y += m_tImageOffset.Y;
 

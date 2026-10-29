@@ -72,7 +72,7 @@ public class PlistDocument : PlistObjectBase
     {
         data = SeekableStream(data);
 			byte[] magicHeader = new byte[8];
-			data.Read(magicHeader, 0, 8);
+			data.ReadAtLeast(magicHeader, magicHeader.Length, throwOnEndOfStream: false);
 			data.Seek(0, SeekOrigin.Begin);
 			if (BitConverter.ToInt64 (magicHeader, 0) == 3472403351741427810) {
 				using (BinaryReader reader = new BinaryReader(data))

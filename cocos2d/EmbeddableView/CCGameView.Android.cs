@@ -3,7 +3,6 @@ using System;
 using Android.App;
 using Android.Content;
 using Android.OS;
-using Android.Runtime;
 using Android.Util;
 using Android.Views;
 using Microsoft.Xna.Framework;
@@ -113,7 +112,7 @@ public partial class CCGameView : IDisposable
             {
                 // Without a keyguard manager, nothing holds the screen locked.
                 var keyguard = (KeyguardManager?)context?.GetSystemService(Context.KeyguardService);
-                if (keyguard == null || !keyguard.InKeyguardRestrictedInputMode())
+                if (keyguard == null || !keyguard.IsKeyguardLocked)
                     OnUnlocked();
             }
             else if (action == Intent.ActionUserPresent)
@@ -194,13 +193,10 @@ public partial class CCGameView : IDisposable
 
     static CCSize DefaultDisplaySize(Context context)
     {
-        var windowManager = context.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
-        var display = windowManager?.DefaultDisplay;
-        Debug.Assert(display != null, "A context's window manager has a default display.");
-        var size = new Android.Graphics.Point();
-        display.GetSize(size);
+        var metrics = context.Resources?.DisplayMetrics;
+        Debug.Assert(metrics != null, "A context's resources have display metrics.");
 
-        return new CCSize(size.X, size.Y);
+        return new CCSize(metrics.WidthPixels, metrics.HeightPixels);
     }
 
     #endregion Constructors

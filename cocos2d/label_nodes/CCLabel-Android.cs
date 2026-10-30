@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Android.App;
 using Android.Graphics;
-using Android.Util;
 using Microsoft.Xna.Framework;
 
 namespace Cocos2D;
@@ -18,18 +17,11 @@ public partial class CCLabel
     private static int[]? _data;
     private static GCHandle _dataHandle;
     private static Paint.FontMetrics? _fontMetrix;
-    private static float _fontScaleFactor;
 
     private void CreateFont(string fontName, float fontSize, CCRawList<char> charset)
     {
         if (_paint == null)
         {
-            var display = Game.Activity.WindowManager?.DefaultDisplay;
-            var metrics = new DisplayMetrics();
-            display?.GetMetrics(metrics);
-
-            _fontScaleFactor = metrics.ScaledDensity;
-
             _paint = new Paint(PaintFlags.AntiAlias);
             _paint.Color = Android.Graphics.Color.White;
             _paint.TextAlign = Paint.Align.Left;
@@ -150,7 +142,7 @@ public partial class CCLabel
         float textY = 0;
 
         //Calculate base line
-        textY = (_fontMetrix.Descent - _fontMetrix.Ascent + _fontMetrix.Leading); // / _fontScaleFactor; //GetFontHeight();// -(r.Height() + r.Top);
+        textY = (_fontMetrix.Descent - _fontMetrix.Ascent + _fontMetrix.Leading); //GetFontHeight();// -(r.Height() + r.Top);
 
         _canvas.DrawText(text, textX, textY, _paint);
 

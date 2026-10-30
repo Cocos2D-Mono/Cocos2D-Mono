@@ -78,7 +78,15 @@ dotnet build src/Cocos2DMono/Cocos2DMono.csproj -c Release -f $TFM -p:TargetFram
 
 A game can instead reference `src/Cocos2DMono/Cocos2DMono.csproj` from its own `net10.0-maccatalyst` or `net10.0-tvos` project: once step 3 has run, the engine finds the fork's assembly and adds the target on its own. `Directory.Build.props` documents the overrides for a fork checked out somewhere else.
 
-If the game builds its content with `MonoGame.Content.Builder.Task`, set `<MonoGamePlatform>iOS</MonoGamePlatform>` in its project for these targets. MonoGame's platform packages set that property, and these targets use the fork's assembly instead of a package. The content builder has no Mac Catalyst or tvOS platform anyway, and both run content built for iOS unchanged.
+If the game builds its content with `MonoGame.Content.Builder.Task`, set `MonoGamePlatform` to `iOS` for these two targets only. MonoGame's platform packages set it for the others, and these two use the fork's assembly instead of a package. The content builder has no Mac Catalyst or tvOS platform anyway, and both run content built for iOS unchanged.
+
+```xml
+<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst' Or $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tvos'">
+  <MonoGamePlatform>iOS</MonoGamePlatform>
+</PropertyGroup>
+```
+
+The condition calls `GetTargetPlatformIdentifier` because the SDK sets `$(TargetPlatformIdentifier)` only after the project's own properties, so a condition on that property never matches there.
 
 # Getting Started
 

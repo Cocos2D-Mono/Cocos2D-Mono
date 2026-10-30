@@ -125,11 +125,11 @@
     In CI ($(CI) is true: GitHub Actions sets it in every workflow, pack.yml included), a
     warning fails the build, except for the codes listed below. That covers compiler,
     analyzer and NuGet warnings (TreatWarningsAsErrors), and the warnings other MSBuild
-    tasks log, with or without a code (MSBuildTreatWarningsAsErrors). The listed codes
-    still have warnings to clear, and they stay warnings for MSBuild too, because
-    MSBuildWarningsNotAsErrors defaults to WarningsNotAsErrors. Each C2D-198 slice that
-    clears a code deletes it here, so don't add codes. Local builds keep warnings as
-    warnings; build with -p:CI=true to see what CI will do.
+    tasks log, with or without a code (MSBuildTreatWarningsAsErrors). The listed codes are
+    trim analysis warnings, which wait for the 3.0 trim work. They stay warnings for MSBuild
+    too, because MSBuildWarningsNotAsErrors defaults to WarningsNotAsErrors. Don't add
+    codes. Local builds keep warnings as warnings; build with -p:CI=true to see what CI
+    will do.
 
     NuGet's audit warnings (NU1901-NU1904) fail it too, for direct and transitive
     packages. Update the package, or review the advisory and add a NuGetAuditSuppress
@@ -138,8 +138,6 @@
   <PropertyGroup Condition="'$(CI)' == 'true'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <MSBuildTreatWarningsAsErrors>true</MSBuildTreatWarningsAsErrors>
-    <!-- Android APIs obsoleted in later versions -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);CA1422</WarningsNotAsErrors>
     <!-- Trim analysis, which waits for the 3.0 trim-safety work -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);IL2026;IL2057;IL2060;IL2111</WarningsNotAsErrors>
   </PropertyGroup>

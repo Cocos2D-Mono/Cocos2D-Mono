@@ -1,6 +1,6 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -8,10 +8,12 @@ namespace Cocos2D;
 
 public partial class CCDrawingPrimitives
 {
-    private static CCPrimitiveBatch _batch;
+    // CCDrawManager calls Init at startup, before anything draws.
+    private static CCPrimitiveBatch _batch = null!;
     private static float _pointSize = 3f;
     private static CCColor4B _color;
 
+    [MemberNotNull(nameof(_batch))]
     public static void Init(GraphicsDevice graphics)
     {
         _batch = new CCPrimitiveBatch(graphics);

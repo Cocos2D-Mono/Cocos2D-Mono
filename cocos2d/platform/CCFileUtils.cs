@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2009 Jason Booth
@@ -148,7 +147,8 @@ public class CCFileUtils
     /// </summary>
     public static string FullPathFromRelativeFile(string pszFilename, string pszRelativeFile)
     {
-        string path = Path.GetDirectoryName(pszRelativeFile);
+        // GetDirectoryName returns null for an empty path or a root.
+        string path = Path.GetDirectoryName(pszRelativeFile) ?? string.Empty;
         return Path.Combine(path, RemoveExtension(pszFilename));
     }
 
@@ -184,7 +184,7 @@ public class CCFileUtils
     /// <typeparam name="?"></typeparam>
     /// <param name="?"></param>
     /// <returns></returns>
-    public static Dictionary<string, object> DictionaryWithContentsOfFile(string pFileName)
+    public static Dictionary<string, object>? DictionaryWithContentsOfFile(string pFileName)
     {
         CCDictMaker tMaker = new CCDictMaker();
         return tMaker.DictionaryWithContentsOfFile(pFileName);

@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Reflection;
 using Microsoft.Xna;
@@ -11,11 +10,11 @@ public class CCAccelerometer
 {
 #if (ANDROID || IOS) && !TVOS
     // the accelerometer sensor on the device
-    private static MonoGame.Framework.Devices.Sensors.Accelerometer accelerometer = null;
+    private static MonoGame.Framework.Devices.Sensors.Accelerometer? accelerometer = null;
 #endif
 
     private const float TG3_GRAVITY_EARTH = 9.80665f;
-    private ICCAccelerometerDelegate _accelDelegate;
+    private ICCAccelerometerDelegate? _accelDelegate;
     private readonly CCAcceleration _accelerationValue = new CCAcceleration();
 
     private bool _active;
@@ -51,7 +50,7 @@ public class CCAccelerometer
         _accelerationValue.Z = 0;
     }
 
-    public void SetDelegate(ICCAccelerometerDelegate pDelegate)
+    public void SetDelegate(ICCAccelerometerDelegate? pDelegate)
     {
         _accelDelegate = pDelegate;
 
@@ -116,7 +115,7 @@ public class CCAccelerometer
 
 
 #if (ANDROID || IOS) && !TVOS
-    private void accelerometer_CurrentValueChanged(object sender, MonoGame.Framework.Devices.Sensors.SensorReadingEventArgs<MonoGame.Framework.Devices.Sensors.AccelerometerReading> e)
+    private void accelerometer_CurrentValueChanged(object? sender, MonoGame.Framework.Devices.Sensors.SensorReadingEventArgs<MonoGame.Framework.Devices.Sensors.AccelerometerReading> e)
     {
 
         // We have to use reflection to get the Vector3 value out of Acceleration
@@ -124,18 +123,19 @@ public class CCAccelerometer
         // the XNA with MonoGame which our Sensor does not compile against.
         //
         // Result is this ugly hack.
-        object val = e.SensorReading.GetType()
+        object? val = e.SensorReading.GetType()
          .GetProperty("Acceleration",
                       BindingFlags.FlattenHierarchy |
                       BindingFlags.Instance |
                       BindingFlags.Public)
-         .GetValue(e.SensorReading, null);
+         ?.GetValue(e.SensorReading, null);
 
-        if (val == null)
+        string? acceleration = val?.ToString();
+        if (acceleration == null)
             return;
 
         // store the accelerometer value in our acceleration object to be updated.
-        UpdateAccelerationValue(val.ToString());
+        UpdateAccelerationValue(acceleration);
 
         _accelerationValue.TimeStamp = e.SensorReading.Timestamp.Ticks;
     }

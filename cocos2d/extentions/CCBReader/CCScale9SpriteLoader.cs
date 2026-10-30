@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 internal class CCScale9SpriteLoader : CCNodeLoader
@@ -19,12 +18,16 @@ internal class CCScale9SpriteLoader : CCNodeLoader
         return new CCScale9Sprite();
     }
 
-    protected override void OnHandlePropTypeSpriteFrame(CCNode node, CCNode parent, string propertyName, CCSpriteFrame spriteFrame,
+    protected override void OnHandlePropTypeSpriteFrame(CCNode node, CCNode? parent, string propertyName, CCSpriteFrame? spriteFrame,
                                                         CCBReader reader)
     {
         if (propertyName == PROPERTY_SPRITEFRAME)
         {
-            ((CCScale9Sprite) node).InitWithSpriteFrame(spriteFrame);
+            // Like the other loaders, skip a sprite frame that couldn't be found.
+            if (spriteFrame != null)
+            {
+                ((CCScale9Sprite) node).InitWithSpriteFrame(spriteFrame);
+            }
         }
         else
         {
@@ -32,7 +35,7 @@ internal class CCScale9SpriteLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeColor3(CCNode node, CCNode parent, string propertyName, CCColor3B color, CCBReader reader)
+    protected override void OnHandlePropTypeColor3(CCNode node, CCNode? parent, string propertyName, CCColor3B color, CCBReader reader)
     {
         if (propertyName == PROPERTY_COLOR)
         {
@@ -44,7 +47,7 @@ internal class CCScale9SpriteLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeByte(CCNode node, CCNode parent, string propertyName, byte pByte, CCBReader reader)
+    protected override void OnHandlePropTypeByte(CCNode node, CCNode? parent, string propertyName, byte pByte, CCBReader reader)
     {
         if (propertyName == PROPERTY_OPACITY)
         {
@@ -56,7 +59,7 @@ internal class CCScale9SpriteLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeBlendFunc(CCNode node, CCNode parent, string propertyName, CCBlendFunc blendFunc,
+    protected override void OnHandlePropTypeBlendFunc(CCNode node, CCNode? parent, string propertyName, CCBlendFunc blendFunc,
                                                       CCBReader reader)
     {
         if (propertyName == PROPERTY_BLENDFUNC)
@@ -70,7 +73,7 @@ internal class CCScale9SpriteLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeSize(CCNode node, CCNode parent, string propertyName, CCSize pSize, CCBReader reader)
+    protected override void OnHandlePropTypeSize(CCNode node, CCNode? parent, string propertyName, CCSize pSize, CCBReader reader)
     {
         if (propertyName == PROPERTY_CONTENTSIZE)
         {
@@ -86,7 +89,7 @@ internal class CCScale9SpriteLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeFloat(CCNode node, CCNode parent, string propertyName, float pFloat, CCBReader reader)
+    protected override void OnHandlePropTypeFloat(CCNode node, CCNode? parent, string propertyName, float pFloat, CCBReader reader)
     {
         if (propertyName == PROPERTY_INSETLEFT)
         {

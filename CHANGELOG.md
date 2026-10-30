@@ -4,6 +4,384 @@ All notable changes to Cocos2D-Mono are recorded here. This file was introduced 
 2.5.10; earlier releases are described in their GitHub release notes / git history.
 The project follows [Semantic Versioning](https://semver.org/) where practical.
 
+## 2.9.0 - 2026-10-30
+
+The last of the nullable reference type annotations that started in 2.7.0. The director and
+scheduler, the platform code (plists, content loading and the runtime classes), the embeddable
+view, the controls, the scroll views, the CCB reader and all of Box2D now say which of their
+members can be null. So every part of the engine and Box2D is annotated, except the deprecated
+zlib port. Converting them turned up the bugs fixed below, among them a
+`b2Body.DestroyFixture` that could hang and a Box2D world that stayed locked after a callback
+threw. Zlib-compressed TMX layers now decompress with .NET's `System.IO.Compression`, so the
+bundled zlib port is deprecated, and 3.0 removes it. The packages are also built with the .NET
+SDK's own Source Link, so the build no longer uses a package with a known vulnerability.
+
+### ⚠️ Upgrading
+
+Bump the package reference to 2.9.0. Apart from nullability and the zlib port's deprecation, no
+public API changed or went away since 2.8.0, so nothing stops compiling unless the build treats
+the new nullable or obsolete warnings as errors. Four things can still affect a game:
+
+- **New warnings in projects that enable nullable.** Using one of the newly annotated members
+  without a check, such as `CCDirector.RunningScene`, `CCTableView.CellAtIndex` or
+  `b2Body.Next`, now raises a nullable warning (CS86xx). As with 2.7.0 and 2.8.0,
+  `<WarningsNotAsErrors>nullable</WarningsNotAsErrors>` keeps them as warnings in a build with
+  `TreatWarningsAsErrors`. Code that implements or overrides a member whose parameters became
+  nullable is warned too, until its signature matches: an `ICCSAXDelegator.StartElement`
+  implementation should declare `string[]? atts`, and a custom CCB node loader's overrides
+  should declare `CCNode? parent`, as Changed describes.
+- **The bundled zlib port is obsolete.** Code that uses `Cocos2D.Compression.Zlib` gets an
+  obsolete warning (CS0618). Switch to `System.IO.Compression.ZLibStream` before 3.0 removes
+  the port.
+- **Some failures throw a more specific exception.** For example, a sprite frame, animation or
+  particle plist that lacks a value it needs throws `InvalidDataException`, and so does
+  `CCBReader.CreateSceneWithNodeGraphFromFile` for a file it can't read. `b2World.CreateJoint`
+  throws `ArgumentException` for a definition without both bodies. Before, most of these threw
+  `NullReferenceException`. Code that catches `NullReferenceException` from the engine should
+  handle the new exceptions; Changed and Fixed list each one.
+- **Some fixes change what existing code does.** Check code that worked around the old
+  behavior:
+  - `b2World.CreateBody`, `b2World.CreateJoint` and `b2Body.CreateFixture` throw
+    `InvalidOperationException` while the world is stepping, such as in a contact callback,
+    instead of returning null. So does `b2World.Step`, which used to run a whole step inside
+    the current one. Make these calls after `Step` returns.
+  - A particle plist without a `textureFileName` gets its embedded texture instead of the
+    default texture.
+  - `CCContentManager.Load<string>` no longer returns null for a content file without any
+    text. It tries the raw file, and throws `ContentLoadException` if that fails too.
+  - A corrupt zlib-compressed TMX layer throws `InvalidDataException` instead of the port's
+    `ZStreamException`.
+
+Building the engine from source needs .NET SDK 10.0.303 or later, as Security explains. Games
+that use the packages aren't affected.
+
+### Changed
+
+- **Nullable annotations for the director, the scheduler and the other root files**
+  (`CCDirector`, `CCScheduler`, `CCTimer`, `CCCamera2D`, `CCConfiguration`, `CCContent` and
+  `CCDrawingPrimitives`). The visible changes:
+  - `CCDirector.RunningScene`, `NotificationNode` and `Delegate` are nullable: there's no
+    running scene until the first one starts, and no notification node or projection delegate
+    until one is set.
+  - `CCScheduler.UnscheduleSelector`, `UnscheduleAllForTarget` and `UnscheduleUpdateForTarget`
+    accept null, which does nothing, as before. `CCScheduler.OnUnhandledException` is a nullable
+    event.
+  - `CCTimer.Selector` is nullable: a timer made with the parameterless constructor has none.
+  - `CCCamera2D.FollowTarget` is nullable: the camera follows nothing until `Follow` is called,
+    and again after `Unfollow`.
+  - `CCContent.Content` is nullable until the content reader sets it.
+  - `CCDirector.PopScene(t, transition)` accepts a null transition.
+
+  Overrides of `CCDirector.Init` must call the base method, which creates the scheduler, the
+  action manager and the dispatchers. The compiler can't check this, because those fields are
+  private.
+- **Zlib-compressed TMX layers** (`compression="zlib"`) decompress with .NET's
+  `System.IO.Compression.ZLibStream` instead of the bundled zlib port. A corrupt one throws
+  `InvalidDataException` instead of the port's `ZStreamException`.
+- **Nullable annotations for the plist classes** (`PlistDocument`, `PlistDictionary`,
+  `PlistArray`, `PlistObjectBase` and the classes for each type of value). The visible changes:
+  - `PlistObjectBase.AsString`, `AsBinary`, `AsArray` and `AsDictionary` are nullable. They
+    return null for a key that a dictionary doesn't have, and `AsArray` and `AsDictionary` also
+    return null for some values of other types, such as a boolean. The overrides that always
+    return a value aren't nullable: `PlistString.AsString`, `PlistString.AsBinary`,
+    `PlistData.AsBinary`, `PlistArray.AsArray` and `PlistDictionary.AsDictionary`.
+  - `PlistDocument.Root` is nullable: a document made with the parameterless constructor has no
+    root, and neither does one read from a plist without a root object.
+  - `PlistDictionary.TryGetValue` returns null for a missing key, and `PlistDictionary.Keys` is
+    null for a dictionary that doesn't keep its keys in order.
+- **Nullable annotations for content loading** (`CCContentManager`, `CCFileUtils`,
+  `CCSAXParser`, `ICCSAXDelegator`, `CCDictMaker`, `CCSpriteFontCache`, `CCFontManager` and the
+  content readers). The visible changes:
+  - `CCContentManager.TryLoad` returns a nullable value: the type's default, such as null, when
+    the asset can't be loaded.
+  - `CCContentManager.SharedContentManager` isn't nullable, though it's null until
+    `CCApplication` loads its content or a `CCGameView` starts.
+  - `CCSpriteFontCache.GetFont` and `TryLoadFont` return a nullable `SpriteFont`, and
+    `CCFontManager.ResolveFontPath` a nullable path. `CCFontManager.RegisterTTF`, `IsTTFFont`
+    and `ResolveFontPath` accept null, which they already handled.
+  - `ICCSAXDelegator.StartElement`'s attributes are nullable, because the parser passes null
+    for an element without any. Implementations should declare `string[]? atts`.
+  - `CCDictMaker`'s public fields are nullable, and so are the dictionaries and arrays it
+    returns, including `CCFileUtils.DictionaryWithContentsOfFile`'s.
+- **Nullable annotations for the runtime classes** (`CCDrawManager`, `CCApplication`,
+  `CCFocusManager`, `CCAccelerometer`, `CCRawList`, `CCTask`, `CCLog` and the rest of
+  `cocos2d/platform`). The visible changes:
+  - `CCApplication.SharedApplication` is nullable, because a `CCGameView` has no application.
+    So are `CCApplication.GameTime` until the first update, `TouchDelegate`, and the game pad
+    and gesture events.
+  - `CCDrawManager.BindTexture` and both `SetRenderTarget` overloads accept null, which they
+    already handled, and `GetRenderTarget` returns null while drawing goes to the screen.
+  - `CCDrawManager.GraphicsDevice`, `spriteBatch`, `PrimitiveEffect` and `AlphaTestEffect`
+    aren't nullable, though they're null before `CCDrawManager.Init` and after
+    `PurgeDrawManager`.
+  - `CCAccelerometer.SetDelegate` accepts null, which removes the delegate.
+  - `CCFocusManager.ItemWithFocus` is nullable, and so is the previous item that
+    `OnFocusChanged` passes when nothing had focus.
+  - `CCLog.Log`'s format arguments can be null. `CCTask.RunAsync`'s completion callback is
+    nullable, and it receives null.
+- **Nullable annotations for the embeddable view** (`CCGameView` and its Android, iOS and
+  desktop hosts). The visible changes:
+  - `CCGameView.RunningScene` and `SplitScreenScene` are nullable, because a view has no scene
+    until one runs.
+  - `CCGameView.GraphicsDevice` is nullable. It's null until the view initialises, unless a
+    constructor took an existing device.
+  - On Android, `CCGameView.Game` and `AndroidView` are nullable. They're null until
+    `StartGame` makes the view's own game, and stay null for a view made from an existing
+    `Game`.
+- **Nullable annotations for the controls** (`CCControl`, `CCControlButton`, `CCControlSlider`,
+  `CCControlSwitch`, `CCControlStepper`, `CCControlPotentiometer`, the colour pickers and
+  `CCScale9Sprite`). The visible changes:
+  - `CCControlButton.GetTitleLabelForState` and `GetBackgroundSpriteForState` are nullable,
+    because they return null when neither the state nor `Normal` has one. So are `TitleLabel`
+    and `BackgroundSprite`, which the button sets from them when it lays itself out.
+  - `CCControl.RemoveTargetWithActionForControlEvent` and `RemoveTargetWithActionForControlEvents`
+    accept a null target or action, which matches any, as their documentation says.
+  - `CCControlSwitch`'s constructor with labels and `CCControlSwitchSprite.InitWithMaskSprite`
+    accept null labels, and `CCControlSwitchSprite.OnLabel` and `OffLabel` are nullable.
+  - `CCScale9Sprite.InitWithBatchNode` accepts a null batch node, which makes an empty sprite.
+    The protected fields for its batch node and its nine sprites are nullable, because an empty
+    sprite has none.
+  - The events of `CCControlButton`, `CCControlSwitch` and `CCControlStepper` are nullable.
+  - A `CCControlStepper`, `CCControlPotentiometer`, `CCControlHuePicker` or
+    `CCControlSaturationBrightnessPicker` made with the parameterless constructor needs its init
+    method to run before it's used. Its sprites and labels aren't nullable, though they're null
+    until then.
+- **Nullable annotations for the scroll views** (`CCScrollView`, `CCTableView`,
+  `CCTableViewCell` and `CCArrayForObjectSorting`). The visible changes:
+  - `CCScrollView.Delegate` and `CCTableView.Delegate` are nullable: a view has no delegate
+    until one is set.
+  - `CCTableView.CellAtIndex` and `DequeueCell` are nullable, because they return null when
+    there's no such cell. So is `CCArrayForObjectSorting.ObjectWithObjectID`.
+  - The `CCScrollView` and `CCTableView` constructors that take a container accept null, which
+    makes a default one, as the constructors without a container do.
+  - A `CCTableView` made with the parameterless constructor needs `InitWithViewSize` to run and
+    `DataSource` to be set before it's used. `DataSource` isn't nullable, though it's null until
+    then.
+- **Nullable annotations for the CCB reader** (`CCBReader`, `CCBAnimationManager`, `CCNodeLoader`,
+  `CCNodeLoaderLibrary` and the CCB value, keyframe and sequence classes) **and Box2D's
+  `CCBox2dDraw`**. The visible changes:
+  - The `parent` parameter of `CCNodeLoader.LoadCCNode`, `ParseProperties` and every
+    `ParsePropType…` and `OnHandlePropType…` method is nullable, because a file's root node has
+    no parent. Overrides in custom loaders should declare `CCNode? parent`.
+  - `CCNodeLoader.ParsePropTypeSpriteFrame`, `ParsePropTypeAnimation`, `ParsePropTypeTexture`,
+    `ParsePropTypeBlock`, `ParsePropTypeBlockCcControl` and `ParsePropTypeCcbFile` are nullable.
+    So are the values that `OnHandlePropTypeSpriteFrame`, `OnHandlePropTypeAnimation`,
+    `OnHandlePropTypeTexture`, `OnHandlePropTypeBlock` and `OnHandlePropTypeCCBFile` receive,
+    because a property can be empty and a sprite frame or texture can be missing.
+  - `ICCBSelectorResolver`'s methods return nullable delegates, because the reader skips a
+    selector that no resolver handles.
+  - `CCBReader.ReadNodeGraphFromFile`, `ReadNodeGraphFromData` and `ReadFileWithCleanUp` are
+    nullable, because they return null for a file they can't read. They accept a null owner, and
+    the constructors accept a null assigner, resolver and listener.
+  - Also nullable: `CCBReader.MemberVariableAssigner`, `SelectorResolver` and `Owner`;
+    `CCBAnimationManager.RootNode`, `Delegate`, `DocumentControllerName`, `RunningSequenceName`
+    and `GetLastCompletedSequenceName`; `CCBSequence.CallBackChannel` and `SoundChannel`;
+    `CCBFile.FileNode`; and `CCBKeyframe.Value`.
+  - `CCBReader.CCBRootPath` is empty instead of null until it's set, as in cocos2d-x. The
+    reader's lists of owner outlets, owner callbacks and animation managers are empty instead of
+    null until a file fills them.
+- **Nullable annotations for Box2D's collision, math and rope code** (`box2d/Collision`,
+  `box2d/Common` and `box2d/Rope`). The visible changes:
+  - `b2DynamicTree<T>.b2TreeNode.userData` and `b2DynamicTree<T>.GetUserData` are nullable,
+    because only a leaf has user data. `GetUserData` returns the default for an ID that isn't a
+    proxy, as in Box2D. `b2BroadPhase.GetUserData` isn't nullable, because its tree's user data
+    is a struct.
+  - `b2ChainShape.Vertices` isn't nullable, though it's null until `CreateLoop` or `CreateChain`
+    runs.
+- **Nullable annotations for Box2D's world, bodies and fixtures** (`b2World`, `b2Body`,
+  `b2Fixture`, `b2ContactManager`, `b2Island` and the definitions, listeners and callbacks in
+  `box2d/Dynamics`). The visible changes:
+  - The lists of bodies, joints, fixtures and contacts end with null, so these are nullable:
+    `b2World.BodyList` and `JointList`; `b2Body.Next`, `Prev`, `FixtureList`, `JointList` and
+    `ContactList`; `b2Fixture.Next`; and `b2ContactManager.ContactList`.
+  - A world has no destruction listener, contact filter, contact listener or debug draw until
+    one is set. `b2World.SetDestructionListener`, `SetContactFilter`, `SetContactListener` and
+    `SetDebugDraw` accept null, and `b2ContactManager.ContactFilter` and `ContactListener` are
+    nullable. So is `b2ContactListener.b2_defaultListener`, which nothing sets.
+  - `b2BodyDef.userData`, `b2FixtureDef.userData`, `b2Body.UserData` and `b2Fixture.UserData`
+    are nullable. So is `b2FixtureDef.shape`, though `b2Body.CreateFixture` needs one.
+  - `b2Fixture.Body` and `Shape` aren't nullable, though they're null until `Create` runs and
+    after the fixture is destroyed. `b2Body.CreateFixture` runs `Create`. The `BroadPhase` and
+    `Callback` of `b2WorldQueryWrapper` and `b2WorldRayCastWrapper` aren't nullable either,
+    though they're null until they're set.
+  - `b2Island.m_bodies`, `m_contacts` and `m_joints` are empty instead of null when the island
+    is made with a capacity of 0 for them.
+- **`b2World.CreateBody`, `b2World.CreateJoint` and `b2Body.CreateFixture` throw
+  `InvalidOperationException` while the world is stepping**, for example in a contact callback.
+  Before, they returned null, which usually led to a `NullReferenceException` later. Create
+  bodies, joints and fixtures after `Step` returns.
+- **`b2World.Step` throws `InvalidOperationException` while the world is stepping**, for example
+  in a contact callback. Before, it ran a whole step in the middle of the current one, and
+  unlocked the world when it finished.
+- **Nullable annotations for Box2D's contacts and joints** (`box2d/Dynamics/Contacts` and
+  `box2d/Dynamics/Joints`). With these, all of Box2D is annotated. The visible changes:
+  - The lists end with null, so these are nullable: `b2Contact.Next` and `Prev`,
+    `b2ContactEdge.Next` and `Prev`, `b2Joint.Next` and `Prev`, `b2JointEdge.Next` and `Prev`,
+    and what `b2Contact.GetNext` and `GetPrev` and `b2Joint.GetNext` return.
+  - `b2JointDef.BodyA`, `BodyB` and `UserData`, `b2GearJointDef.joint1` and `joint2`, and a
+    joint's user data (`GetUserData` and `SetUserData`) are nullable. A new definition has no
+    bodies or joints until they're set.
+  - `b2ContactEdge.Contact` and `Other` and `b2JointEdge.Joint` and `Other` aren't nullable. A
+    joint edge's are null until `b2World.CreateJoint` adds the joint to its bodies' lists.
+  - `b2ContactConstraint.BodyA`, `BodyB` and `contact` aren't nullable, though they're null in a
+    constraint that no step has used yet.
+  - `b2Contact.Update` accepts a null listener.
+- **Sprite frame, sprite sheet, animation and particle plists that lack a value they need**
+  throw an `InvalidDataException` that says what's missing. So does one whose root isn't a
+  dictionary. Before, most of these threw `NullReferenceException`, `NotSupportedException` or
+  `ArgumentNullException`. Code that catches those exceptions should handle the new one; Fixed
+  lists each case.
+
+### Deprecated
+
+- **The bundled zlib port, `Cocos2D.Compression.Zlib`** (`ZInputStream`, `ZOutputStream`,
+  `ZStream`, `ZStreamException`, `Deflate`, `SupportClass` and `zlibConst`), is obsolete and will
+  be removed in 3.0. The engine no longer uses it. Use `System.IO.Compression.ZLibStream`
+  instead.
+
+### Fixed
+
+- A `CCTimer` made with the parameterless constructor no longer throws `NullReferenceException`
+  on its second update. It has no scheduler or selector, so updating it does nothing.
+- `CCDirector.DeserializeState` no longer puts a null in the scene stack for a saved type that
+  isn't a scene. The saved scene list ends there instead, as it already did at a type the game
+  no longer has.
+- A format-3 sprite frame without an `aliases` array no longer throws `NullReferenceException`
+  in `CCSpriteFrameCache` or `CCSpriteSheet`. It has no aliases, as in cocos2d-x.
+- `CCSpriteFrameCache.RemoveSpriteFramesFromDictionary` does nothing for a dictionary without
+  frames, instead of throwing `NullReferenceException`.
+- `CCAnimationCache` no longer throws `NullReferenceException` for animation properties without
+  a `spritesheets` array. It loads no sprite sheets for them.
+- A particle plist without a `textureFileName` gets its embedded texture. The missing name was
+  read as null, which made the texture cache throw, so the system got the default texture.
+- A particle plist whose texture file can't be loaded and that has no `textureImageData` no
+  longer throws `NullReferenceException` in release builds. The system gets no texture, as it
+  already did for empty `textureImageData`.
+- A sprite frame, animation, animation frame, SpriteKit image or SpriteKit subimage that isn't a
+  dictionary throws `InvalidDataException` instead of `NullReferenceException` or
+  `NotImplementedException`. So do a SpriteKit image without a `subimages` array and a plist
+  whose root isn't a dictionary, though a sprite sheet read from a stream still throws
+  `ContentLoadException` for its root.
+- A sprite frame without one of the rectangles, points or sizes its format needs throws an
+  `InvalidDataException` that names the key, instead of `NotSupportedException`. So does an
+  animation frame without a `spriteframe`, which threw `ArgumentNullException`, and a SpriteKit
+  image without a `path` or a subimage without a `name`.
+- `CCLabelAtlas` throws `ArgumentException` for a character map without a `textureFilename`, as
+  it does for one whose root isn't a dictionary. It used to pass a null file name to the texture
+  cache.
+- `PlistDocument.Write` writes a plist without a root object for a document that has no root,
+  instead of throwing `NullReferenceException`. Loading a plist without a root object into a
+  document also clears the root it had, which it used to keep.
+- A `PlistArray` or `PlistDictionary` made from a collection that holds null throws
+  `InvalidCastException`, as for other values it can't convert, instead of
+  `NullReferenceException`.
+- A plist with a `<data>` value no longer makes `CCSAXParser` throw `NullReferenceException`.
+  `CCDictMaker`, and so `CCFileUtils.DictionaryWithContentsOfFile`, skips the value and reads
+  the rest.
+- A TMX map without a `width` or `height` throws an `InvalidDataException` that names it,
+  instead of `ArgumentNullException`.
+- `CCFileUtils.FullPathFromRelativeFile` resolves a file relative to an empty path instead of
+  throwing `ArgumentNullException`.
+- `CCContentManager.LoadFilenameLookupDictionaryFromFile` throws `InvalidDataException` for a
+  file whose root isn't a dictionary, instead of passing null to
+  `SetFilenameLookupDictionary`.
+- `CCContentManager.Load<string>` no longer returns null for a content file without any text.
+  It tries the raw file instead, as it does when the content file can't be read, and throws
+  `ContentLoadException` if that fails too.
+- A node with the game pad enabled no longer throws `NullReferenceException` when it enters or
+  exits a scene in a `CCGameView`, which has no `CCApplication` to raise game pad events.
+- `CCFocusManager.FocusNextItem` and `FocusPreviousItem` no longer throw
+  `NullReferenceException` after the focused item is removed when it was the only one. No item
+  gets focus.
+- A pooled `CCRawList` can be added to after `Clear(true)`. Returning its buffer to the pool
+  left the list without one, so the next `Add` threw `NullReferenceException`.
+- `CCDrawManager.SetOrientation` throws `InvalidOperationException` when `InitializeDisplay`
+  hasn't run, as in a `CCGameView`, instead of `NullReferenceException`.
+- Reinitializing or disposing the graphics resources, as a device reset does, no longer throws
+  `NullReferenceException` when the garbage collector frees a resource partway through.
+- On iOS, a `CCLabel` with a `.ttf` font finds the content directory in a `CCGameView` instead
+  of throwing `NullReferenceException`.
+- On Android, setting `CCGameView.Paused` after `StartGame`, but before the view's own game
+  has initialised, no longer throws `NullReferenceException`.
+- On iOS, a touch that reaches a `CCGameView` before its game starts is ignored instead of
+  throwing `NullReferenceException`.
+- `CCGameView.ViewCreated` handlers get `EventArgs.Empty` instead of null.
+- `CCControl.IsTouchInside` and `CCControlSlider.IsTouchInside` test the touch in world space
+  for a control without a parent, instead of throwing `NullReferenceException`.
+- A `CCControlButton` can have a title node that isn't a label. Before, making one threw
+  `NullReferenceException`, and laying it out threw `InvalidCastException`.
+- `CCControlButton.GetTitleTtfForState`, `SetTitleTtfSizeForState` and `GetTitleBmFontForState`
+  treat a title node that isn't a label as having no font, instead of throwing
+  `InvalidCastException`.
+- Setting `CapInsets` on a `CCScale9Sprite` that has no image yet does nothing, instead of
+  throwing `NullReferenceException`.
+- `CCScale9Sprite` throws `ArgumentException` for a sprite frame name that isn't in the sprite
+  frame cache, and for a sprite frame or sprite without a texture. Before, these threw
+  `NullReferenceException`.
+- `CCTableView.TouchEnded` reports the touched cell for a table view without a parent, instead
+  of throwing `NullReferenceException`.
+- `CCNodeLoaderLibrary.SharedInstance` no longer throws `ArgumentException` the first time it's
+  used. It registered the default loaders a second time.
+- A `CCBReader` made with the parameterless constructor reads files with the shared node loader
+  library, instead of throwing `NullReferenceException`.
+- Reading a JavaScript-controlled CCB file with owner outlets or callbacks no longer throws
+  `NullReferenceException`.
+- When a sequence finishes, `CCBAnimationManager` tells its delegate the sequence's name, instead
+  of throwing `NullReferenceException`.
+- `CCBAnimationManager.RunAnimationsForSequenceIdTweenDuration`, and the methods that run a
+  sequence by name, throw `ArgumentException` for a sequence that doesn't exist and leave the
+  running sequence alone. Before, they threw `NullReferenceException` after stopping it.
+- A sprite frame or texture that a CCB file uses but that can't be found is skipped. Before, a
+  missing texture threw `NullReferenceException` while the file loaded, and so did a missing
+  frame for a `CCScale9Sprite`. A missing frame in an animation threw when its keyframe played.
+- `CCBReader.CreateSceneWithNodeGraphFromFile` throws `InvalidDataException` for a file it can't
+  read: no file name, a file without the CCB header, or one of another version. So does reading a
+  CCB file node whose own file can't be read. Before, these threw `NullReferenceException`, and a
+  file shorter than the header threw `IndexOutOfRangeException`.
+- Setting an extra property on an embedded CCB file that declares none no longer throws
+  `NullReferenceException`. The property is skipped, as in cocos2d-x.
+- `CCBox2dDraw` loads its font in a `CCGameView`, which has no `CCApplication`, instead of
+  throwing `NullReferenceException`.
+- `b2Vec2`, `b2AABB` and `b2ContactFeature` `Equals(object)` return false for null or a value of
+  another type, instead of throwing.
+- `b2Body.DestroyFixture` no longer hangs. It looped forever for any fixture but the body's two
+  newest.
+- `b2World.DrawShape` and `DrawJoint` do nothing for a world without a debug draw, instead of
+  throwing `NullReferenceException`.
+- `b2Body.CompareTo(null)` returns a positive number, as `IComparable<T>` requires, instead of
+  throwing `NullReferenceException`.
+- `b2World.Step` unlocks the world when a callback throws, such as a contact listener that
+  creates a body. Before, the world stayed locked until a later `Step` finished, so changes such
+  as creating or destroying a body failed or did nothing.
+- `b2World.Step` locks the world while it looks for new contacts, as it does for the rest of the
+  step. Before, a contact filter called then could change the world or step it again, and a
+  nested step could add the same contact twice.
+- `b2Body.CreateFixture` throws `ArgumentException` for a fixture definition without a shape,
+  instead of `NullReferenceException`.
+- `b2World.CreateJoint` throws `ArgumentException` for a definition without both bodies, a gear
+  joint definition without both joints, and a definition whose type it can't create, such as a
+  plain `b2JointDef`. Before, these threw `NullReferenceException` or failed an assert, and a
+  definition without `BodyB` left the joint half-added to the world.
+- `b2Contact`'s public four-argument constructor no longer throws `NullReferenceException`. It
+  still makes a circle contact whatever the shapes are, so use `b2Contact.Create` for other
+  shapes.
+
+### Security
+
+- The packages are built with the .NET SDK's own Source Link instead of the
+  `Microsoft.SourceLink.GitHub` 8.0.0 package, whose `Microsoft.Build.Tasks.Git` dependency has
+  an information disclosure vulnerability (CVE-2026-62900). The Source Link information in the
+  packages is unchanged. Building the engine from source needs .NET SDK 10.0.303 or later.
+
+### Documentation
+
+- `CONTRIBUTING.md` and the roadmap say that nullable annotations cover the engine and Box2D.
+  Every file is converted except the deprecated zlib port, which keeps `#nullable disable`
+  until 3.0 removes it.
+- 2.8.0's notes no longer say that the compiler warns about an override of `CCDrawNode.Init`
+  that doesn't call the base method. It can't, because the field that method sets is private.
+  Overrides of the other init methods those notes list are still warned.
+
 ## 2.8.0 - 2026-10-23
 
 More nullable reference type annotations, continuing 2.7.0. The menus, the misc nodes
@@ -25,7 +403,8 @@ errors. Three things can still affect a game:
   `CCUserDefault.GetStringForKey` with a null default, now raises a nullable warning (CS86xx).
   As with 2.7.0, `<WarningsNotAsErrors>nullable</WarningsNotAsErrors>` keeps them as warnings
   in a build with `TreatWarningsAsErrors`. A subclass that overrides one of the init methods
-  listed under Changed is also warned until it calls the base method.
+  listed under Changed is also warned until it calls the base method, except for
+  `CCDrawNode.Init`.
 - **Some failures throw a more specific exception.** For example, `CCMenu.AddChild` throws
   `ArgumentException` for a child that isn't a menu item, in release builds too;
   `CCProgressTimer` throws `ArgumentNullException` for a null sprite; and a malformed TMX file
@@ -68,8 +447,9 @@ errors. Three things can still affect a game:
 
   Overrides of `CCDrawNode.Init` and `CCRenderTexture.InitWithWidthAndHeight` must call the
   base method, and overrides of `CCProgressTimer.InitWithSprite` must set the sprite, for
-  example by calling the base method; the compiler now checks. Overrides of
-  `CCMotionStreak.InitWithFade` that take a texture should declare it nullable.
+  example by calling the base method. The compiler checks the last two, but not
+  `CCDrawNode.Init`, whose field is private. Overrides of `CCMotionStreak.InitWithFade` that
+  take a texture should declare it nullable.
 - **Nullable annotations for the tile maps** (TMX maps with their layers, object groups and
   tilesets, tile map atlases and parallax nodes). The visible changes:
   - `CCTMXTiledMap.LayerNamed` and `ObjectGroupNamed`, `CCTMXObjectGroup.ObjectNamed` and

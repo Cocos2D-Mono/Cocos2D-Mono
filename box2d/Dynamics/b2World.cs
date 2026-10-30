@@ -1,6 +1,6 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Box2D.Collision;
@@ -61,14 +61,14 @@ public class b2World
         set { m_contactManager = value; }
     }
 
-    private b2Body m_bodyList;
-    public b2Body BodyList
+    private b2Body? m_bodyList;
+    public b2Body? BodyList
     {
         get { return (m_bodyList); }
         set { m_bodyList = value; }
     }
-    private b2Joint m_jointList;
-    public b2Joint JointList
+    private b2Joint? m_jointList;
+    public b2Joint? JointList
     {
         get { return (m_jointList); }
         set { m_jointList = value; }
@@ -104,8 +104,8 @@ public class b2World
         set { m_allowSleep = value; }
     }
 
-    private b2DestructionListener m_destructionListener;
-    private b2Draw m_debugDraw;
+    private b2DestructionListener? m_destructionListener;
+    private b2Draw? m_debugDraw;
 
     // This is used to compute the time step ratio to
     // support a variable time step.
@@ -168,22 +168,22 @@ public class b2World
     public void SetSubStepping(bool flag) { m_subStepping = flag; }
     public bool GetSubStepping() { return m_subStepping; }
 
-    public void SetDestructionListener(b2DestructionListener listener)
+    public void SetDestructionListener(b2DestructionListener? listener)
     {
         m_destructionListener = listener;
     }
 
-    public void SetContactFilter(b2ContactFilter filter)
+    public void SetContactFilter(b2ContactFilter? filter)
     {
         m_contactManager.ContactFilter = filter;
     }
 
-    public void SetContactListener(b2ContactListener listener)
+    public void SetContactListener(b2ContactListener? listener)
     {
         m_contactManager.ContactListener = listener;
     }
 
-    public void SetDebugDraw(b2Draw debugDraw)
+    public void SetDebugDraw(b2Draw? debugDraw)
     {
         m_debugDraw = debugDraw;
     }
@@ -192,7 +192,8 @@ public class b2World
     {
         if (IsLocked)
         {
-            return null;
+            throw new InvalidOperationException(
+                "Bodies can't be created while the world is stepping, for example in a contact callback.");
         }
 
         b2Body b = new b2Body(def, this);
@@ -218,7 +219,7 @@ public class b2World
         }
 
         // Delete the attached joints.
-        b2JointEdge je = b.JointList;
+        b2JointEdge? je = b.JointList;
         while (je != null)
         {
             b2JointEdge je0 = je;
@@ -236,7 +237,7 @@ public class b2World
         b.JointList = null;
 
         // Delete the attached contacts.
-        b2ContactEdge ce = b.ContactList;
+        b2ContactEdge? ce = b.ContactList;
         while (ce != null)
         {
             b2ContactEdge ce0 = ce;
@@ -246,7 +247,7 @@ public class b2World
         b.ContactList = null;
 
         // Delete the attached fixtures. This destroys broad-phase proxies.
-        b2Fixture f = b.FixtureList;
+        b2Fixture? f = b.FixtureList;
         while (f != null)
         {
             b2Fixture f0 = f;
@@ -288,7 +289,8 @@ public class b2World
     {
         if (IsLocked)
         {
-            return null;
+            throw new InvalidOperationException(
+                "Joints can't be created while the world is stepping, for example in a contact callback.");
         }
 
         b2Joint j = b2Joint.Create(def);
@@ -320,13 +322,14 @@ public class b2World
             j.m_bodyB.JointList.Prev = j.m_edgeB;
         j.m_bodyB.JointList = j.m_edgeB;
 
+        Debug.Assert(def.BodyA != null && def.BodyB != null, "b2Joint's constructor checks that the definition has both bodies.");
         b2Body bodyA = def.BodyA;
         b2Body bodyB = def.BodyB;
 
         // If the joint prevents collisions, then flag any contacts for filtering.
         if (def.CollideConnected == false)
         {
-            b2ContactEdge edge = bodyB.ContactList;
+            b2ContactEdge? edge = bodyB.ContactList;
             while (edge != null)
             {
                 if (edge.Other == bodyA)
@@ -421,7 +424,7 @@ public class b2World
         // If the joint prevents collisions, then flag any contacts for filtering.
         if (collideConnected == false)
         {
-            b2ContactEdge edge = bodyB.ContactList;
+            b2ContactEdge? edge = bodyB.ContactList;
             while (edge != null)
             {
                 if (edge.Other == bodyA)
@@ -447,14 +450,14 @@ public class b2World
         m_allowSleep = flag;
         if (m_allowSleep == false)
         {
-            for (b2Body b = m_bodyList; b != null; b = b.Next)
+            for (b2Body? b = m_bodyList; b != null; b = b.Next)
             {
                 b.SetAwake(true);
             }
         }
     }
 
-    private b2Island m_Island;
+    private b2Island? m_Island;
 
     // Find islands, integrate and solve raints, solve position raints
     public void Solve(b2TimeStep step)
@@ -489,21 +492,21 @@ public class b2World
         b2Island island = m_Island;
 
         // Clear all the island flags.
-        for (b2Body b = m_bodyList; b != null; b = b.Next)
+        for (b2Body? b = m_bodyList; b != null; b = b.Next)
         {
 #if PROFILING
             m_profile.bodyCount++;
 #endif
             b.BodyFlags = b.BodyFlags & ~b2BodyFlags.e_islandFlag;
         }
-        for (b2Contact c = m_contactManager.ContactList; c != null; c = c.Next)
+        for (b2Contact? c = m_contactManager.ContactList; c != null; c = c.Next)
         {
 #if PROFILING
             m_profile.contactCount++;
 #endif
             c.Flags &= ~b2ContactFlags.e_islandFlag;
         }
-        for (b2Joint j = m_jointList; j != null; j = j.Next)
+        for (b2Joint? j = m_jointList; j != null; j = j.Next)
         {
 #if PROFILING
             m_profile.jointCount++;
@@ -514,7 +517,7 @@ public class b2World
         // Build and simulate all awake islands.
         int stackSize = m_bodyCount;
         b2Body[] stack = b2ArrayPool<b2Body>.Create(stackSize, true);
-        for (b2Body seed = m_bodyList; seed != null; seed = seed.Next)
+        for (b2Body? seed = m_bodyList; seed != null; seed = seed.Next)
         {
             if ((seed.BodyFlags & b2BodyFlags.e_islandFlag) != 0)
             {
@@ -558,7 +561,7 @@ public class b2World
                 }
 
                 // Search all contacts connected to this body.
-                for (b2ContactEdge ce = b.ContactList; ce != null; ce = ce.Next)
+                for (b2ContactEdge? ce = b.ContactList; ce != null; ce = ce.Next)
                 {
                     b2Contact contact = ce.Contact;
 
@@ -599,7 +602,7 @@ public class b2World
                 }
 
                 // Search all joints connect to this body.
-                for (b2JointEdge je = b.JointList; je != null; je = je.Next)
+                for (b2JointEdge? je = b.JointList; je != null; je = je.Next)
                 {
 #if PROFILING
                     m_profile.jointCount++;
@@ -658,7 +661,7 @@ public class b2World
         b2Timer timer = new b2Timer();
 #endif
         // Synchronize fixtures, check for out of range bodies.
-        for (b2Body b = m_bodyList; b != null; b = b.Next)
+        for (b2Body? b = m_bodyList; b != null; b = b.Next)
         {
             // If a body was not in an island then it did not move.
             if ((b.BodyFlags & b2BodyFlags.e_islandFlag) == 0)
@@ -686,7 +689,7 @@ public class b2World
 
     // TODO: Make this faster, it's very slow.
 
-    private b2Island m_TOIIsland;
+    private b2Island? m_TOIIsland;
     private b2Body[] m_TOIbodies = new b2Body[2];
 
     public void SolveTOI(b2TimeStep step)
@@ -703,13 +706,13 @@ public class b2World
 
         if (m_stepComplete)
         {
-            for (b2Body b = m_bodyList; b != null; b = b.Next)
+            for (b2Body? b = m_bodyList; b != null; b = b.Next)
             {
                 b.BodyFlags = b.BodyFlags & ~b2BodyFlags.e_islandFlag;
                 b.Sweep.alpha0 = 0.0f;
             }
 
-            for (b2Contact c = m_contactManager.ContactList; c != null; c = c.Next)
+            for (b2Contact? c = m_contactManager.ContactList; c != null; c = c.Next)
             {
                 // Invalidate TOI
                 c.Flags &= ~(b2ContactFlags.e_toiFlag | b2ContactFlags.e_islandFlag);
@@ -729,10 +732,10 @@ public class b2World
             m_profile.toiSolverIterations++;
 #endif
             // Find the first TOI.
-            b2Contact minContact = null;
+            b2Contact? minContact = null;
             float minAlpha = 1.0f;
 
-            for (b2Contact c = m_contactManager.ContactList; c != null; c = c.Next)
+            for (b2Contact? c = m_contactManager.ContactList; c != null; c = c.Next)
             {
                 // Is this contact disabled?
                 if ((c.Flags & b2ContactFlags.e_enabledFlag) == 0)
@@ -909,7 +912,7 @@ public class b2World
                     b2Body body = bodies[i];
                     if (body.BodyType == b2BodyType.b2_dynamicBody)
                     {
-                        for (b2ContactEdge ce = body.ContactList; ce != null; ce = ce.Next)
+                        for (b2ContactEdge? ce = body.ContactList; ce != null; ce = ce.Next)
                         {
                             if (island.m_bodyCount == island.m_bodyCapacity)
                             {
@@ -1017,7 +1020,7 @@ public class b2World
                     body.SynchronizeFixtures();
 
                     // Invalidate all contact TOIs on this displaced body.
-                    for (b2ContactEdge ce = body.ContactList; ce != null; ce = ce.Next)
+                    for (b2ContactEdge? ce = body.ContactList; ce != null; ce = ce.Next)
                     {
                         ce.Contact.Flags &= ~(b2ContactFlags.e_toiFlag | b2ContactFlags.e_islandFlag);
                     }
@@ -1041,82 +1044,95 @@ public class b2World
 
     public void Step(float dt, int velocityIterations, int positionIterations)
     {
+        if (IsLocked)
+        {
+            throw new InvalidOperationException(
+                "Step can't be called while the world is stepping, for example in a contact callback.");
+        }
+
 #if PROFILING
         b2Timer stepTimer = new b2Timer();
 #endif
 
-        // If new fixtures were added, we need to find the new contacts.
-        if ((m_flags & b2WorldFlags.e_newFixture) != 0)
-        {
-            m_contactManager.FindNewContacts();
-            m_flags &= ~b2WorldFlags.e_newFixture;
-        }
-
+        // The world is locked for the whole step, including the search for new contacts, which
+        // calls the contact filter. It's unlocked even when a callback throws, for example by
+        // creating a body. Otherwise it would stay locked until a later Step finished.
         m_flags |= b2WorldFlags.e_locked;
-
-        b2TimeStep step = new b2TimeStep();
-        step.dt = dt;
-        step.velocityIterations = velocityIterations;
-        step.positionIterations = positionIterations;
-        if (dt > 0.0f)
+        try
         {
-            step.inv_dt = 1.0f / dt;
-        }
-        else
-        {
-            step.inv_dt = 0.0f;
-        }
+            // If new fixtures were added, we need to find the new contacts.
+            if ((m_flags & b2WorldFlags.e_newFixture) != 0)
+            {
+                m_contactManager.FindNewContacts();
+                m_flags &= ~b2WorldFlags.e_newFixture;
+            }
 
-        step.dtRatio = m_inv_dt0 * dt;
+            b2TimeStep step = new b2TimeStep();
+            step.dt = dt;
+            step.velocityIterations = velocityIterations;
+            step.positionIterations = positionIterations;
+            if (dt > 0.0f)
+            {
+                step.inv_dt = 1.0f / dt;
+            }
+            else
+            {
+                step.inv_dt = 0.0f;
+            }
 
-        step.warmStarting = m_warmStarting;
+            step.dtRatio = m_inv_dt0 * dt;
+
+            step.warmStarting = m_warmStarting;
 
 #if PROFILING
-        b2Timer timer = new b2Timer();
+            b2Timer timer = new b2Timer();
 #endif
-        // Update contacts. This is where some contacts are destroyed.
-        {
-            m_contactManager.Collide();
+            // Update contacts. This is where some contacts are destroyed.
+            {
+                m_contactManager.Collide();
 #if PROFILING
-            m_profile.collide = timer.GetMilliseconds();
+                m_profile.collide = timer.GetMilliseconds();
 #endif
-        }
+            }
 
-        // Integrate velocities, solve velocityraints, and integrate positions.
-        if (m_stepComplete && step.dt > 0.0f)
-        {
+            // Integrate velocities, solve velocityraints, and integrate positions.
+            if (m_stepComplete && step.dt > 0.0f)
+            {
 #if PROFILING
-            timer.Reset();
+                timer.Reset();
 #endif
-            Solve(step);
+                Solve(step);
 #if PROFILING
-            m_profile.solve = timer.GetMilliseconds();
+                m_profile.solve = timer.GetMilliseconds();
 #endif
-        }
+            }
 
-        // Handle TOI events.
-        if (m_continuousPhysics && step.dt > 0.0f)
-        {
+            // Handle TOI events.
+            if (m_continuousPhysics && step.dt > 0.0f)
+            {
 #if PROFILING
-            timer.Reset();
+                timer.Reset();
 #endif
-            SolveTOI(step);
+                SolveTOI(step);
 #if PROFILING
-            m_profile.solveTOI = timer.GetMilliseconds();
+                m_profile.solveTOI = timer.GetMilliseconds();
 #endif
-        }
+            }
 
-        if (step.dt > 0.0f)
+            if (step.dt > 0.0f)
+            {
+                m_inv_dt0 = step.inv_dt;
+            }
+
+            if ((m_flags & b2WorldFlags.e_clearForces) != 0)
+            {
+                ClearForces();
+            }
+        }
+        finally
         {
-            m_inv_dt0 = step.inv_dt;
+            m_flags &= ~b2WorldFlags.e_locked;
         }
-
-        if ((m_flags & b2WorldFlags.e_clearForces) != 0)
-        {
-            ClearForces();
-        }
-
-        m_flags &= ~b2WorldFlags.e_locked;
 #if PROFILING
         m_profile.step = stepTimer.GetMilliseconds();
 #endif
@@ -1124,7 +1140,7 @@ public class b2World
 
     public void ClearForces()
     {
-        for (b2Body body = m_bodyList; body != null; body = body.Next)
+        for (b2Body? body = m_bodyList; body != null; body = body.Next)
         {
             body.Force.SetZero(); // = b2Vec2.Zero;
             body.Torque = 0.0f;
@@ -1153,6 +1169,11 @@ public class b2World
 
     public void DrawShape(b2Fixture fixture, ref b2Transform xf, b2Color color)
     {
+        if (m_debugDraw == null)
+        {
+            return;
+        }
+
         switch (fixture.ShapeType)
         {
             case b2ShapeType.e_circle:
@@ -1218,6 +1239,11 @@ public class b2World
 
     public void DrawJoint(b2Joint joint)
     {
+        if (m_debugDraw == null)
+        {
+            return;
+        }
+
         b2Body bodyA = joint.GetBodyA();
         b2Body bodyB = joint.GetBodyB();
         b2Transform xf1 = bodyA.Transform;
@@ -1269,9 +1295,9 @@ public class b2World
 
         if ((flags & b2DrawFlags.e_shapeBit) != 0)
         {
-            for (b2Body b = m_bodyList; b != null; b = b.Next)
+            for (b2Body? b = m_bodyList; b != null; b = b.Next)
             {
-                for (b2Fixture f = b.FixtureList; f != null; f = f.Next)
+                for (b2Fixture? f = b.FixtureList; f != null; f = f.Next)
                 {
                     if (b.IsActive() == false)
                     {
@@ -1299,7 +1325,7 @@ public class b2World
 
         if ((flags & b2DrawFlags.e_jointBit) != 0)
         {
-            for (b2Joint j = m_jointList; j != null; j = j.GetNext())
+            for (b2Joint? j = m_jointList; j != null; j = j.GetNext())
             {
                 DrawJoint(j);
             }
@@ -1308,7 +1334,7 @@ public class b2World
         if ((flags & b2DrawFlags.e_pairBit) != 0)
         {
             b2Color color = new b2Color(0.3f, 0.9f, 0.9f);
-            for (b2Contact c = m_contactManager.ContactList; c != null; c = c.Next)
+            for (b2Contact? c = m_contactManager.ContactList; c != null; c = c.Next)
             {
                 //b2Fixture fixtureA = c.FixtureA;
                 //b2Fixture fixtureB = c.FixtureB;
@@ -1325,14 +1351,14 @@ public class b2World
             b2Color color = new b2Color(0.9f, 0.3f, 0.9f);
             b2BroadPhase bp = m_contactManager.BroadPhase;
 
-            for (b2Body b = m_bodyList; b != null; b = b.Next)
+            for (b2Body? b = m_bodyList; b != null; b = b.Next)
             {
                 if (b.IsActive() == false)
                 {
                     continue;
                 }
 
-                for (b2Fixture f = b.FixtureList; f != null; f = f.Next)
+                for (b2Fixture? f = b.FixtureList; f != null; f = f.Next)
                 {
                     for (int i = 0; i < f.ProxyCount; ++i)
                     {
@@ -1353,7 +1379,7 @@ public class b2World
 
         if ((flags & b2DrawFlags.e_centerOfMassBit) != 0)
         {
-            for (b2Body b = m_bodyList; b != null; b = b.Next)
+            for (b2Body? b = m_bodyList; b != null; b = b.Next)
             {
                 b2Transform xf = b.Transform;
                 xf.p = b.WorldCenter;
@@ -1395,20 +1421,20 @@ public class b2World
         System.Diagnostics.Debug.WriteLine("b2Body bodies = new b2Body[{0}];", m_bodyCount);
         System.Diagnostics.Debug.WriteLine("b2Joint joints = new b2Joint[{0}];", m_jointCount);
         int i = 0;
-        for (b2Body b = m_bodyList; b != null; b = b.Next, i++)
+        for (b2Body? b = m_bodyList; b != null; b = b.Next, i++)
         {
             b.IslandIndex = i;
             b.Dump();
         }
 
         i = 0;
-        for (b2Joint j = m_jointList; j != null; j = j.Next, i++)
+        for (b2Joint? j = m_jointList; j != null; j = j.Next, i++)
         {
             j.Index = i;
         }
 
         // First pass on joints, only gear joints.
-        for (b2Joint j = m_jointList; j != null; j = j.Next)
+        for (b2Joint? j = m_jointList; j != null; j = j.Next)
         {
             if (j.GetJointType() == b2JointType.e_gearJoint)
             {
@@ -1421,7 +1447,7 @@ public class b2World
         }
 
         // Second pass on joints, skip gear joints.
-        for (b2Joint j = m_jointList; j != null; j = j.Next)
+        for (b2Joint? j = m_jointList; j != null; j = j.Next)
         {
             if (j.GetJointType() != b2JointType.e_gearJoint)
             {

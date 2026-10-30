@@ -1,4 +1,3 @@
-#nullable disable
 /*
  * CCControl.h
  *
@@ -96,7 +95,8 @@ public class CCControl : CCLayerRGBA
 
     /** Changes the priority of the button. The lower the number, the higher the priority. */
 //        private int _defaultTouchPriority;
-    protected Dictionary<CCControlEvent, CCRawList<CCInvocation>> _dispatchTable;
+    protected Dictionary<CCControlEvent, CCRawList<CCInvocation>> _dispatchTable =
+        new Dictionary<CCControlEvent, CCRawList<CCInvocation>>();
 
 /*      public int DefaultTouchPriority
     {
@@ -266,7 +266,7 @@ public class CCControl : CCLayerRGBA
     * target and action. See "CCControlEvent" for bitmask constants.
     */
 
-		public virtual void RemoveTargetWithActionForControlEvents(object target, Action<object, CCControlEvent> action, CCControlEvent controlEvents)
+		public virtual void RemoveTargetWithActionForControlEvents(object? target, Action<object, CCControlEvent>? action, CCControlEvent controlEvents)
     {
         // For each control events
         for (int i = 0; i < ControlEventTotalNumber; i++)
@@ -305,7 +305,8 @@ public class CCControl : CCLayerRGBA
     public virtual bool IsTouchInside(CCTouch touch)
     {
         CCPoint touchLocation = touch.Location;
-        touchLocation = Parent.ConvertToNodeSpace(touchLocation);
+        // Without a parent, the bounding box is in world space, like the touch.
+        touchLocation = Parent?.ConvertToNodeSpace(touchLocation) ?? touchLocation;
         CCRect bBox = BoundingBox;
         return bBox.ContainsPoint(touchLocation);
     }
@@ -340,7 +341,7 @@ public class CCControl : CCLayerRGBA
     //<CCInvocation*>
     protected CCRawList<CCInvocation> DispatchListforControlEvent(CCControlEvent controlEvent)
     {
-        CCRawList<CCInvocation> invocationList;
+        CCRawList<CCInvocation>? invocationList;
         if (!_dispatchTable.TryGetValue(controlEvent, out invocationList))
         {
             invocationList = new CCRawList<CCInvocation>(1);
@@ -361,7 +362,7 @@ public class CCControl : CCLayerRGBA
         eventInvocationList.Add(invocation);
     }
 
-		public void RemoveTargetWithActionForControlEvent(object target, Action<object, CCControlEvent> action, CCControlEvent controlEvent)
+		public void RemoveTargetWithActionForControlEvent(object? target, Action<object, CCControlEvent>? action, CCControlEvent controlEvent)
     {
         // Retrieve all invocations for the given control event
         //<CCInvocation*>
@@ -409,8 +410,8 @@ public class CCControl : CCLayerRGBA
 
     public bool HasVisibleParents()
     {
-        CCNode parent = Parent;
-        for (CCNode c = parent; c != null; c = c.Parent)
+        CCNode? parent = Parent;
+        for (CCNode? c = parent; c != null; c = c.Parent)
         {
             if (!c.Visible)
             {

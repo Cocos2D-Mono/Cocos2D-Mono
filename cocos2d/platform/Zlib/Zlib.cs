@@ -47,6 +47,7 @@ using System;
 
 namespace Cocos2D.Compression.Zlib;
 
+[Obsolete(ZlibDeprecation.Message)]
 public sealed class zlibConst
 {
     private const String version_Renamed_Field = "1.0.2";
@@ -82,4 +83,13 @@ public sealed class zlibConst
     {
         get { return version_Renamed_Field; }
     }
+}
+
+// The message on the port's [Obsolete] attributes. This class isn't obsolete itself, so
+// the attributes can refer to it.
+internal static class ZlibDeprecation
+{
+    internal const string Message =
+        "The bundled zlib port is deprecated and will be removed in 3.0. " +
+        "Use System.IO.Compression.ZLibStream instead.";
 }

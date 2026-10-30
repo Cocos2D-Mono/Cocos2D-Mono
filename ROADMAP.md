@@ -65,7 +65,7 @@ The larger architecture work (composition, dependency injection, async content l
 |---|---|
 | Quality & testing | In place and growing |
 | Build & packaging | Shipped in 2.5.11 |
-| Modern C# | In progress — nullable annotations ship area by area, starting in 2.7.0 |
+| Modern C# | In progress — nullable annotations cover the engine and Box2D from 2.9.0, except the deprecated zlib port |
 | API & architecture | Exploratory — after 3.0 |
 | Platforms | Maintained, in three tiers — packaged, source only, console |
 | 3.0 | Planned — API cleanup, no date yet |

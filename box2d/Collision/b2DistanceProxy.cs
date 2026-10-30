@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,8 +13,9 @@ public class b2DistanceProxy
     // GJK using Voronoi regions (Christer Ericson) and Barycentric coordinates.
     public static int b2_gjkCalls, b2_gjkIters, b2_gjkMaxIters;
 
-    internal b2Vec2[] m_buffer;
-    internal b2Vec2[] m_vertices;
+    internal b2Vec2[] m_buffer = new b2Vec2[2];
+    // No vertices until Set points this at the shape's vertices or the buffer.
+    internal b2Vec2[] m_vertices = Array.Empty<b2Vec2>();
     internal int m_count;
     internal float m_radius;
 
@@ -25,10 +25,8 @@ public class b2DistanceProxy
     public static b2DistanceProxy Create()
     {
         b2DistanceProxy bp = new b2DistanceProxy();
-        bp.m_vertices = null;
         bp.m_count = 0;
         bp.m_radius = 0.0f;
-        bp.m_buffer = new b2Vec2[2];
         return (bp);
     }
 

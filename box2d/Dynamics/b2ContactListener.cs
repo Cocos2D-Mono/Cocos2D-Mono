@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,5 +53,5 @@ public abstract class b2ContactListener
     /// </summary>
     public abstract void PostSolve(b2Contact contact, ref b2ContactImpulse impulse);
 
-    public static b2ContactListener b2_defaultListener;
+    public static b2ContactListener? b2_defaultListener;
 }

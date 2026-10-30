@@ -1,7 +1,7 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.IsolatedStorage;
 using Microsoft.Xna.Framework;
@@ -64,17 +64,18 @@ public abstract class CCDirector
     private bool _needsInit = true;
     internal CCSize m_obWinSizeInPoints;
 		
-    private CCAccelerometer _accelerometer;
-		private CCActionManager _actionManager;
-    private CCKeypadDispatcher _keypadDispatcher;
-		private CCKeyboardDispatcher _keyboardDispatcher;
-    private CCScene _nextScene;
-    private CCNode _notificationNode;
+    // Init creates these, and SharedDirector calls Init as soon as it constructs the director.
+    private CCAccelerometer _accelerometer = null!;
+		private CCActionManager _actionManager = null!;
+    private CCKeypadDispatcher _keypadDispatcher = null!;
+		private CCKeyboardDispatcher _keyboardDispatcher = null!;
+    private CCScheduler _scheduler = null!;
+    private CCTouchDispatcher _touchDispatcher = null!;
 
-    private ICCDirectorDelegate _projectionDelegate;
-    private CCScene _runningScene;
-    private CCScheduler _scheduler;
-    private CCTouchDispatcher _touchDispatcher;
+    private CCScene? _nextScene;
+    private CCNode? _notificationNode;
+    private ICCDirectorDelegate? _projectionDelegate;
+    private CCScene? _runningScene;
 
     private bool _displayStats;
     
@@ -85,15 +86,16 @@ public abstract class CCDirector
     private uint _drawCount;
     private float _accumUpdate;
     
-    private CCLabel _fpsLabel;
-    private CCLabel _updateTimeLabel;
-    private CCLabel _drawTimeLabel;
-    private CCLabel _drawsLabel;
-    private CCLabel _memoryLabel;
-    private CCLabel _gcLabel;
+    // Created together by CreateStatsLabel, the first time the stats are shown.
+    private CCLabel? _fpsLabel;
+    private CCLabel? _updateTimeLabel;
+    private CCLabel? _drawTimeLabel;
+    private CCLabel? _drawsLabel;
+    private CCLabel? _memoryLabel;
+    private CCLabel? _gcLabel;
 
     // Stopwatch for measure the time.
-    private Stopwatch _stopwatch;
+    private Stopwatch _stopwatch = null!; // Init creates it.
     
     #region State Management
 		
@@ -161,7 +163,7 @@ public abstract class CCDirector
             // if it needs to. we name each file "ScreenX.dat" where X is the index of
             // the screen in the stack, to ensure the files are uniquely named
             int screenIndex = 0;
-            string fileName = null;
+            string? fileName = null;
             foreach (CCScene scene in _scenesStack)
             {
                 if (scene.IsSerializable)
@@ -230,7 +232,7 @@ public abstract class CCDirector
                                         while (true)
                                 {
                                     // read a line from our file
-                                            string line = reader.ReadLine();
+                                            string? line = reader.ReadLine();
                                             if (line == null)
                                             {
                                                 break;
@@ -255,9 +257,17 @@ public abstract class CCDirector
                                         }
                                         else
                                         {
-                                            Type screenType = Type.GetType(line);
-                                            CCScene scene = Activator.CreateInstance(screenType) as CCScene;
-                                                    PushScene(scene);
+                                            // The scene list ends at the first line that isn't a scene type the game has: the
+                                            // running-scene marker that follows the list, or a type the game no longer has.
+                                            // Stopping there, as the exception it used to throw did, keeps each restored scene
+                                            // lined up with its numbered save file.
+                                            Type? screenType = Type.GetType(line);
+                                            if (screenType == null || !typeof(CCScene).IsAssignableFrom(screenType) ||
+                                                Activator.CreateInstance(screenType) is not CCScene scene)
+                                            {
+                                                break;
+                                            }
+                                            PushScene(scene);
                                                     //                                                    _scenesStack.Add(scene);
                                                 }
                                             }
@@ -333,7 +343,7 @@ public abstract class CCDirector
                     }
     #endregion
 
-    public ICCDirectorDelegate Delegate
+    public ICCDirectorDelegate? Delegate
     {
         get { return _projectionDelegate; }
         set { _projectionDelegate = value; }
@@ -454,7 +464,7 @@ public abstract class CCDirector
         get { return _accelerometer; }
         set { _accelerometer = value; }
     }
-    public CCScene RunningScene
+    public CCScene? RunningScene
     {
         get { return _runningScene; }
     }
@@ -492,7 +502,7 @@ public abstract class CCDirector
         get { return _paused; }
     }
 
-    public CCNode NotificationNode
+    public CCNode? NotificationNode
     {
         get { return _notificationNode; }
         set { _notificationNode = value; }
@@ -514,6 +524,8 @@ public abstract class CCDirector
         set { _needsInit = value; }
     }
 
+    [MemberNotNull(nameof(_stopwatch), nameof(_scheduler), nameof(_actionManager), nameof(_touchDispatcher),
+        nameof(_keypadDispatcher), nameof(_keyboardDispatcher), nameof(_accelerometer))]
     public virtual bool Init()
     {
         SetDefaultValues();
@@ -679,7 +691,7 @@ public abstract class CCDirector
         // draw the notifications node
         if (_notificationNode != null)
         {
-            NotificationNode.Visit();
+            _notificationNode.Visit();
         }
 
         if (_displayStats)
@@ -981,7 +993,7 @@ public abstract class CCDirector
         }
     }
 
-    public void PopScene(float t, CCTransitionScene s)
+    public void PopScene(float t, CCTransitionScene? s)
     {
         Debug.Assert(_runningScene != null, "_runningScene cannot be null");
 
@@ -1067,6 +1079,7 @@ public abstract class CCDirector
 
     protected void SetNextScene()
     {
+        Debug.Assert(_nextScene != null, "DrawScene only calls SetNextScene when there's a next scene");
         bool runningIsTransition = _runningScene != null && _runningScene.IsTransition;// is CCTransitionScene;
 
         // If it is not a transition, call onExit/cleanup
@@ -1104,7 +1117,7 @@ public abstract class CCDirector
     {
         if (_fpsLabel == null)
         {
-            CCTexture2D texture;
+            CCTexture2D? texture;
             CCTextureCache textureCache = CCTextureCache.SharedTextureCache;
 
             try
@@ -1164,6 +1177,11 @@ public abstract class CCDirector
             }
         }
 
+        // The labels are created together, and a failed attempt clears _fpsLabel, so they all exist here.
+        Debug.Assert(_fpsLabel != null && _updateTimeLabel != null && _drawTimeLabel != null &&
+                     _drawsLabel != null && _memoryLabel != null && _gcLabel != null,
+                     "the stats labels are created together");
+
         float factor = CCDrawManager.DesignResolutionSize.Height / 320.0f;
         var pos = CCDirector.SharedDirector.VisibleOrigin;
 
@@ -1200,7 +1218,8 @@ public abstract class CCDirector
             if (_fpsLabel == null)
                 CreateStatsLabel();
 
-            if (_fpsLabel != null && _updateTimeLabel != null && _drawsLabel != null)
+            if (_fpsLabel != null && _updateTimeLabel != null && _drawTimeLabel != null &&
+                _drawsLabel != null && _memoryLabel != null && _gcLabel != null)
             {
                 if (_accumDt > CCMacros.CCDirectorStatsUpdateIntervalInSeconds)
                 {

@@ -1,4 +1,3 @@
-#nullable disable
 /*
  * CCControlSwitch.h
  *
@@ -27,6 +26,7 @@
 
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Cocos2D;
@@ -45,7 +45,7 @@ public class CCControlSwitch : CCControl
     protected float _initialTouchXPosition;
     protected CCControlSwitchSprite _switchSprite;
 
-    public event CCSwitchValueChangedDelegate OnValueChanged;
+    public event CCSwitchValueChangedDelegate? OnValueChanged;
 
     public override bool Enabled
     {
@@ -60,6 +60,7 @@ public class CCControlSwitch : CCControl
         }
     }
 
+    [MemberNotNull(nameof(_switchSprite))]
     protected virtual bool InitWithMaskSprite(CCSprite maskSprite, CCSprite onSprite, CCSprite offSprite, CCSprite thumbSprite)
     {
         return InitWithMaskSprite(maskSprite, onSprite, offSprite, thumbSprite, null, null);
@@ -74,8 +75,9 @@ public class CCControlSwitch : CCControl
 
     /** Initializes a switch with a mask sprite, on/off sprites for on/off states, a thumb sprite and an on/off labels. */
 
-    protected virtual bool InitWithMaskSprite(CCSprite maskSprite, CCSprite onSprite, CCSprite offSprite, CCSprite thumbSprite, CCLabelTTF onLabel,
-                                   CCLabelTTF offLabel)
+    [MemberNotNull(nameof(_switchSprite))]
+    protected virtual bool InitWithMaskSprite(CCSprite maskSprite, CCSprite onSprite, CCSprite offSprite, CCSprite thumbSprite, CCLabelTTF? onLabel,
+                                   CCLabelTTF? offLabel)
     {
         if (base.Init())
         {
@@ -98,13 +100,14 @@ public class CCControlSwitch : CCControl
             ContentSize = _switchSprite.ContentSize;
             return true;
         }
+        Debug.Fail("CCControl.Init can't fail.");
         return false;
     }
 
     /** Creates a switch with a mask sprite, on/off sprites for on/off states, a thumb sprite and an on/off labels. */
 
-    public CCControlSwitch(CCSprite maskSprite, CCSprite onSprite, CCSprite offSprite, CCSprite thumbSprite, CCLabelTTF onLabel,
-                                         CCLabelTTF offLabel)
+    public CCControlSwitch(CCSprite maskSprite, CCSprite onSprite, CCSprite offSprite, CCSprite thumbSprite, CCLabelTTF? onLabel,
+                                         CCLabelTTF? offLabel)
     {
         InitWithMaskSprite(maskSprite, onSprite, offSprite, thumbSprite, onLabel, offLabel);
     }
@@ -249,9 +252,9 @@ public class CCControlSwitchSprite : CCSprite, ICCActionTweenDelegate
     private float _onPosition;
     private float _sliderXPosition;
     private CCSprite _maskSprite;
-    private CCLabelTTF _offLabel;
+    private CCLabelTTF? _offLabel;
     private CCSprite _offSprite;
-    private CCLabelTTF _onLabel;
+    private CCLabelTTF? _onLabel;
     private CCSprite _onSprite;
 
     public CCControlSwitchSprite()
@@ -259,12 +262,13 @@ public class CCControlSwitchSprite : CCSprite, ICCActionTweenDelegate
         _sliderXPosition = 0.0f;
         _onPosition = 0.0f;
         _offPosition = 0.0f;
-        _onSprite = null;
-        _offSprite = null;
-        _thumbSprite = null;
+        // CCControlSwitch calls InitWithMaskSprite straight after construction, which sets the sprites.
+        _onSprite = null!;
+        _offSprite = null!;
+        _thumbSprite = null!;
         _onLabel = null;
         _offLabel = null;
-        _maskSprite = null;
+        _maskSprite = null!;
     }
 
     public float OnPosition
@@ -303,13 +307,13 @@ public class CCControlSwitchSprite : CCSprite, ICCActionTweenDelegate
         set { _thumbSprite = value; }
     }
 
-    public CCLabelTTF OnLabel
+    public CCLabelTTF? OnLabel
     {
         get { return _onLabel; }
         set { _onLabel = value; }
     }
 
-    public CCLabelTTF OffLabel
+    public CCLabelTTF? OffLabel
     {
         get { return _offLabel; }
         set { _offLabel = value; }
@@ -357,8 +361,9 @@ public class CCControlSwitchSprite : CCSprite, ICCActionTweenDelegate
 
     #endregion
 
+    [MemberNotNull(nameof(_maskSprite), nameof(_onSprite), nameof(_offSprite), nameof(_thumbSprite))]
     public bool InitWithMaskSprite(CCSprite maskSprite, CCSprite onSprite, CCSprite offSprite,
-                                   CCSprite thumbSprite, CCLabelTTF onLabel, CCLabelTTF offLabel)
+                                   CCSprite thumbSprite, CCLabelTTF? onLabel, CCLabelTTF? offLabel)
     {
         CCRect rect = maskSprite.TextureRect;
         rect.Origin.X = rect.Origin.Y = 0;
@@ -371,18 +376,19 @@ public class CCControlSwitchSprite : CCSprite, ICCActionTweenDelegate
             _offPosition = -onSprite.ContentSize.Width + thumbSprite.ContentSize.Width / 2;
             _sliderXPosition = _onPosition;
 
-            OnSprite = onSprite;
-            OffSprite = offSprite;
-            ThumbSprite = thumbSprite;
-            OnLabel = onLabel;
-            OffLabel = offLabel;
-            MaskSprite = maskSprite;
+            _onSprite = onSprite;
+            _offSprite = offSprite;
+            _thumbSprite = thumbSprite;
+            _onLabel = onLabel;
+            _offLabel = offLabel;
+            _maskSprite = maskSprite;
 
             AddChild(_thumbSprite);
 
             NeedsLayout();
             return true;
         }
+        Debug.Fail("CCSprite.InitWithTexture can't fail.");
         return false;
     }
 
@@ -440,7 +446,9 @@ public class CCControlSwitchSprite : CCSprite, ICCActionTweenDelegate
 
         rt.End();
 
-        InitWithTexture(rt.Sprite.Texture);
+        CCTexture2D? texture = rt.Sprite.Texture;
+        Debug.Assert(texture != null, "A render texture's sprite has its texture.");
+        InitWithTexture(texture);
         
         ContentSize = _maskSprite.ContentSize;
     }

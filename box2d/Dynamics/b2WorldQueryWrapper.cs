@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +9,13 @@ namespace Box2D.Dynamics;
 
 public class b2WorldQueryWrapper : Ib2QueryCallback
 {
+    public b2WorldQueryWrapper()
+    {
+        // b2World.QueryAABB sets BroadPhase and Callback straight after construction.
+        broadPhase = null!;
+        callback = null!;
+    }
+
     public bool QueryCallback(int proxyId)
     {
         b2FixtureProxy proxy = (b2FixtureProxy)broadPhase.GetUserData(proxyId);

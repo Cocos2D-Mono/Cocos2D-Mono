@@ -43,8 +43,8 @@
     <Product>Cocos2D-Mono</Product>
     <Description>Cocos2D-Mono is a managed C# port of cocos2d-x built on MonoGame. This single package multi-targets DesktopGL (Windows-GL, Linux, macOS), WindowsDX, Android, and iOS.</Description>
     <PackageReleaseNotes>
+2.9.0 - The last nullable reference type annotations (the director and scheduler, the platform code, the embeddable view, the controls, the scroll views and the CCB reader), so the engine and Box2D are annotated throughout, apart from the deprecated zlib port. It also fixes bugs found while converting; some failures now throw ArgumentException, InvalidOperationException or InvalidDataException instead of NullReferenceException, and a few fixes change behavior. Zlib-compressed TMX layers decompress with System.IO.Compression, and the bundled zlib port (Cocos2D.Compression.Zlib) is obsolete; 3.0 removes it. Apart from nullability and that deprecation, no public API changed. Read the CHANGELOG's Upgrading notes before updating.
 2.8.0 - More nullable reference type annotations (menus, misc nodes, tile maps and support helpers), plus fixes found while converting: some failures now throw ArgumentException, ArgumentNullException, InvalidOperationException or InvalidDataException instead of NullReferenceException, and a few fixes change behavior. Gzip data now decompresses with System.IO.Compression, which rejects a bad checksum. Apart from nullability, no public API changed. Read the CHANGELOG's Upgrading notes before updating.
-2.7.0 - The first nullable reference type annotations (nodes, input, layers and scenes, actions, particles, sprites, textures and labels): projects with nullable enabled now see which members can be null. Apart from nullability, no public API changed. It also fixes bugs found while converting; some failures now throw ArgumentException or NotSupportedException instead of NullReferenceException, and a few fixes change behavior. Read the CHANGELOG's Upgrading notes before updating.
 - See https://github.com/Cocos2D-Mono/cocos2d-mono for the full changelog.
     </PackageReleaseNotes>
     <PackageTags>mono monogame cocos2d game gamedev 2d mgcb content-pipeline</PackageTags>
@@ -253,11 +253,6 @@
     <Reference Include="MonoGame.Framework">
       <HintPath>$(MonoGameTvosAssembly)</HintPath>
     </Reference>
-  </ItemGroup>
-
-  <!-- Source Link (all TFMs) -->
-  <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
   </ItemGroup>
 
   <!-- ============================================================

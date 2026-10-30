@@ -387,7 +387,10 @@ namespace Cocos2D
 			if (!String.IsNullOrEmpty(ext) && ext.ToLower() == ".ttf")
 			{
 				var fontName = familyName.Substring (0, familyName.Length - ext.Length);
-				var path = CCApplication.SharedApplication.Game.Content.RootDirectory + Path.DirectorySeparatorChar + fontName;
+				// A CCGameView has no application, but it has a content manager with the same root.
+				var contentRoot = CCApplication.SharedApplication?.Game.Content.RootDirectory
+					?? CCContentManager.SharedContentManager.RootDirectory;
+				var path = contentRoot + Path.DirectorySeparatorChar + fontName;
 				var pathForResource = NSBundle.MainBundle.PathForResource (path, ext.Substring(1));
 
 				try {

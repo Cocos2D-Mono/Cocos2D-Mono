@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,12 +15,12 @@ public class CCMenuItemLoader : CCNodeLoader
         return new CCMenuItem();
     }
 
-    protected override void OnHandlePropTypeBlock(CCNode node, CCNode parent, string propertyName, BlockData pBlockData, CCBReader reader)
+    protected override void OnHandlePropTypeBlock(CCNode node, CCNode? parent, string propertyName, BlockData? pBlockData, CCBReader reader)
     {
-        MenuItemBlockData mi = (MenuItemBlockData)pBlockData;
+        var mi = (MenuItemBlockData?)pBlockData;
         if (propertyName == PROPERTY_BLOCK)
         {
-            if (null != pBlockData) // Add this condition to allow CCMenuItemImage without target/selector predefined 
+            if (null != mi) // Add this condition to allow CCMenuItemImage without target/selector predefined 
             {
                 ((CCMenuItem) node).SetTarget(mi.mSELMenuItemHandler);
             }
@@ -32,7 +31,7 @@ public class CCMenuItemLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeCheck(CCNode node, CCNode parent, string propertyName, bool pCheck, CCBReader reader)
+    protected override void OnHandlePropTypeCheck(CCNode node, CCNode? parent, string propertyName, bool pCheck, CCBReader reader)
     {
         if (propertyName == PROPERTY_ISENABLED)
         {

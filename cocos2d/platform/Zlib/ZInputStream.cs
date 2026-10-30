@@ -43,10 +43,12 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * and contributors of zlib.
 */
 
+using System;
 using System.IO;
 
 namespace Cocos2D.Compression.Zlib;
 
+[Obsolete(ZlibDeprecation.Message)]
 public class ZInputStream : BinaryReader
 {
     protected byte[] buf, buf1 = new byte[1];

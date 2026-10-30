@@ -1,4 +1,3 @@
-#nullable disable
 // 
 // PlistDate.cs
 //  
@@ -72,12 +71,12 @@ namespace Cocos2D;
 	        get { throw new NotImplementedException(); }
 	    }
 
-	    public override PlistArray AsArray
+	    public override PlistArray? AsArray
 	    {
         get { return null; }
     }
 
-	    public override PlistDictionary AsDictionary
+	    public override PlistDictionary? AsDictionary
 	    {
         get { return null; }
     }

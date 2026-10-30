@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 internal class CCLabelBMFontLoader : CCNodeLoader
@@ -14,7 +13,7 @@ internal class CCLabelBMFontLoader : CCNodeLoader
         return new CCLabelBMFont();
     }
 
-    protected override void OnHandlePropTypeColor3(CCNode node, CCNode parent, string propertyName, CCColor3B color, CCBReader reader)
+    protected override void OnHandlePropTypeColor3(CCNode node, CCNode? parent, string propertyName, CCColor3B color, CCBReader reader)
     {
         if (propertyName == PROPERTY_COLOR)
         {
@@ -26,7 +25,7 @@ internal class CCLabelBMFontLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeByte(CCNode node, CCNode parent, string propertyName, byte pByte, CCBReader reader)
+    protected override void OnHandlePropTypeByte(CCNode node, CCNode? parent, string propertyName, byte pByte, CCBReader reader)
     {
         if (propertyName == PROPERTY_OPACITY)
         {
@@ -38,7 +37,7 @@ internal class CCLabelBMFontLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeBlendFunc(CCNode node, CCNode parent, string propertyName, CCBlendFunc blendFunc,
+    protected override void OnHandlePropTypeBlendFunc(CCNode node, CCNode? parent, string propertyName, CCBlendFunc blendFunc,
                                                       CCBReader reader)
     {
         if (propertyName == PROPERTY_BLENDFUNC)
@@ -51,7 +50,7 @@ internal class CCLabelBMFontLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeFntFile(CCNode node, CCNode parent, string propertyName, string pFntFile, CCBReader reader)
+    protected override void OnHandlePropTypeFntFile(CCNode node, CCNode? parent, string propertyName, string pFntFile, CCBReader reader)
     {
         if (propertyName == PROPERTY_FNTFILE)
         {
@@ -63,7 +62,7 @@ internal class CCLabelBMFontLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeText(CCNode node, CCNode parent, string propertyName, string pText, CCBReader reader)
+    protected override void OnHandlePropTypeText(CCNode node, CCNode? parent, string propertyName, string pText, CCBReader reader)
     {
         if (propertyName == PROPERTY_STRING)
         {

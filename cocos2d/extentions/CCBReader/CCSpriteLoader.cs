@@ -1,4 +1,3 @@
-#nullable disable
 namespace Cocos2D;
 
 internal class CCSpriteLoader : CCNodeLoader
@@ -14,7 +13,7 @@ internal class CCSpriteLoader : CCNodeLoader
         return new CCSprite();
     }
 
-    protected override void OnHandlePropTypeSpriteFrame(CCNode node, CCNode parent, string propertyName, CCSpriteFrame spriteFrame,
+    protected override void OnHandlePropTypeSpriteFrame(CCNode node, CCNode? parent, string propertyName, CCSpriteFrame? spriteFrame,
                                                         CCBReader reader)
     {
         if (propertyName == PROPERTY_DISPLAYFRAME)
@@ -34,7 +33,7 @@ internal class CCSpriteLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeFlip(CCNode node, CCNode parent, string propertyName, bool[] pFlip, CCBReader reader)
+    protected override void OnHandlePropTypeFlip(CCNode node, CCNode? parent, string propertyName, bool[] pFlip, CCBReader reader)
     {
         if (propertyName == PROPERTY_FLIP)
         {
@@ -47,7 +46,7 @@ internal class CCSpriteLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeColor3(CCNode node, CCNode parent, string propertyName, CCColor3B color, CCBReader reader)
+    protected override void OnHandlePropTypeColor3(CCNode node, CCNode? parent, string propertyName, CCColor3B color, CCBReader reader)
     {
         if (propertyName == PROPERTY_COLOR)
         {
@@ -59,7 +58,7 @@ internal class CCSpriteLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeByte(CCNode node, CCNode parent, string propertyName, byte pByte, CCBReader reader)
+    protected override void OnHandlePropTypeByte(CCNode node, CCNode? parent, string propertyName, byte pByte, CCBReader reader)
     {
         if (propertyName == PROPERTY_OPACITY)
         {
@@ -71,7 +70,7 @@ internal class CCSpriteLoader : CCNodeLoader
         }
     }
 
-    protected override void OnHandlePropTypeBlendFunc(CCNode node, CCNode parent, string propertyName, CCBlendFunc blendFunc,
+    protected override void OnHandlePropTypeBlendFunc(CCNode node, CCNode? parent, string propertyName, CCBlendFunc blendFunc,
                                                       CCBReader reader)
     {
         if (propertyName == PROPERTY_BLENDFUNC)

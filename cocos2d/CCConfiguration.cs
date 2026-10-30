@@ -1,4 +1,3 @@
-#nullable disable
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2010      Ricardo Quesada
@@ -53,7 +52,7 @@ public class CCConfiguration
     protected bool m_bInited;
     protected uint m_uOSVersion;
     protected int m_nMaxSamplesAllowed;
-    protected string m_pGlExtensions;
+    protected string? m_pGlExtensions;
 
     private CCConfiguration()
     { }
@@ -155,7 +154,8 @@ public class CCConfiguration
         get 
         {
 #if ANDROID
-            return(Android.OS.Build.VERSION.Release);
+            // The binding marks it nullable; an empty string stands for an unknown version.
+            return(Android.OS.Build.VERSION.Release ?? string.Empty);
 #elif IOS
             return(ObjCRuntime.Constants.Version);
 #else

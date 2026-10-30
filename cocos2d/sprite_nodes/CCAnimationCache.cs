@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 
 namespace Cocos2D;
 
@@ -67,7 +68,7 @@ public class CCAnimationCache
 
     public void AddAnimationsWithDictionary(PlistDictionary dictionary)
     {
-        PlistDictionary animations = dictionary["animations"].AsDictionary;
+        PlistDictionary? animations = dictionary["animations"].AsDictionary;
 
         if (animations == null)
         {
@@ -75,15 +76,16 @@ public class CCAnimationCache
             return;
         }
 
-        PlistDictionary properties = dictionary["properties"].AsDictionary;
+        PlistDictionary? properties = dictionary["properties"].AsDictionary;
         if (properties != null)
         {
             int version = properties["format"].AsInt;
-            PlistArray spritesheets = properties["spritesheets"].AsArray;
+            PlistArray spritesheets = properties["spritesheets"].AsArray ?? new PlistArray();
 
             foreach (PlistObjectBase pObj in spritesheets)
             {
-                string name = pObj.AsString;
+                string name = (pObj as PlistString)?.Value
+                    ?? throw new InvalidDataException("A sprite sheet in the animation properties isn't a string.");
                 CCSpriteFrameCache.SharedSpriteFrameCache.AddSpriteFramesWithFile(name);
             }
 
@@ -110,9 +112,7 @@ public class CCAnimationCache
 
         PlistDocument document = CCContentManager.SharedContentManager.Load<PlistDocument>(plist);
 
-        PlistDictionary dict = document.Root.AsDictionary;
-
-        Debug.Assert(dict != null, "CCAnimationCache: File could not be found");
+        PlistDictionary dict = document.GetRootDictionary(plist);
 
         AddAnimationsWithDictionary(dict);
     }
@@ -129,9 +129,10 @@ public class CCAnimationCache
 
         foreach (var pElement in animations)
         {
-            PlistDictionary animationDict = pElement.Value.AsDictionary;
+            PlistDictionary animationDict = pElement.Value as PlistDictionary
+                ?? throw new InvalidDataException("The animation '" + pElement.Key + "' isn't a dictionary.");
 
-            PlistArray frameNames = animationDict["frames"].AsArray;
+            PlistArray? frameNames = animationDict["frames"].AsArray;
             float delay = animationDict["delay"].AsFloat;
             //CCAnimation* animation = NULL;
 
@@ -147,7 +148,8 @@ public class CCAnimationCache
 
             foreach (PlistObjectBase pObj in frameNames)
             {
-                string frameName = pObj.AsString;
+                string frameName = (pObj as PlistString)?.Value
+                    ?? throw new InvalidDataException("A frame of the animation '" + pElement.Key + "' isn't a string.");
                 CCSpriteFrame? spriteFrame = frameCache.SpriteFrameByName(frameName);
 
                 if (spriteFrame == null)
@@ -190,12 +192,13 @@ public class CCAnimationCache
         foreach (var pElement in animations)
         {
             string name = pElement.Key;
-            PlistDictionary animationDict = pElement.Value.AsDictionary;
+            PlistDictionary animationDict = pElement.Value as PlistDictionary
+                ?? throw new InvalidDataException("The animation '" + name + "' isn't a dictionary.");
 
             int loops = animationDict["loops"].AsInt;
             bool restoreOriginalFrame = animationDict["restoreOriginalFrame"].AsBool;
 
-            PlistArray frameArray = animationDict["frames"].AsArray;
+            PlistArray? frameArray = animationDict["frames"].AsArray;
 
             if (frameArray == null)
             {
@@ -210,9 +213,10 @@ public class CCAnimationCache
 
             foreach (PlistObjectBase pObj in frameArray)
             {
-                PlistDictionary entry = pObj.AsDictionary;
+                PlistDictionary entry = pObj as PlistDictionary
+                    ?? throw new InvalidDataException("A frame of the animation '" + name + "' isn't a dictionary.");
 
-                string spriteFrameName = entry["spriteframe"].AsString;
+                string spriteFrameName = entry.GetRequiredString("spriteframe");
                 CCSpriteFrame? spriteFrame = frameCache.SpriteFrameByName(spriteFrameName);
 
                 if (spriteFrame == null)
@@ -225,7 +229,7 @@ public class CCAnimationCache
                 }
 
                 float delayUnits = entry["delayUnits"].AsFloat;
-                PlistDictionary userInfo = entry["notification"].AsDictionary;
+                PlistDictionary? userInfo = entry["notification"].AsDictionary;
 
                 var animFrame = new CCAnimationFrame();
                 animFrame.InitWithSpriteFrame(spriteFrame, delayUnits, userInfo);

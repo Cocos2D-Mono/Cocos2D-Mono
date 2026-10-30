@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -86,7 +85,7 @@ public class b2BodyDef
     public bool active;
 
     /// Use this to store application specific body data.
-    public object userData;
+    public object? userData;
 
     /// Scale the gravity applied to this body.
     public float gravityScale;

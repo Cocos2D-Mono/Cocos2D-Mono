@@ -1,4 +1,3 @@
-#nullable disable
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -34,8 +33,8 @@ public class CCBValue
     private float floatValue;
     private CCBValueType _type;
     private int intValue;
-    private string _strValue;
-    private object _arrValue;  
+    private string? _strValue;
+    private object? _arrValue;  
 
     public CCBValue (int nValue)
     {
@@ -99,13 +98,13 @@ public class CCBValue
 
     public string GetStringValue()
     {
-        Debug.Assert(_type == CCBValueType.String, "The type of CCBValue isn't string.");
+        Debug.Assert(_type == CCBValueType.String && _strValue != null, "The type of CCBValue isn't string.");
         return _strValue;
     }
 
     public object GetArrayValue()
     {
-        Debug.Assert(_type == CCBValueType.Array, "The type of CCBValue isn't array.");
+        Debug.Assert(_type == CCBValueType.Array && _arrValue != null, "The type of CCBValue isn't array.");
         return _arrValue;
     }
 

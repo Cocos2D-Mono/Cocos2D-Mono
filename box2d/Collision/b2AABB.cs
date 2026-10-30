@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,10 +23,9 @@ public struct b2AABB
         return (LowerBound == o.LowerBound && UpperBound == o.UpperBound);
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
-        b2AABB o = (b2AABB) obj;
-        return (LowerBound == o.LowerBound && UpperBound == o.UpperBound);
+        return obj is b2AABB o && Equals(o);
     }
 
     public static bool operator ==(b2AABB a, b2AABB b)

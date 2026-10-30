@@ -10,9 +10,10 @@ namespace tests;
 
 /// <summary>
 /// Checks the engine's gzip paths on the device: a TMX map with a gzip layer, particle systems
-/// whose textures are embedded as gzip data (and one whose data is corrupt, which should get the
-/// default texture), and ZipUtils.InflateMemory with valid data and with a bad checksum. Each
-/// check shows PASS or FAIL, and is logged with a "GzipTest:" prefix.
+/// whose textures are embedded as gzip data (one whose data is corrupt, which should get the
+/// default texture, and one without a texture name, which should still get its embedded
+/// texture), and ZipUtils.InflateMemory with valid data and with a bad checksum. Each check
+/// shows PASS or FAIL, and is logged with a "GzipTest:" prefix.
 /// </summary>
 public class GzipTest : CCLayer
 {
@@ -67,9 +68,21 @@ public class GzipTest : CCLayer
         broken.Position = new CCPoint(s.Width * 0.74f, s.Height * 0.58f);
         AddChild(broken, 1);
         // The engine caches its default particle texture under this key.
-        bool usesDefault = broken.Texture != null &&
-                           broken.Texture == CCTextureCache.SharedTextureCache.TextureForKey("__firePngData");
+        CCTexture2D defaultTexture = CCTextureCache.SharedTextureCache.TextureForKey("__firePngData");
+        bool usesDefault = broken.Texture != null && broken.Texture == defaultTexture;
         Check("Particle with a bad embedded checksum: " + (usesDefault ? "default texture" : SizeOf(broken)), usesDefault);
+
+        // Galaxy again, without a texture name. It should still get its embedded texture, not the
+        // default one.
+        PlistDictionary nameless = CopyOf("Particles/Galaxy.plist");
+        nameless.Remove("textureFileName");
+        var unnamed = new CCParticleSystemQuad();
+        unnamed.InitWithDictionary(nameless);
+        unnamed.Position = new CCPoint(s.Width * 0.86f, s.Height * 0.58f);
+        AddChild(unnamed, 1);
+        bool usesEmbedded = unnamed.Texture != null && unnamed.Texture != defaultTexture;
+        Check("Particle without a texture name: " + (usesEmbedded ? SizeOf(unnamed) : "default texture"),
+              usesEmbedded && SizeOf(unnamed) == "32x32");
 
         byte[] text = Encoding.ASCII.GetBytes("hello world");
         byte[] valid = Compress(text, false);
@@ -118,16 +131,23 @@ public class GzipTest : CCLayer
     // name is neither a file nor in the texture cache, so the embedded data is what gets loaded.
     private static PlistDictionary CorruptedCopy(string plist)
     {
+        PlistDictionary copy = CopyOf(plist);
+        byte[] data = Convert.FromBase64String(copy["textureImageData"].AsString);
+        data[data.Length - 8] ^= 0xFF;
+        copy["textureImageData"] = new PlistString(Convert.ToBase64String(data));
+        copy["textureFileName"] = new PlistString("GzipTestCorrupt.png");
+        return copy;
+    }
+
+    // A copy of a particle plist's dictionary, which can change without changing the cached plist.
+    private static PlistDictionary CopyOf(string plist)
+    {
         PlistDictionary original = CCContentManager.SharedContentManager.Load<PlistDocument>(plist).Root.AsDictionary;
         var copy = new PlistDictionary();
         foreach (KeyValuePair<string, PlistObjectBase> entry in original)
         {
             copy[entry.Key] = entry.Value;
         }
-        byte[] data = Convert.FromBase64String(original["textureImageData"].AsString);
-        data[data.Length - 8] ^= 0xFF;
-        copy["textureImageData"] = new PlistString(Convert.ToBase64String(data));
-        copy["textureFileName"] = new PlistString("GzipTestCorrupt.png");
         return copy;
     }
 

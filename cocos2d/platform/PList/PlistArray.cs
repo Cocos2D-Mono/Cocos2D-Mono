@@ -1,4 +1,3 @@
-#nullable disable
 //
 // Taken from PodSleuth (http://git.gnome.org/cgit/podsleuth)
 //  
@@ -50,7 +49,7 @@ namespace Cocos2D;
     public PlistArray(IEnumerable value)
         : this()
     {
-        foreach (object item in value)
+        foreach (object? item in value)
         {
             Add(ObjectToPlistObject(item));
         }
@@ -105,7 +104,7 @@ namespace Cocos2D;
 	        get { return this; }
 	    }
 
-	    public override PlistDictionary AsDictionary
+	    public override PlistDictionary? AsDictionary
 	    {
 	        get { return null; }
 	    }

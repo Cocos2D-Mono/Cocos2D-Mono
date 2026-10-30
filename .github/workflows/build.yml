@@ -64,6 +64,11 @@ jobs:
         with:
           global-json-file: global.json
 
+      # With global.json's rollForward, a newer SDK on the runner image wins over the
+      # one installed above, so log the SDK that builds.
+      - name: Show the .NET SDK version
+        run: dotnet --version
+
       - name: Setup Java (Android only)
         if: matrix.target.workloads == 'android'
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0

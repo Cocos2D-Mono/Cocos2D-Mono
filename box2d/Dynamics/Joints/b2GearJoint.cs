@@ -1,4 +1,3 @@
-#nullable disable
 /*
 * Copyright (c) 2007-2011 Erin Catto http://www.box2d.org
 *
@@ -91,8 +90,8 @@ public class b2GearJoint : b2Joint
     public b2GearJoint(b2GearJointDef def)
         : base(def)
     {
-        m_joint1 = def.joint1;
-        m_joint2 = def.joint2;
+        m_joint1 = def.joint1 ?? throw new ArgumentException("The gear joint definition has no joint1.", nameof(def));
+        m_joint2 = def.joint2 ?? throw new ArgumentException("The gear joint definition has no joint2.", nameof(def));
 
         m_typeA = m_joint1.GetJointType();
         m_typeB = m_joint2.GetJointType();
@@ -115,7 +114,7 @@ public class b2GearJoint : b2Joint
 
         if (m_typeA == b2JointType.e_revoluteJoint)
         {
-            b2RevoluteJoint revolute = (b2RevoluteJoint)def.joint1;
+            b2RevoluteJoint revolute = (b2RevoluteJoint)m_joint1;
             m_localAnchorC = revolute.GetLocalAnchorA();
             m_localAnchorA = revolute.GetLocalAnchorB();
             m_referenceAngleA = revolute.GetReferenceAngle();
@@ -125,7 +124,7 @@ public class b2GearJoint : b2Joint
         }
         else
         {
-            b2PrismaticJoint prismatic = (b2PrismaticJoint)def.joint1;
+            b2PrismaticJoint prismatic = (b2PrismaticJoint)m_joint1;
             m_localAnchorC = prismatic.GetLocalAnchorA();
             m_localAnchorA = prismatic.GetLocalAnchorB();
             m_referenceAngleA = prismatic.GetReferenceAngle();
@@ -148,7 +147,7 @@ public class b2GearJoint : b2Joint
 
         if (m_typeB == b2JointType.e_revoluteJoint)
         {
-            b2RevoluteJoint revolute = (b2RevoluteJoint)def.joint2;
+            b2RevoluteJoint revolute = (b2RevoluteJoint)m_joint2;
             m_localAnchorD = revolute.GetLocalAnchorA();
             m_localAnchorB = revolute.GetLocalAnchorB();
             m_referenceAngleB = revolute.GetReferenceAngle();
@@ -158,7 +157,7 @@ public class b2GearJoint : b2Joint
         }
         else
         {
-            b2PrismaticJoint prismatic = (b2PrismaticJoint)def.joint2;
+            b2PrismaticJoint prismatic = (b2PrismaticJoint)m_joint2;
             m_localAnchorD = prismatic.GetLocalAnchorA();
             m_localAnchorB = prismatic.GetLocalAnchorB();
             m_referenceAngleB = prismatic.GetReferenceAngle();

@@ -59,7 +59,8 @@ public class CCLabelAtlas : CCAtlasNode, ICCLabelProtocol
 
         Debug.Assert(dict["version"].AsInt == 1, "Unsupported version. Upgrade cocos2d version");
 
-        string textureFilename = dict["textureFilename"].AsString;
+        string textureFilename = (dict["textureFilename"] as PlistString)?.Value
+            ?? throw new ArgumentException("The character map '" + fntFile + "' has no textureFilename.", nameof(fntFile));
         int width = (int)Math.Ceiling(dict["itemWidth"].AsInt / CCMacros.CCContentScaleFactor());
         int height = (int)Math.Ceiling(dict["itemHeight"].AsInt / CCMacros.CCContentScaleFactor());
         var startChar = (char) dict["firstChar"].AsInt;

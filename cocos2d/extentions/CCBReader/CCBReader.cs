@@ -1,7 +1,8 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Text;
 using Microsoft.Xna.Framework;
 
@@ -119,9 +120,9 @@ public enum CCBScaleType
 
 public class CCBFile : CCNode
 {
-    private CCNode _CCBFileNode;
+    private CCNode? _CCBFileNode;
 
-    public CCNode FileNode
+    public CCNode? FileNode
     {
         get { return _CCBFileNode; }
         set { _CCBFileNode = value; }
@@ -138,9 +139,9 @@ public interface ICCNodeLoaderListener
 
 public interface ICCBSelectorResolver
 {
-		Action<CCMenuItem> OnResolveCCBCCMenuItemSelector(object target, string pSelectorName);
-    Action<CCNode> OnResolveCCBCCCallFuncSelector(Object pTarget, string pSelectorName);
-		Action<object, CCControlEvent> OnResolveCCBCCControlSelector(object target, string pSelectorName);
+		Action<CCMenuItem>? OnResolveCCBCCMenuItemSelector(object target, string pSelectorName);
+    Action<CCNode>? OnResolveCCBCCCallFuncSelector(Object pTarget, string pSelectorName);
+		Action<object, CCControlEvent>? OnResolveCCBCCControlSelector(object target, string pSelectorName);
 }
 
 public interface ICCBScriptOwnerProtocol
@@ -160,29 +161,29 @@ public class CCBReader
 
     private readonly List<string> _animatedProps = new List<string>();
 
-    private readonly ICCBMemberVariableAssigner _CCBMemberVariableAssigner;
-    private readonly ICCBSelectorResolver _CCBSelectorResolver;
+    private readonly ICCBMemberVariableAssigner? _CCBMemberVariableAssigner;
+    private readonly ICCBSelectorResolver? _CCBSelectorResolver;
     private readonly CCNodeLoaderLibrary _nodeLoaderLibrary;
-    private readonly ICCNodeLoaderListener _nodeLoaderListener;
+    private readonly ICCNodeLoaderListener? _nodeLoaderListener;
     private readonly List<string> _loadedSpriteSheets;
     private readonly List<string> _stringCache = new List<string>();
 
     public bool _hasScriptingOwner = false;
     private CCBAnimationManager _actionManager;
-    internal byte[] _bytes;
+    internal byte[] _bytes = Array.Empty<byte>();
     internal int _currentBit;
     internal int _currentByte;
-    internal object _owner;
+    internal object? _owner;
 
-    private Dictionary<CCNode, CCBAnimationManager> _actionManagers;
-    private List<string> _ownerOutletNames;
-    private List<CCNode> _ownerOutletNodes;
-    private List<CCNode> _nodesWithAnimationManagers;
-    private List<CCBAnimationManager> _animationManagersForNodes;
+    private Dictionary<CCNode, CCBAnimationManager> _actionManagers = new Dictionary<CCNode, CCBAnimationManager>();
+    private List<string> _ownerOutletNames = new List<string>();
+    private List<CCNode> _ownerOutletNodes = new List<CCNode>();
+    private List<CCNode> _nodesWithAnimationManagers = new List<CCNode>();
+    private List<CCBAnimationManager> _animationManagersForNodes = new List<CCBAnimationManager>();
 
-    private List<string> _ownerCallbackNames;
-    private List<CCNode> _ownerCallbackNodes;
-    private string _CCBRootPath;
+    private List<string> _ownerCallbackNames = new List<string>();
+    private List<CCNode> _ownerCallbackNodes = new List<CCNode>();
+    private string _CCBRootPath = string.Empty;
     private bool _jsControlled;
 
     private static readonly UTF8Encoding utf8Encoder = new UTF8Encoding(false);
@@ -193,19 +194,19 @@ public class CCBReader
     {
     }
 
-    public CCBReader(CCNodeLoaderLibrary nodeLoaderLibrary, ICCBMemberVariableAssigner memberVariableAssigner)
+    public CCBReader(CCNodeLoaderLibrary nodeLoaderLibrary, ICCBMemberVariableAssigner? memberVariableAssigner)
         : this(nodeLoaderLibrary, memberVariableAssigner, null, null)
     {
     }
 
-    public CCBReader(CCNodeLoaderLibrary nodeLoaderLibrary, ICCBMemberVariableAssigner memberVariableAssigner,
-                     ICCBSelectorResolver selectorResolver)
+    public CCBReader(CCNodeLoaderLibrary nodeLoaderLibrary, ICCBMemberVariableAssigner? memberVariableAssigner,
+                     ICCBSelectorResolver? selectorResolver)
         : this(nodeLoaderLibrary, memberVariableAssigner, selectorResolver, null)
     {
     }
 
-    public CCBReader(CCNodeLoaderLibrary nodeLoaderLibrary, ICCBMemberVariableAssigner memberVariableAssigner,
-                     ICCBSelectorResolver selectorResolver, ICCNodeLoaderListener nodeLoaderListener)
+    public CCBReader(CCNodeLoaderLibrary nodeLoaderLibrary, ICCBMemberVariableAssigner? memberVariableAssigner,
+                     ICCBSelectorResolver? selectorResolver, ICCNodeLoaderListener? nodeLoaderListener)
     {
         _currentByte = -1;
         _currentBit = -1;
@@ -242,18 +243,16 @@ public class CCBReader
     }
 
     public CCBReader()
+        : this(CCNodeLoaderLibrary.SharedInstance)
     {
-        _currentByte = -1;
-        _currentBit = -1;
-        Init();
     }
 
-    public ICCBMemberVariableAssigner MemberVariableAssigner
+    public ICCBMemberVariableAssigner? MemberVariableAssigner
     {
         get { return _CCBMemberVariableAssigner; }
     }
 
-    public ICCBSelectorResolver SelectorResolver
+    public ICCBSelectorResolver? SelectorResolver
     {
         get { return _CCBSelectorResolver; }
     }
@@ -276,7 +275,7 @@ public class CCBReader
         get { return _loadedSpriteSheets; }
     }
 
-    public object Owner
+    public object? Owner
     {
         get { return _owner; }
     }
@@ -297,11 +296,12 @@ public class CCBReader
         get { return _CCBRootPath; }
     }
 
+    [MemberNotNull(nameof(_actionManager))]
     private bool Init()
     {
         // Setup action manager
         CCBAnimationManager pActionManager = new CCBAnimationManager();
-        AnimationManager = pActionManager;
+        _actionManager = pActionManager;
         
         // Setup resolution scale and container size
         _actionManager.RootContainerSize = CCDirector.SharedDirector.WinSize;
@@ -309,17 +309,17 @@ public class CCBReader
         return true;
     }
 
-    public CCNode ReadNodeGraphFromFile(string fileName)
+    public CCNode? ReadNodeGraphFromFile(string fileName)
     {
         return ReadNodeGraphFromFile(fileName, null);
     }
 
-    public CCNode ReadNodeGraphFromFile(string fileName, object owner)
+    public CCNode? ReadNodeGraphFromFile(string fileName, object? owner)
     {
         return ReadNodeGraphFromFile(fileName, owner, CCDirector.SharedDirector.WinSize);
     }
 
-    public CCNode ReadNodeGraphFromFile(string fileName, object owner, CCSize parentSize)
+    public CCNode? ReadNodeGraphFromFile(string fileName, object? owner, CCSize parentSize)
     {
         if (string.IsNullOrEmpty(fileName))
         {
@@ -339,12 +339,12 @@ public class CCBReader
         var pBytes = CCFileUtils.GetFileBytes(strPath);
         byte[] data = pBytes;
 
-        CCNode ret = ReadNodeGraphFromData(data, owner, parentSize);
+        CCNode? ret = ReadNodeGraphFromData(data, owner, parentSize);
 
         return ret;
     }
 
-    public CCNode ReadNodeGraphFromData(byte[] bytes, object owner, CCSize parentSize)
+    public CCNode? ReadNodeGraphFromData(byte[] bytes, object? owner, CCSize parentSize)
     {
         _bytes = bytes;
         _currentByte = 0;
@@ -357,7 +357,7 @@ public class CCBReader
         _ownerCallbackNodes = new List<CCNode>();
 
         Dictionary<CCNode, CCBAnimationManager> animationManagers = new Dictionary<CCNode, CCBAnimationManager>();
-        CCNode pNodeGraph = ReadFileWithCleanUp(true, animationManagers);
+        CCNode? pNodeGraph = ReadFileWithCleanUp(true, animationManagers);
 
         if (pNodeGraph != null && _actionManager.AutoPlaySequenceId != -1 && !_jsControlled)
         {
@@ -392,14 +392,15 @@ public class CCBReader
         return CreateSceneWithNodeGraphFromFile(fileName, null);
     }
 
-    public CCScene CreateSceneWithNodeGraphFromFile(string fileName, object owner)
+    public CCScene CreateSceneWithNodeGraphFromFile(string fileName, object? owner)
     {
         return CreateSceneWithNodeGraphFromFile(fileName, owner, CCDirector.SharedDirector.WinSize);
     }
 
-    public CCScene CreateSceneWithNodeGraphFromFile(string fileName, object owner, CCSize parentSize)
+    public CCScene CreateSceneWithNodeGraphFromFile(string fileName, object? owner, CCSize parentSize)
     {
-        CCNode pNode = ReadNodeGraphFromFile(fileName, owner, parentSize);
+        CCNode pNode = ReadNodeGraphFromFile(fileName, owner, parentSize)
+            ?? throw new InvalidDataException("The CCB file '" + fileName + "' couldn't be read.");
         CCScene pScene = new CCScene();
         pScene.AddChild(pNode);
 
@@ -676,7 +677,7 @@ public class CCBReader
         _actionManager.AddDocumentCallbackNode(node);
     }
 
-    public CCNode ReadFileWithCleanUp(bool bCleanUp, Dictionary<CCNode, CCBAnimationManager> am)
+    public CCNode? ReadFileWithCleanUp(bool bCleanUp, Dictionary<CCNode, CCBAnimationManager> am)
     {
         if (!ReadHeader())
         {
@@ -767,7 +768,7 @@ public class CCBReader
 
         var easingType = (CCBEasingType) ReadInt(false);
         float easingOpt = 0;
-        object value = null;
+        object? value = null;
 
         if (easingType == CCBEasingType.CubicIn
             || easingType == CCBEasingType.CubicOut
@@ -818,15 +819,24 @@ public class CCBReader
             string spriteSheet = ReadCachedString();
             string spriteFile = ReadCachedString();
 
-            CCSpriteFrame spriteFrame;
+            CCSpriteFrame? spriteFrame;
 
             if (String.IsNullOrEmpty(spriteSheet))
             {
                 spriteFile = _CCBRootPath + spriteFile;
 
-                CCTexture2D texture = CCTextureCache.SharedTextureCache.AddImage(CCFileUtils.RemoveExtension(spriteFile));
-                var bounds = new CCRect(0, 0, texture.ContentSize.Width, texture.ContentSize.Height);
-                spriteFrame = new CCSpriteFrame(texture, bounds);
+                CCTexture2D? texture = CCTextureCache.SharedTextureCache.AddImage(CCFileUtils.RemoveExtension(spriteFile));
+                if (texture != null)
+                {
+                    var bounds = new CCRect(0, 0, texture.ContentSize.Width, texture.ContentSize.Height);
+                    spriteFrame = new CCSpriteFrame(texture, bounds);
+                }
+                else
+                {
+                    // Like a sprite frame that isn't in the cache, a texture that couldn't be loaded
+                    // gives the keyframe no frame, which the animation skips.
+                    spriteFrame = null;
+                }
             }
             else
             {
@@ -852,8 +862,8 @@ public class CCBReader
 
     private bool ReadHeader()
     {
-        /* If no bytes loaded, don't crash about it. */
-        if (_bytes == null)
+        /* If the magic bytes aren't all there, don't crash about it. */
+        if (_bytes.Length < _currentByte + 4)
         {
             return false;
         }
@@ -915,12 +925,12 @@ public class CCBReader
         return ReadNodeGraph(null);
     }
 
-    private CCNode ReadNodeGraph(CCNode parent)
+    private CCNode ReadNodeGraph(CCNode? parent)
     {
         /* Read class name. */
         string className = ReadCachedString();
 
-        string _jsControlledName = null;
+        string? _jsControlledName = null;
 
         if (_jsControlled)
         {
@@ -936,12 +946,8 @@ public class CCBReader
             memberVarAssignmentName = ReadCachedString();
         }
 
+        // GetCCNodeLoader throws KeyNotFoundException for a class without a loader.
         CCNodeLoader ccNodeLoader = _nodeLoaderLibrary.GetCCNodeLoader(className);
-        if (ccNodeLoader == null)
-        {
-            CCLog.Log("no corresponding node loader for {0}", className);
-            return null;
-        }
 
         CCNode node = ccNodeLoader.LoadCCNode(parent, this);
 
@@ -1007,7 +1013,8 @@ public class CCBReader
         {
             var ccbFileNode = (CCBFile) node;
 
-            CCNode embeddedNode = ccbFileNode.FileNode;
+            CCNode embeddedNode = ccbFileNode.FileNode
+                ?? throw new InvalidDataException("A CCB file node has no file, or its file couldn't be read.");
             embeddedNode.Position = ccbFileNode.Position;
             embeddedNode.Rotation = ccbFileNode.Rotation;
             embeddedNode.ScaleX = ccbFileNode.ScaleX;
@@ -1034,7 +1041,7 @@ public class CCBReader
         {
             if (!_jsControlled)
             {
-                object target = null;
+                object? target = null;
                 if (memberVarAssignmentType == CCBTargetType.DocumentRoot)
                 {
                     target = _actionManager.RootNode;
@@ -1091,7 +1098,7 @@ if (ccNodeLoader.CustomProperties.Count > 0)
         Object target = node;
         if(target != null)
         {
-            ICCBMemberVariableAssigner targetAsCCBMemberVariableAssigner = target as ICCBMemberVariableAssigner;
+            ICCBMemberVariableAssigner? targetAsCCBMemberVariableAssigner = target as ICCBMemberVariableAssigner;
             if(targetAsCCBMemberVariableAssigner != null) {
                 
                 var pCustomPropeties = ccNodeLoader.CustomProperties;

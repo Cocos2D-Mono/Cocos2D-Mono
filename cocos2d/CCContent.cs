@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using Microsoft.Xna.Framework.Content;
 
@@ -7,7 +6,7 @@ namespace Cocos2D;
 public class CCContent
 {
     [ContentSerializer]
-    public string Content { get; set; }
+    public string? Content { get; set; }
 
     /// <summary>
     /// Helper static method to load the contents of a CCContent object.
@@ -26,7 +25,7 @@ public class CCContent
             throw new InvalidOperationException("No content manager available. Initialize CCApplication or CCGameView first.");
         }
 
-        string content = null;
+        string? content = null;
         try
         {
             content = contentManager.Load<string>(file);

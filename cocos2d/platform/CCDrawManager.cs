@@ -1,7 +1,7 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -70,15 +70,17 @@ public static class CCDrawManager
     private const int DefaultQuadBufferSize = 1024 * 4;
     public static string DefaultFont = "arial";
 
-    public static BasicEffect PrimitiveEffect;
-    public static AlphaTestEffect AlphaTestEffect;
+    // Init(GraphicsDevice) creates the device's objects before anything draws, and
+    // PurgeDrawManager sets them back to null.
+    public static BasicEffect PrimitiveEffect = null!;
+    public static AlphaTestEffect AlphaTestEffect = null!;
 
-    private static BasicEffect _defaultEffect;
-    private static Effect _currentEffect;
+    private static BasicEffect _defaultEffect = null!;
+    private static Effect _currentEffect = null!;
     private static readonly Stack<Effect> _effectStack = new Stack<Effect>();
 
-    public static SpriteBatch spriteBatch;
-    internal static GraphicsDevice graphicsDevice;
+    public static SpriteBatch spriteBatch = null!;
+    internal static GraphicsDevice graphicsDevice = null!;
 
     internal static Matrix m_worldMatrix;
     internal static Matrix m_viewMatrix;
@@ -90,16 +92,16 @@ public static class CCDrawManager
     internal static Matrix m_Matrix;
     private static Matrix _tmpMatrix;
 
-    private static RenderTarget2D _renderTarget = null;
+    private static RenderTarget2D? _renderTarget = null;
 
-    private static Texture2D _currentTexture;
+    private static Texture2D? _currentTexture;
     private static bool _textureEnabled;
     private static bool _vertexColorEnabled;
 
     private static readonly Dictionary<CCBlendFunc, BlendState> _blendStates = new Dictionary<CCBlendFunc, BlendState>();
 
-    private static DepthStencilState _depthEnableStencilState;
-    private static DepthStencilState _depthDisableStencilState;
+    private static DepthStencilState _depthEnableStencilState = null!;
+    private static DepthStencilState _depthDisableStencilState = null!;
 
     //Flags
     private static bool _worldMatrixChanged;
@@ -112,10 +114,10 @@ public static class CCDrawManager
     private static int _lastHeight;
     private static bool _depthTest = true;
     private static CCBlendFunc _currBlend = CCBlendFunc.AlphaBlend;
-    private static RenderTarget2D _currRenderTarget;
+    private static RenderTarget2D? _currRenderTarget;
     private static Viewport _savedViewport;
-    private static CCQuadVertexBuffer _quadsBuffer;
-    private static CCIndexBuffer<short> _quadsIndexBuffer;
+    private static CCQuadVertexBuffer? _quadsBuffer;
+    private static CCIndexBuffer<short>? _quadsIndexBuffer;
 
     public static int DrawCount;
 
@@ -126,7 +128,7 @@ public static class CCDrawManager
     /// </summary>
     public static SamplerState DefaultSamplerState { get; set; } = SamplerState.LinearClamp;
 
-    private static CCV3F_C4B_T2F[] _quadVertices;
+    private static CCV3F_C4B_T2F[]? _quadVertices;
     private static float _scaleX;
     private static float _scaleY;
     private static CCRect _viewPortRect;
@@ -142,7 +144,7 @@ public static class CCDrawManager
 
     private static bool _needReinitResources;
 
-    internal static Game m_Game;
+    internal static Game? m_Game;
 
     public static bool VertexColorEnabled
     {
@@ -359,9 +361,9 @@ public static class CCDrawManager
         return new CCPoint(gameX, gameY);
     }
 
-    private static IGraphicsDeviceService _graphicsService;
+    private static IGraphicsDeviceService? _graphicsService;
     private static PresentationParameters _presentationParameters = new PresentationParameters();
-    private static GraphicsDeviceManager _graphicsDeviceMgr;
+    private static GraphicsDeviceManager? _graphicsDeviceMgr;
 
     private static void UpdatePresentationParametrs(GraphicsDeviceManager manager)
     {
@@ -433,7 +435,7 @@ public static class CCDrawManager
     /// Called just before the graphics device for the presentation is created. This method callback is used to setup
     /// the device settings. The WindowSetup is used to set the presentation parameters.
     /// </summary>
-    static void GraphicsPreparingDeviceSettings(object sender, PreparingDeviceSettingsEventArgs e)
+    static void GraphicsPreparingDeviceSettings(object? sender, PreparingDeviceSettingsEventArgs e)
     {
         var gdipp = e.GraphicsDeviceInformation.PresentationParameters;
         var pp = _presentationParameters;
@@ -451,11 +453,14 @@ public static class CCDrawManager
         }
     }
 
-    static void GraphicsDeviceDeviceCreated(object sender, EventArgs e)
+    static void GraphicsDeviceDeviceCreated(object? sender, EventArgs e)
     {
+        Debug.Assert(_graphicsService != null, "Init(IGraphicsDeviceService) sets the service before it handles DeviceCreated.");
         Init(_graphicsService.GraphicsDevice);
     }
 
+    [MemberNotNull(nameof(CCDrawManager.graphicsDevice), nameof(spriteBatch), nameof(_defaultEffect), nameof(_currentEffect),
+        nameof(PrimitiveEffect), nameof(AlphaTestEffect), nameof(_depthEnableStencilState), nameof(_depthDisableStencilState))]
     public static void Init(GraphicsDevice graphicsDevice)
     {
         CCDrawManager.graphicsDevice = graphicsDevice;
@@ -463,6 +468,7 @@ public static class CCDrawManager
         spriteBatch = new SpriteBatch(graphicsDevice);
 
         _defaultEffect = new BasicEffect(graphicsDevice);
+        _currentEffect = _defaultEffect;
 
         PrimitiveEffect = new BasicEffect(graphicsDevice)
         {
@@ -524,16 +530,18 @@ public static class CCDrawManager
 
     public static void PurgeDrawManager()
     {
-        graphicsDevice = null;
+        // Back to the state before Init. Nothing draws until Init runs again, because BeginDraw
+        // checks for a device.
+        graphicsDevice = null!;
 
-        PrimitiveEffect = null;
-        AlphaTestEffect = null;
+        PrimitiveEffect = null!;
+        AlphaTestEffect = null!;
 
-        _defaultEffect = null;
-        _currentEffect = null;
+        _defaultEffect = null!;
+        _currentEffect = null!;
         _effectStack.Clear();
 
-        spriteBatch = null;
+        spriteBatch = null!;
 
         _renderTarget = null;
 
@@ -541,8 +549,8 @@ public static class CCDrawManager
 
         _blendStates.Clear();
 
-        _depthEnableStencilState = null;
-        _depthDisableStencilState = null;
+        _depthEnableStencilState = null!;
+        _depthDisableStencilState = null!;
 
         _currRenderTarget = null;
         _quadsBuffer = null;
@@ -552,15 +560,15 @@ public static class CCDrawManager
         _tmpVertices.Clear();
     }
     
-    static void GraphicsDeviceResourceDestroyed(object sender, ResourceDestroyedEventArgs e)
+    static void GraphicsDeviceResourceDestroyed(object? sender, ResourceDestroyedEventArgs e)
     {
     }
 
-    static void GraphicsDeviceResourceCreated(object sender, ResourceCreatedEventArgs e)
+    static void GraphicsDeviceResourceCreated(object? sender, ResourceCreatedEventArgs e)
     {
     }
 
-    static void GraphicsDeviceDeviceResetting(object sender, EventArgs e)
+    static void GraphicsDeviceDeviceResetting(object? sender, EventArgs e)
     {
         CCGraphicsResource.DisposeAllResources();
         CCSpriteFontCache.SharedInstance.Clear();
@@ -570,15 +578,15 @@ public static class CCDrawManager
         _needReinitResources = true;
     }
 
-    static void GraphicsDeviceDeviceReset(object sender, EventArgs e)
+    static void GraphicsDeviceDeviceReset(object? sender, EventArgs e)
     {
     }
 
-    static void GraphicsDeviceDeviceLost(object sender, EventArgs e)
+    static void GraphicsDeviceDeviceLost(object? sender, EventArgs e)
     {
     }
 
-    static void GraphicsDeviceDisposing(object sender, EventArgs e)
+    static void GraphicsDeviceDisposing(object? sender, EventArgs e)
     {
     }
 
@@ -838,7 +846,7 @@ public static class CCDrawManager
         // blend state seems the correct modification for now.
         //if (_currBlend.Destination != blendFunc.Destination || _currBlend.Source != blendFunc.Source)
         //{
-        BlendState bs = null;
+        BlendState? bs = null;
         if (blendFunc == CCBlendFunc.AlphaBlend)
         {
             bs = BlendState.AlphaBlend;
@@ -881,13 +889,13 @@ public static class CCDrawManager
         //}
     }
 
-    public static void BindTexture(CCTexture2D texture)
+    public static void BindTexture(CCTexture2D? texture)
     {
-        Texture2D tex = texture == null ? null : texture.XNATexture;
+        Texture2D? tex = texture?.XNATexture;
 
         if (!graphicsDevice.IsDisposed && graphicsDevice.GraphicsDeviceStatus == GraphicsDeviceStatus.Normal)
         {
-            if (tex == null)
+            if (texture == null || tex == null)
             {
                 graphicsDevice.SamplerStates[0] = DefaultSamplerState;
                 TextureEnabled = false;
@@ -951,11 +959,11 @@ public static class CCDrawManager
     /// must be a RenderTarget2D or else you will get an assert/exception.
     /// </summary>
     /// <param name="pTexture">The target of future drawing, which must be a RenderTarget2D</param>
-    public static void SetRenderTarget(CCTexture2D pTexture)
+    public static void SetRenderTarget(CCTexture2D? pTexture)
     {
         if (pTexture == null)
         {
-            SetRenderTarget((RenderTarget2D)null);
+            SetRenderTarget((RenderTarget2D?)null);
         }
         else
         {
@@ -982,7 +990,7 @@ public static class CCDrawManager
     /// if the given parameter is not null.
     /// </summary>
     /// <param name="renderTarget"></param>
-    public static void SetRenderTarget(RenderTarget2D renderTarget)
+    public static void SetRenderTarget(RenderTarget2D? renderTarget)
     {
         if (graphicsDevice.GraphicsDeviceStatus == GraphicsDeviceStatus.Normal)
         {
@@ -1005,13 +1013,14 @@ public static class CCDrawManager
     /// is set to draw directly to the display frame buffer.
     /// </summary>
     /// <returns></returns>
-    public static RenderTarget2D GetRenderTarget()
+    public static RenderTarget2D? GetRenderTarget()
     {
         return _currRenderTarget;
     }
 
     #region Quad Buffer Integrity Checks
 
+    [MemberNotNull(nameof(_quadsIndexBuffer))]
     private static void CheckQuadsIndexBuffer(int capacity)
     {
         if (_quadsIndexBuffer == null || _quadsIndexBuffer.Capacity < capacity * 6)
@@ -1053,6 +1062,7 @@ public static class CCDrawManager
         }
     }
 
+    [MemberNotNull(nameof(_quadsBuffer))]
     private static void CheckQuadsVertexBuffer(int capacity)
     {
         if (_quadsBuffer == null || _quadsBuffer.Capacity < capacity)
@@ -1076,13 +1086,13 @@ public static class CCDrawManager
 
     public static void DrawQuad(ref CCV3F_C4B_T2F_Quad quad)
     {
-        CCV3F_C4B_T2F[] vertices = _quadVertices;
+        CCV3F_C4B_T2F[]? vertices = _quadVertices;
 
         if (vertices == null)
         {
             vertices = _quadVertices = new CCV3F_C4B_T2F[4];
-            CheckQuadsIndexBuffer(1);
         }
+        CheckQuadsIndexBuffer(1);
 
         vertices[0] = quad.TopLeft;
         vertices[1] = quad.BottomLeft;
@@ -1320,6 +1330,11 @@ public static class CCDrawManager
 
     private static void SetOrientation(DisplayOrientation supportedOrientations, bool bUpdateDimensions)
     {
+        if (_graphicsDeviceMgr == null)
+        {
+            throw new InvalidOperationException("Setting the orientation needs the graphics device manager that InitializeDisplay sets.");
+        }
+
         bool ll = (supportedOrientations & DisplayOrientation.LandscapeLeft) == DisplayOrientation.LandscapeLeft;
         bool lr = (supportedOrientations & DisplayOrientation.LandscapeRight) == DisplayOrientation.LandscapeRight;
         bool p = (supportedOrientations & DisplayOrientation.Portrait) == DisplayOrientation.Portrait;
@@ -1937,9 +1952,10 @@ public class CCGraphicsResource : IDisposable
             var resources = _createdResources.Elements;
             for (int i = 0, count = _createdResources.Count; i < count; i++)
             {
-                if (resources[i].IsAlive)
+                // Target can be collected after IsAlive, so read it once.
+                if (resources[i].Target is CCGraphicsResource resource)
                 {
-                    ((CCGraphicsResource) resources[i].Target).Reinit();
+                    resource.Reinit();
                 }
             }
         }
@@ -1952,9 +1968,9 @@ public class CCGraphicsResource : IDisposable
             var resources = _createdResources.Elements;
             for (int i = 0, count = _createdResources.Count; i < count; i++)
             {
-                if (resources[i].IsAlive)
+                if (resources[i].Target is CCGraphicsResource resource)
                 {
-                    ((CCGraphicsResource) resources[i].Target).Dispose();
+                    resource.Dispose();
                 }
             }
         }
@@ -1964,11 +1980,11 @@ public class CCGraphicsResource : IDisposable
 
 public class CCVertexBuffer<T> : CCGraphicsResource where T : struct, IVertexType
 {
-    protected VertexBuffer _vertexBuffer;
+    protected VertexBuffer? _vertexBuffer;
     protected BufferUsage _usage;
     protected CCRawList<T> _data;
 
-    internal VertexBuffer VertexBuffer
+    internal VertexBuffer? VertexBuffer
     {
         get { return _vertexBuffer; }
     }
@@ -2017,6 +2033,7 @@ public class CCVertexBuffer<T> : CCGraphicsResource where T : struct, IVertexTyp
     {
         if (elementCount > 0)
         {
+            Debug.Assert(_vertexBuffer != null, "Reinit creates the buffer, and Dispose releases it.");
             _vertexBuffer.SetData(_data.Elements, startIndex, elementCount);
         }
     }
@@ -2078,6 +2095,7 @@ public class CCQuadVertexBuffer : CCVertexBuffer<CCV3F_C4B_T2F_Quad>
             i4 += 4;
         }
 
+        Debug.Assert(_vertexBuffer != null, "Reinit creates the buffer, and Dispose releases it.");
         _vertexBuffer.SetData(vertices, startIndex * 4, elementCount * 4);
     }
 
@@ -2107,11 +2125,11 @@ public class CCQuadVertexBuffer : CCVertexBuffer<CCV3F_C4B_T2F_Quad>
 
 public class CCIndexBuffer<T> : CCGraphicsResource where T : struct
 {
-    private IndexBuffer _indexBuffer;
+    private IndexBuffer? _indexBuffer;
     private BufferUsage _usage;
     private CCRawList<T> _data;
 
-    internal IndexBuffer IndexBuffer
+    internal IndexBuffer? IndexBuffer
     {
         get { return _indexBuffer; }
     }
@@ -2172,6 +2190,7 @@ public class CCIndexBuffer<T> : CCGraphicsResource where T : struct
     {
         if (elementCount > 0)
         {
+            Debug.Assert(_indexBuffer != null, "Reinit creates the buffer, and Dispose releases it.");
             _indexBuffer.SetData(_data.Elements, startIndex, elementCount);
         }
     }

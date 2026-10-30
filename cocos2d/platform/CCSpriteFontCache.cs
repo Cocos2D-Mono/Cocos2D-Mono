@@ -1,6 +1,7 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using Microsoft.Xna.Framework.Content;
@@ -16,13 +17,12 @@ public class CCSpriteFontCache
         public float FontSize;
     }
 
-    private static ContentManager _contentManager;
+    private static ContentManager? _contentManager;
     public static string FontRoot = "fonts";
 
     private static Dictionary<string, int[]> _registeredFonts = new Dictionary<string, int[]>(StringComparer.OrdinalIgnoreCase);
     private static Dictionary<string, FontMapEntry> _loadedFontsMap = new Dictionary<string, FontMapEntry>();
     private static float _fontScale = 1.0f;
-    private static bool _initialized = false;
     private static readonly object _initLock = new object();
 
     public static void RegisterFont(string fontName, params int[] sizes)
@@ -47,17 +47,18 @@ public class CCSpriteFontCache
         // Defer initialization until first use - supports both CCApplication and CCGameView
     }
 
+    [MemberNotNull(nameof(_contentManager))]
     private static void EnsureInitialized()
     {
-        if (_initialized)
+        if (_contentManager != null)
             return;
 
         lock (_initLock)
         {
-            if (_initialized)
+            if (_contentManager != null)
                 return;
 
-            ContentManager cm = null;
+            ContentManager? cm = null;
 
             // Try CCApplication first (traditional approach)
             if (CCApplication.SharedApplication != null)
@@ -73,7 +74,6 @@ public class CCSpriteFontCache
             if (cm != null)
             {
                 _contentManager = new ContentManager(cm.ServiceProvider, Path.Combine(cm.RootDirectory, FontRoot));
-                _initialized = true;
             }
             else
             {
@@ -91,7 +91,7 @@ public class CCSpriteFontCache
         return fontName + "-" + fontSize.ToString("R", CultureInfo.InvariantCulture);
     }
 
-    public SpriteFont GetFont(string fontName)
+    public SpriteFont? GetFont(string fontName)
     {
         EnsureInitialized();
         try
@@ -105,7 +105,7 @@ public class CCSpriteFontCache
         }
     }
 
-    public SpriteFont TryLoadFont(string fontName, float fontSize, out float loadedSize)
+    public SpriteFont? TryLoadFont(string fontName, float fontSize, out float loadedSize)
     {
         EnsureInitialized();
         var key = FontKey(fontName, fontSize);
@@ -118,7 +118,7 @@ public class CCSpriteFontCache
             return _contentManager.Load<SpriteFont>(FontKey(entry.FontName, entry.FontSize));
         }
 
-        SpriteFont result = null;
+        SpriteFont? result = null;
         var loadedName = fontName;
         loadedSize = fontSize;
         try
@@ -154,6 +154,7 @@ public class CCSpriteFontCache
 
     private SpriteFont InternalLoadFont(string fontName, float fontSize, out float loadedSize)
     {
+        Debug.Assert(_contentManager != null, "TryLoadFont initializes the cache first.");
         loadedSize = fontSize;
 
         try
@@ -196,7 +197,7 @@ public class CCSpriteFontCache
 
     public void Clear()
     {
-        if (_initialized && _contentManager != null)
+        if (_contentManager != null)
         {
             _contentManager.Unload();
         }

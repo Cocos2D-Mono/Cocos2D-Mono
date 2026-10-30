@@ -21,6 +21,21 @@ public class CCRawListTests
     }
 
     [Fact]
+    public void Pooled_FullClear_ThenAdd_StoresTheValue()
+    {
+        // A full clear returned the rented buffer and left no array, so the next Add threw
+        // NullReferenceException (C2D-303).
+        var list = new CCRawList<int>(useArrayPool: true);
+        list.Add(1);
+        list.Clear(true);
+
+        list.Add(42);
+
+        Assert.Equal(1, list.count);
+        Assert.Equal(42, list.Elements[0]);
+    }
+
+    [Fact]
     public void Pooled_AddAndGrow_StoresValuesAndFrees()
     {
         var list = new CCRawList<int>(useArrayPool: true);  // backing buffer rented from the shared pool

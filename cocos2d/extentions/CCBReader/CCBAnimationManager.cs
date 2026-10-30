@@ -1,7 +1,7 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using CocosDenshion;
 
@@ -11,7 +11,7 @@ public delegate void CCBAnimationManagerDelegate(string name);
 
 public class CCBAnimationManager 
 {
-    private Dictionary<CCNode, Dictionary<string, object>> _baseValues = new Dictionary<CCNode, Dictionary<string, object>>();
+    private Dictionary<CCNode, Dictionary<string, object?>> _baseValues = new Dictionary<CCNode, Dictionary<string, object?>>();
 
     private readonly Dictionary<CCNode, Dictionary<int, Dictionary<string, CCBSequenceProperty>>> _nodeSequences =
         new Dictionary<CCNode, Dictionary<int, Dictionary<string, CCBSequenceProperty>>>();
@@ -19,10 +19,10 @@ public class CCBAnimationManager
     private List<CCBSequence> _sequences = new List<CCBSequence>();
 
     private int _autoPlaySequenceId;
-    private CCBAnimationManagerDelegate _delegate;
+    private CCBAnimationManagerDelegate? _delegate;
     private CCSize _rootContainerSize;
-    private CCNode _rootNode;
-    private CCBSequence _runningSequence;
+    private CCNode? _rootNode;
+    private CCBSequence? _runningSequence;
 
     private readonly List<string> _documentOutletNames = new List<string>();
     private readonly List<CCNode> _documentOutletNodes = new List<CCNode>();
@@ -31,14 +31,14 @@ public class CCBAnimationManager
     private readonly List<string> _keyframeCallbacks = new List<string>();
     private readonly Dictionary<string, CCAction> _keyframeCallFuncs = new Dictionary<string, CCAction>();
 
-    private string _documentControllerName;
-    private string _lastCompletedSequenceName;
+    private string? _documentControllerName;
+    private string? _lastCompletedSequenceName;
 
-    private Action _animationCompleteCallbackFunc;
+    private Action? _animationCompleteCallbackFunc;
 
     public bool _jsControlled;
 
-    public Object _owner;
+    public object? _owner;
 
     public CCBAnimationManager()
     {
@@ -62,7 +62,7 @@ public class CCBAnimationManager
         get { return _autoPlaySequenceId; }
     }
 
-    public CCNode RootNode
+    public CCNode? RootNode
     {
         get { return _rootNode; }
         set { _rootNode = value; }
@@ -88,7 +88,7 @@ public class CCBAnimationManager
         _documentOutletNames.Add(name);
     }
 
-    public string DocumentControllerName
+    public string? DocumentControllerName
     {
         set { _documentControllerName = value; }
         get { return _documentControllerName; }
@@ -115,7 +115,7 @@ public class CCBAnimationManager
         return _documentOutletNodes;
     }
 
-    public string GetLastCompletedSequenceName()
+    public string? GetLastCompletedSequenceName()
     {
         return _lastCompletedSequenceName;
     }
@@ -131,13 +131,13 @@ public class CCBAnimationManager
         set { _rootContainerSize = value; }
     }
 
-    public CCBAnimationManagerDelegate Delegate
+    public CCBAnimationManagerDelegate? Delegate
     {
         get { return _delegate; }
         set { _delegate = value; }
     }
 
-    public string RunningSequenceName
+    public string? RunningSequenceName
     {
         get
         {
@@ -149,7 +149,7 @@ public class CCBAnimationManager
         }
     }
 
-    public CCSize GetContainerSize(CCNode node)
+    public CCSize GetContainerSize(CCNode? node)
     {
         if (node != null)
         {
@@ -166,21 +166,28 @@ public class CCBAnimationManager
         _nodeSequences.Add(node, pSeq);
     }
 
-    public void SetBaseValue(object pValue, CCNode node, string pPropName)
+    public void SetBaseValue(object? pValue, CCNode node, string pPropName)
     {
-        Dictionary<string, object> props;
+        Dictionary<string, object?>? props;
         if (!_baseValues.TryGetValue(node, out props))
         {
-            props = new Dictionary<string, object>();
+            props = new Dictionary<string, object?>();
             _baseValues.Add(node, props);
         }
 
         props[pPropName] = pValue;
     }
 
-    private object GetBaseValue(CCNode node, string pPropName)
+    private object? GetBaseValue(CCNode node, string pPropName)
     {
         return _baseValues[node][pPropName];
+    }
+
+    // Keyframe and base values are null only for a sprite frame that couldn't be found.
+    private static T ValueAs<T>(object? value) where T : class
+    {
+        Debug.Assert(value != null, "Only a sprite frame value can be missing.");
+        return (T) value;
     }
 
     private int GetSequenceId(string pSequenceName)
@@ -195,7 +202,7 @@ public class CCBAnimationManager
         return -1;
     }
 
-    private CCBSequence GetSequence(int nSequenceId)
+    private CCBSequence? GetSequence(int nSequenceId)
     {
         for (int i = 0; i < _sequences.Count; i++)
         {
@@ -211,7 +218,7 @@ public class CCBAnimationManager
     {
         // Move base values
 
-         Dictionary<string, object> baseValue;
+         Dictionary<string, object?>? baseValue;
         if (_baseValues.TryGetValue(fromNode, out baseValue)) 
         {
             _baseValues[toNode] = baseValue;
@@ -219,7 +226,7 @@ public class CCBAnimationManager
         }
 
         // Move seqs
-        Dictionary<int, Dictionary<string, CCBSequenceProperty>> seqs;
+        Dictionary<int, Dictionary<string, CCBSequenceProperty>>? seqs;
         if (_nodeSequences.TryGetValue(fromNode, out seqs))
         {
             _nodeSequences[toNode] = seqs;
@@ -227,7 +234,7 @@ public class CCBAnimationManager
         }
     }
 
-    private CCActionInterval GetAction(CCBKeyframe pKeyframe0, CCBKeyframe pKeyframe1, string pPropName, CCNode node)
+    private CCActionInterval? GetAction(CCBKeyframe? pKeyframe0, CCBKeyframe pKeyframe1, string pPropName, CCNode node)
     {
         float duration = pKeyframe1.Time - (pKeyframe0 != null ? pKeyframe0.Time : 0);
 
@@ -235,34 +242,34 @@ public class CCBAnimationManager
         {
             case "rotationX":
                 {
-                    CCBValue value = (CCBValue) pKeyframe1.Value;
+                    CCBValue value = ValueAs<CCBValue>(pKeyframe1.Value);
                     return new CCBRotateXTo(duration, value.GetFloatValue());
                 }
             case "rotationY":
                 {
-                    CCBValue value = (CCBValue) pKeyframe1.Value;
+                    CCBValue value = ValueAs<CCBValue>(pKeyframe1.Value);
                     return new CCBRotateYTo(duration, value.GetFloatValue());
                 }
             case "rotation":
                 {
-                    var value = (CCBValue) pKeyframe1.Value;
+                    var value = ValueAs<CCBValue>(pKeyframe1.Value);
                     return new CCBRotateTo(duration, value.GetFloatValue());
                 }
             case "opacity":
                 {
-                    var value = (CCBValue) pKeyframe1.Value;
+                    var value = ValueAs<CCBValue>(pKeyframe1.Value);
                     return new CCFadeTo (duration, value.GetByteValue());
                 }
             case "color":
                 {
-                    var color = (CCColor3BWapper) pKeyframe1.Value;
+                    var color = ValueAs<CCColor3BWapper>(pKeyframe1.Value);
                     CCColor3B c = color.Color;
 
                     return new CCTintTo (duration, c.R, c.G, c.B);
                 }
             case "visible":
                 {
-                    var value = (CCBValue) pKeyframe1.Value;
+                    var value = ValueAs<CCBValue>(pKeyframe1.Value);
                     if (value.GetBoolValue())
                     {
                         return new CCSequence (new CCDelayTime (duration), new CCShow());
@@ -270,15 +277,15 @@ public class CCBAnimationManager
                     return new CCSequence (new CCDelayTime (duration), new CCHide());
                 }
             case "displayFrame":
-                return new CCSequence (new CCDelayTime (duration), new CCBSetSpriteFrame((CCSpriteFrame) pKeyframe1.Value));
+                return new CCSequence (new CCDelayTime (duration), new CCBSetSpriteFrame((CCSpriteFrame?) pKeyframe1.Value));
             case "position":
                 {
                     // Get position type
-                    var array = (List<CCBValue>) GetBaseValue(node, pPropName);
+                    var array = ValueAs<List<CCBValue>>(GetBaseValue(node, pPropName));
                     var type = (CCBPositionType) array[2].GetIntValue();
 
                     // Get relative position
-                    var value = (List<CCBValue>) pKeyframe1.Value;
+                    var value = ValueAs<List<CCBValue>>(pKeyframe1.Value);
                     float x = value[0].GetFloatValue();
                     float y = value[1].GetFloatValue();
 
@@ -291,11 +298,11 @@ public class CCBAnimationManager
             case "scale":
                 {
                     // Get position type
-                    var array = (List<CCBValue>) GetBaseValue(node, pPropName);
+                    var array = ValueAs<List<CCBValue>>(GetBaseValue(node, pPropName));
                     var type = (CCBScaleType) array[2].GetIntValue();
 
                     // Get relative scale
-                    var value = (List<CCBValue>) pKeyframe1.Value;
+                    var value = ValueAs<List<CCBValue>>(pKeyframe1.Value);
                     float x = value[0].GetFloatValue();
                     float y = value[1].GetFloatValue();
 
@@ -311,7 +318,7 @@ public class CCBAnimationManager
             case "skew":
                 {
                     // Get relative skew
-                    var value = (List<CCBValue>)pKeyframe1.Value;
+                    var value = ValueAs<List<CCBValue>>(pKeyframe1.Value);
                     float x = value[0].GetFloatValue();
                     float y = value[1].GetFloatValue();
     
@@ -325,7 +332,7 @@ public class CCBAnimationManager
         return null;
     }
 
-    private void SetAnimatedProperty(string pPropName, CCNode node, object pValue, float fTweenDuraion)
+    private void SetAnimatedProperty(string pPropName, CCNode node, object? pValue, float fTweenDuraion)
     {
         if (fTweenDuraion > 0)
         {
@@ -336,8 +343,11 @@ public class CCBAnimationManager
             kf1.EasingType = CCBEasingType.Linear;
 
             // Animate
-            CCActionInterval tweenAction = GetAction(null, kf1, pPropName, node);
-            node.RunAction(tweenAction);
+            CCActionInterval? tweenAction = GetAction(null, kf1, pPropName, node);
+            if (tweenAction != null)
+            {
+                node.RunAction(tweenAction);
+            }
         }
         else
         {
@@ -346,11 +356,11 @@ public class CCBAnimationManager
             if (pPropName == "position")
             {
                 // Get position type
-                var array = (List<CCBValue>) GetBaseValue(node, pPropName);
+                var array = ValueAs<List<CCBValue>>(GetBaseValue(node, pPropName));
                 var type = (CCBPositionType) array[2].GetIntValue();
 
                 // Get relative position
-                var value = (List<CCBValue>) pValue;
+                var value = ValueAs<List<CCBValue>>(pValue);
                 float x = value[0].GetFloatValue();
                 float y = value[1].GetFloatValue();
 
@@ -359,11 +369,11 @@ public class CCBAnimationManager
             else if (pPropName == "scale")
             {
                 // Get scale type
-                var array = (List<CCBValue>) GetBaseValue(node, pPropName);
+                var array = ValueAs<List<CCBValue>>(GetBaseValue(node, pPropName));
                 var type = (CCBScaleType) array[2].GetIntValue();
 
                 // Get relative scale
-                var value = (List<CCBValue>) pValue;
+                var value = ValueAs<List<CCBValue>>(pValue);
                 float x = value[0].GetFloatValue();
                 float y = value[1].GetFloatValue();
 
@@ -372,7 +382,7 @@ public class CCBAnimationManager
             else if (pPropName == "skew")
             {
                 // Get relative scale
-                var value = (List<CCBValue>)pValue;
+                var value = ValueAs<List<CCBValue>>(pValue);
                 float x = value[0].GetFloatValue();
                 float y = value[1].GetFloatValue();
 
@@ -386,36 +396,41 @@ public class CCBAnimationManager
                 // TODO only handle rotation, opacity, displayFrame, color
                 if (pPropName == "rotation")
                 {
-                    float rotate = ((CCBValue) pValue).GetFloatValue();
+                    float rotate = ValueAs<CCBValue>(pValue).GetFloatValue();
                     node.Rotation = rotate;
                 }
                 else if (pPropName == "rotationX")
                 {
-                    float rotate = ((CCBValue)pValue).GetFloatValue();
+                    float rotate = ValueAs<CCBValue>(pValue).GetFloatValue();
                     node.RotationX = rotate;
                 }
                 else if (pPropName == "rotationY")
                 {
-                    float rotate = ((CCBValue)pValue).GetFloatValue();
+                    float rotate = ValueAs<CCBValue>(pValue).GetFloatValue();
                     node.RotationY = rotate;
                 }
                 else if (pPropName == "opacity")
                 {
-                    byte opacity = ((CCBValue) pValue).GetByteValue();
+                    byte opacity = ValueAs<CCBValue>(pValue).GetByteValue();
                     ((ICCRGBAProtocol) node).Opacity = opacity;
                 }
                 else if (pPropName == "displayFrame")
                 {
-                    ((CCSprite) node).DisplayFrame = (CCSpriteFrame) pValue;
+                    // A sprite frame that couldn't be found has no frame to show.
+                    var spriteFrame = (CCSpriteFrame?) pValue;
+                    if (spriteFrame != null)
+                    {
+                        ((CCSprite) node).DisplayFrame = spriteFrame;
+                    }
                 }
                 else if (pPropName == "color")
                 {
-                    var color = (CCColor3BWapper) pValue;
+                    var color = ValueAs<CCColor3BWapper>(pValue);
                     ((ICCRGBAProtocol) node).Color = color.Color;
                 }
                 else if (pPropName == "visible")
                 {
-                    bool visible = ((CCBValue)pValue).GetBoolValue();
+                    bool visible = ValueAs<CCBValue>(pValue).GetBoolValue();
                     node.Visible = visible;
                 }
                 else
@@ -434,8 +449,10 @@ public class CCBAnimationManager
         if (keyframes.Count == 0)
         {
             // Use base value (no animation)
-            object baseValue = GetBaseValue(node, pSeqProp.Name);
-            Debug.Assert(baseValue != null, "No baseValue found for property");
+            object? baseValue = GetBaseValue(node, pSeqProp.Name);
+            // A sprite frame that couldn't be found leaves a null base value, which
+            // SetAnimatedProperty skips.
+            Debug.Assert(baseValue != null || pSeqProp.Name == "displayFrame", "No baseValue found for property");
             SetAnimatedProperty(pSeqProp.Name, node, baseValue, fTweenDuration);
         }
         else
@@ -489,7 +506,7 @@ public class CCBAnimationManager
         }
     }
 
-    public Object ActionForCallbackChannel(CCBSequenceProperty channel)
+    public object? ActionForCallbackChannel(CCBSequenceProperty channel)
     {
         float lastKeyframeTime = 0;
 
@@ -508,7 +525,7 @@ public class CCBAnimationManager
                 actions.Add(new CCDelayTime(timeSinceLastKeyframe));
             }
 
-            var keyVal = (List<CCBValue>)keyframe.Value;
+            var keyVal = ValueAs<List<CCBValue>>(keyframe.Value);
             string selectorName = keyVal[0].GetStringValue();
             CCBTargetType selectorTarget =
                 (CCBTargetType) int.Parse(keyVal[1].GetStringValue());
@@ -525,7 +542,7 @@ public class CCBAnimationManager
             }
             else
             {
-                Object target = null;
+                object? target = null;
 
                 if (selectorTarget == CCBTargetType.DocumentRoot)
                     target = _rootNode;
@@ -536,9 +553,9 @@ public class CCBAnimationManager
                 {
                     if (selectorName.Length > 0)
                     {
-                        Action<CCNode> selCallFunc = null;
+                        Action<CCNode>? selCallFunc = null;
 
-                        ICCBSelectorResolver targetAsCCBSelectorResolver = target as ICCBSelectorResolver;
+                        ICCBSelectorResolver? targetAsCCBSelectorResolver = target as ICCBSelectorResolver;
 
                         if (targetAsCCBSelectorResolver != null)
                         {
@@ -569,7 +586,7 @@ public class CCBAnimationManager
         return new CCSequence(actions.ToArray());
     }
 
-    public Object ActionForSoundChannel(CCBSequenceProperty channel)
+    public object? ActionForSoundChannel(CCBSequenceProperty channel)
     {
         float lastKeyframeTime = 0;
 
@@ -588,7 +605,7 @@ public class CCBAnimationManager
                 actions.Add(new CCDelayTime(timeSinceLastKeyframe));
             }
 
-            var keyVal =  (List<CCBValue>)keyframe.Value;
+            var keyVal =  ValueAs<List<CCBValue>>(keyframe.Value);
             string soundFile = keyVal[0].GetStringValue();
 
             float pitch, pan, gain;
@@ -630,7 +647,7 @@ public class CCBAnimationManager
                 CCBKeyframe kf0 = keyframes[i];
                 CCBKeyframe kf1 = keyframes[i + 1];
 
-                CCActionInterval action = GetAction(kf0, kf1, pSeqProp.Name, node);
+                CCActionInterval? action = GetAction(kf0, kf1, pSeqProp.Name, node);
                 if (action != null)
                 {
                     // Apply easing
@@ -669,8 +686,12 @@ public class CCBAnimationManager
 
     public void RunAnimationsForSequenceIdTweenDuration(int nSeqId, float fTweenDuration)
     {
-        Debug.Assert(nSeqId != -1, "Sequence id couldn't be found");
+        // Look the sequence up first, so a request for one that doesn't exist leaves the running
+        // animation alone.
+        CCBSequence seq = GetSequence(nSeqId)
+            ?? throw new ArgumentException("There's no sequence with the ID " + nSeqId + ".", nameof(nSeqId));
 
+        Debug.Assert(_rootNode != null, "The CCB reader sets the root node before animations run.");
         _rootNode.StopAllActions();
 
         foreach (var pElement in _nodeSequences)
@@ -683,7 +704,7 @@ public class CCBAnimationManager
 
             var seqNodePropNames = new List<string>();
 
-            Dictionary<string, CCBSequenceProperty> seqNodeProps;
+            Dictionary<string, CCBSequenceProperty>? seqNodeProps;
             if (seqs.TryGetValue(nSeqId, out seqNodeProps))
             {
                 // Reset nodes that have sequence node properties, and run actions on them
@@ -699,14 +720,14 @@ public class CCBAnimationManager
             }
 
             // Reset the nodes that may have been changed by other timelines
-            Dictionary<string, object> nodeBaseValues;
+            Dictionary<string, object?>? nodeBaseValues;
             if (_baseValues.TryGetValue(node, out nodeBaseValues))
             {
                 foreach (var pElement2 in nodeBaseValues)
                 {
                     if (!seqNodePropNames.Contains(pElement2.Key))
                     {
-                        object value = pElement2.Value;
+                        object? value = pElement2.Value;
 
                         if (value != null)
                         {
@@ -718,7 +739,6 @@ public class CCBAnimationManager
         }
 
         // Make callback at end of sequence
-        CCBSequence seq = GetSequence(nSeqId);
         CCAction completeAction = new CCSequence (
             new CCDelayTime (seq.Duration + fTweenDuration),
             new CCCallFunc(SequenceCompleted)
@@ -730,7 +750,7 @@ public class CCBAnimationManager
 
         if (seq.CallBackChannel != null)
         {
-            CCAction action = (CCAction) ActionForCallbackChannel(seq.CallBackChannel);
+            CCAction? action = (CCAction?) ActionForCallbackChannel(seq.CallBackChannel);
             if (action != null)
             {
                 _rootNode.RunAction(action);
@@ -739,14 +759,14 @@ public class CCBAnimationManager
 
         if (seq.SoundChannel != null)
         {
-            CCAction action = (CCAction) ActionForSoundChannel(seq.SoundChannel);
+            CCAction? action = (CCAction?) ActionForSoundChannel(seq.SoundChannel);
             if (action != null)
             {
                 _rootNode.RunAction(action);
             }
         }
 
-        _runningSequence = GetSequence(nSeqId);
+        _runningSequence = seq;
     }
 
     public void RunAnimationsForSequenceNamedTweenDuration(string pName, float fTweenDuration)
@@ -778,6 +798,7 @@ public class CCBAnimationManager
     private void SequenceCompleted()
     {
 
+        Debug.Assert(_runningSequence != null, "SequenceCompleted runs at the end of a running sequence.");
         string runningSequenceName = _runningSequence.Name;
         int nextSeqId = _runningSequence.ChainedSequenceId;
         _runningSequence = null;
@@ -789,7 +810,7 @@ public class CCBAnimationManager
 
         if (_delegate != null)
         {
-            _delegate(_runningSequence.Name);
+            _delegate(runningSequenceName);
         }
 
         if (_animationCompleteCallbackFunc != null)
@@ -807,7 +828,7 @@ public class CCBAnimationManager
 
 public class CCBSetSpriteFrame : CCActionInstant
 {
-    private CCSpriteFrame _spriteFrame;
+    private CCSpriteFrame? _spriteFrame;
 
     /** creates a Place action with a position */
 
@@ -815,12 +836,12 @@ public class CCBSetSpriteFrame : CCActionInstant
     {
     }
 
-    public CCBSetSpriteFrame(CCSpriteFrame pSpriteFrame)
+    public CCBSetSpriteFrame(CCSpriteFrame? pSpriteFrame)
     {
         InitWithSpriteFrame(pSpriteFrame);
     }
 
-    protected virtual bool InitWithSpriteFrame(CCSpriteFrame pSpriteFrame)
+    protected virtual bool InitWithSpriteFrame(CCSpriteFrame? pSpriteFrame)
     {
         _spriteFrame = pSpriteFrame;
         return true;
@@ -828,10 +849,15 @@ public class CCBSetSpriteFrame : CCActionInstant
 
     public override void Update(float time)
     {
-        ((CCSprite) m_pTarget).DisplayFrame = _spriteFrame;
+        Debug.Assert(m_pTarget != null, "Update only runs while the action is started");
+        // A sprite frame that couldn't be found has no frame to show.
+        if (_spriteFrame != null)
+        {
+            ((CCSprite) m_pTarget).DisplayFrame = _spriteFrame;
+        }
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCBSetSpriteFrame pRet;
 
@@ -858,6 +884,12 @@ public class CCBSetSpriteFrame : CCActionInstant
 
 public class CCBSoundEffect : CCActionInstant
 {
+    public CCBSoundEffect()
+    {
+        // ActionWithSoundFile and Copy call InitWithSoundFile straight after construction, which sets it.
+        _soundFile = null!;
+    }
+
     public static CCBSoundEffect ActionWithSoundFile(string file, float pitch, float pan, float gain)
     {
         CCBSoundEffect pRet = new CCBSoundEffect();
@@ -865,6 +897,7 @@ public class CCBSoundEffect : CCActionInstant
         return pRet;
     }
 
+    [MemberNotNull(nameof(_soundFile))]
     public bool InitWithSoundFile(string file, float pitch, float pan, float gain)
     {
         _soundFile = file;
@@ -880,7 +913,7 @@ public class CCBSoundEffect : CCActionInstant
         CCSimpleAudioEngine.SharedEngine.PlayEffect(_soundFile);
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCBSoundEffect pRet;
 
@@ -936,10 +969,11 @@ public class CCBRotateTo : CCActionInterval
 
     public override void Update(float time)
     {
+        Debug.Assert(m_pTarget != null, "Update only runs while the action is started");
         m_pTarget.Rotation = _startAngle + (_diffAngle * time);
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCBRotateTo pRet;
 
@@ -967,7 +1001,7 @@ public class CCBRotateTo : CCActionInterval
     protected internal override void StartWithTarget(CCNode node)
     {
         base.StartWithTarget(node);
-        _startAngle = m_pTarget.Rotation;
+        _startAngle = node.Rotation;
         _diffAngle = _dstAngle - _startAngle;
     }
 }
@@ -1005,7 +1039,7 @@ public class CCBRotateXTo : CCActionInterval
         _diffAngle = _dstAngle - _startAngle;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCBRotateXTo pRet;
 
@@ -1032,6 +1066,7 @@ public class CCBRotateXTo : CCActionInterval
 
     public override void Update(float time)
     {
+        Debug.Assert(m_pTarget != null, "Update only runs while the action is started");
         m_pTarget.RotationX = _startAngle + (_diffAngle * time);
     }
 
@@ -1073,7 +1108,7 @@ public class CCBRotateYTo : CCActionInterval
         _diffAngle = _dstAngle - _startAngle;
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCBRotateYTo pRet;
 
@@ -1100,6 +1135,7 @@ public class CCBRotateYTo : CCActionInterval
 
     public override void Update(float time)
     {
+        Debug.Assert(m_pTarget != null, "Update only runs while the action is started");
         m_pTarget.RotationY = _startAngle + (_diffAngle * time);
     }
 
@@ -1119,7 +1155,7 @@ class CCBEaseInstant : CCActionEase
         InitWithAction(pAction);
     }
 
-    public override object Copy(ICCCopyable pZone)
+    public override object Copy(ICCCopyable? pZone)
     {
         CCBEaseInstant pRet;
 
@@ -1140,7 +1176,7 @@ class CCBEaseInstant : CCActionEase
 
     public override CCFiniteTimeAction Reverse()
     {
-	         return new CCBEaseInstant((CCActionInterval)m_pInner.Reverse());
+	         return new CCBEaseInstant((CCActionInterval)m_pInner.ReverseOrThrow());
     }
 
     public override void Update(float time)

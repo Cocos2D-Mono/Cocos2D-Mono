@@ -1,6 +1,6 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -12,8 +12,11 @@ namespace Cocos2D;
 
 public class CCContentManager : ContentManager
 {
-    public static CCContentManager SharedContentManager;
+    // Set by Initialize, which CCApplication.LoadContent and CCGameView call before any content
+    // loads.
+    public static CCContentManager SharedContentManager = null!;
 
+    [MemberNotNull(nameof(SharedContentManager))]
     internal static void Initialize(IServiceProvider serviceProvider, string rootDirectory)
     {
         SharedContentManager = new CCContentManager(serviceProvider, rootDirectory);
@@ -90,9 +93,9 @@ public class CCContentManager : ContentManager
         public readonly string AssetFileName;
         public readonly bool WeakReference;
         public readonly bool UseContentReader;
-        private object _asset;
+        private object? _asset;
 
-        public AssetEntry(object asset, string assetFileName, bool weakReference, bool useContentReader)
+        public AssetEntry(object? asset, string assetFileName, bool weakReference, bool useContentReader)
         {
             AssetFileName = assetFileName;
             WeakReference = weakReference;
@@ -100,7 +103,7 @@ public class CCContentManager : ContentManager
             Asset = asset;
         }
 
-        public object Asset
+        public object? Asset
         {
             set
             {
@@ -117,9 +120,9 @@ public class CCContentManager : ContentManager
             {
                 if (WeakReference)
                 {
-                    if (((WeakReference)_asset).IsAlive)
+                    if (_asset is WeakReference reference && reference.IsAlive)
                     {
-                        return ((WeakReference)_asset).Target;
+                        return reference.Target;
                     }
                     return null;
                 }
@@ -137,7 +140,7 @@ public class CCContentManager : ContentManager
     private List<string> _searchPaths = new List<string>();
     private List<string> _searchResolutionsOrder = new List<string>(); 
 
-    private Dictionary<Tuple<string, Type>, string> _failedAssets = new Dictionary<Tuple<string, Type>, string>();
+    private Dictionary<Tuple<string, Type>, string?> _failedAssets = new Dictionary<Tuple<string, Type>, string?>();
 
     public CCContentManager(IServiceProvider serviceProvider) : base(serviceProvider)
     {
@@ -149,12 +152,12 @@ public class CCContentManager : ContentManager
         _loadedAssets = new Dictionary<string, AssetEntry>();
     }
 
-    public T TryLoad<T>(string assetName)
+    public T? TryLoad<T>(string assetName)
     {
         return TryLoad<T>(assetName, false);
     }
 
-    public T TryLoad<T>(string assetName, bool weakReference)
+    public T? TryLoad<T>(string assetName, bool weakReference)
     {
         var assetKey = Tuple.Create(assetName, typeof(T));
         if (_failedAssets.ContainsKey(assetKey))
@@ -202,12 +205,12 @@ public class CCContentManager : ContentManager
         }
 
         // Check for a previously loaded asset first
-        AssetEntry entry;
+        AssetEntry? entry;
         if (_loadedAssets.TryGetValue(assetName, out entry))
         {
-            if (entry.Asset is T)
+            if (entry.Asset is T asset)
             {
-                return (T)entry.Asset;
+                return asset;
             }
             else
             {
@@ -260,7 +263,7 @@ public class CCContentManager : ContentManager
 
     private T InternalLoad<T>(string assetName, string path, bool weakReference)
     {
-        T result = default(T);
+        T result;
 
         bool useContentReader = true;
 
@@ -271,7 +274,8 @@ public class CCContentManager : ContentManager
             {
                 //TODO: No need CCContent, use TileContainer
                 var content = ReadAsset<CCContent>(path, null);
-                result = (T) (object) content.Content;
+                result = (T) (object) (content.Content
+                    ?? throw new ContentLoadException("The asset " + assetName + " has no content."));
 
                 useContentReader = false;
             }
@@ -311,7 +315,8 @@ public class CCContentManager : ContentManager
                     {
                         //TODO: Remove This
                         var content = ReadAsset<CCContent>(path, null);
-                        result = (T) (object) new PlistDocument(content.Content);
+                        result = (T) (object) new PlistDocument(content.Content
+                            ?? throw new ContentLoadException("The asset " + assetName + " has no content."));
                     }
 
                     useContentReader = false;
@@ -320,7 +325,8 @@ public class CCContentManager : ContentManager
                 else if (typeof (T) == typeof (Texture2D) && Path.HasExtension(path))
                 {
                     var service =
-                        (IGraphicsDeviceService) ServiceProvider.GetService(typeof (IGraphicsDeviceService));
+                        (IGraphicsDeviceService?) ServiceProvider.GetService(typeof (IGraphicsDeviceService))
+                        ?? throw new InvalidOperationException("Loading a texture needs a graphics device service.");
 
                     using (var streamContent = TitleContainer.OpenStream(assetPath))
                     {
@@ -345,15 +351,15 @@ public class CCContentManager : ContentManager
 
         _loadedAssets[assetName] = assetEntry;
 
-        if (result is GraphicsResource)
+        if (result is GraphicsResource resource)
         {
-            (result as GraphicsResource).Disposing += AssetDisposing;
+            resource.Disposing += AssetDisposing;
         }
 
         return result;
     }
 
-    private void AssetDisposing(object sender, EventArgs e)
+    private void AssetDisposing(object? sender, EventArgs e)
     {
         foreach (var loadedAsset in _loadedAssets)
         {
@@ -433,7 +439,7 @@ public class CCContentManager : ContentManager
     {
         var document = Load<PlistDocument>(filename, true);
         
-        SetFilenameLookupDictionary(document.Root as PlistDictionary);
+        SetFilenameLookupDictionary(document.GetRootDictionary(filename));
     }
 
     public virtual void SetFilenameLookupDictionary(PlistDictionary filenameLookupDict)

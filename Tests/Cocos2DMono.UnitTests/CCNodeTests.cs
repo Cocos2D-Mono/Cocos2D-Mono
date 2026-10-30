@@ -168,6 +168,29 @@ public class CCNodeTests
         Assert.Equal(0, node.ContentSize.Height);
     }
 
+    [Fact]
+    public void OnEnterAndOnExit_AGamePadNodeWithoutAnApplication_RunAndStop()
+    {
+        // Entering and exiting subscribed to the application's game pad events without checking
+        // that there is an application, which a CCGameView doesn't have, so they threw
+        // NullReferenceException (C2D-303). Enabling a node's game pad enables the director's.
+        CCDirector director = CCDirector.SharedDirector;
+        bool directorGamePad = director.GamePadEnabled;
+        try
+        {
+            var node = new CCNode { GamePadEnabled = true };
+
+            node.OnEnter();
+            Assert.True(node.IsRunning);
+            node.OnExit();
+            Assert.False(node.IsRunning);
+        }
+        finally
+        {
+            director.GamePadEnabled = directorGamePad;
+        }
+    }
+
     private sealed class ProbeNode : CCNode
     {
         public void MarkReorderDirty() => m_bReorderChildDirty = true;

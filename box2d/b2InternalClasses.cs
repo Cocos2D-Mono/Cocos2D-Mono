@@ -1,6 +1,6 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Box2D;
 
@@ -8,7 +8,8 @@ internal static class b2ArrayPool<T>
 {
     private class PoolEntry
     {
-        public T[][] Elements = new T[4][];
+        // The slots from Count on are empty.
+        public T[]?[] Elements = new T[4][];
         public int Count;
 
         public void Add(T[] array)
@@ -28,7 +29,7 @@ internal static class b2ArrayPool<T>
 
     public static T[] Create(int length, bool pow)
     {
-        PoolEntry entry;
+        PoolEntry? entry;
 
         if (pow)
         {
@@ -41,7 +42,8 @@ internal static class b2ArrayPool<T>
         {
             if (entry.Count > 0)
             {
-                var result = entry.Elements[--entry.Count];
+                T[]? result = entry.Elements[--entry.Count];
+                Debug.Assert(result != null, "The slots below Count hold arrays.");
                 entry.Elements[entry.Count] = null;
                 return result;
             }
@@ -57,7 +59,7 @@ internal static class b2ArrayPool<T>
     }
     public static void Free(T[] array)
     {
-        PoolEntry entry;
+        PoolEntry? entry;
 
         if (!_unused.TryGetValue(array.Length, out entry))
         {

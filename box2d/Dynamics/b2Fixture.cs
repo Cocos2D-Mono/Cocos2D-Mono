@@ -1,6 +1,6 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using Box2D.Collision;
@@ -43,7 +43,7 @@ public struct b2Filter
 public class b2Fixture
 {
     public float Density;
-    public b2Fixture Next;
+    public b2Fixture? Next;
     public b2Body Body;
     public b2Shape Shape;
 
@@ -88,7 +88,7 @@ public class b2Fixture
         }
     }
 
-    public object UserData;
+    public object? UserData;
 
     public virtual bool TestPoint(b2Vec2 p)
     {
@@ -112,6 +112,15 @@ public class b2Fixture
         return m_proxies[childIndex].aabb;
     }
 
+    public b2Fixture()
+    {
+        // b2Body.CreateFixture calls Create straight after construction, which sets these.
+        Body = null!;
+        Shape = null!;
+        m_proxies = null!;
+    }
+
+    [MemberNotNull(nameof(Body), nameof(Shape), nameof(m_proxies))]
     public void Create(b2Body body, b2FixtureDef def)
     {
         UserData = def.userData;
@@ -125,14 +134,17 @@ public class b2Fixture
 
         m_isSensor = def.isSensor;
 
-        Shape = def.shape.Clone();
+        b2Shape shape = def.shape ?? throw new ArgumentException("The fixture definition has no shape.", nameof(def));
+        Shape = shape.Clone();
 
         // Reserve proxy space
         int childCount = Shape.GetChildCount();
         m_proxies = b2ArrayPool<b2FixtureProxy>.Create(childCount, true);
         for (int i = 0; i < childCount; ++i)
         {
-            m_proxies[i].fixture = null;
+            // The pool can return an array that an earlier fixture used. Each proxy belongs to this
+            // fixture, and isn't in the broad phase until CreateProxies adds it.
+            m_proxies[i].fixture = this;
             m_proxies[i].proxyId = b2BroadPhase.e_nullProxy;
         }
         m_proxyCount = 0;
@@ -143,8 +155,9 @@ public class b2Fixture
     public virtual void Destroy()
     {
         b2ArrayPool<b2FixtureProxy>.Free(m_proxies);
-        m_proxies = null;
-        Shape = null;
+        // A destroyed fixture is back in the state it had before Create, and nothing may use it.
+        m_proxies = null!;
+        Shape = null!;
     }
 
     public virtual void CreateProxies(b2BroadPhase broadPhase, b2Transform xf)
@@ -211,7 +224,7 @@ public class b2Fixture
         }
 
         // Flag associated contacts for filtering.
-        b2ContactEdge edge = Body.ContactList;
+        b2ContactEdge? edge = Body.ContactList;
         while (edge != null)
         {
             b2Contact contact = edge.Contact;

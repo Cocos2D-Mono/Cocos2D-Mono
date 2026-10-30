@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,10 +10,10 @@ namespace Box2D.Dynamics;
 public class b2ContactManager
 {
     private b2BroadPhase m_broadPhase;
-    private b2Contact m_contactList;
+    private b2Contact? m_contactList;
     private int m_contactCount;
-    private b2ContactFilter m_contactFilter;
-    private b2ContactListener m_contactListener;
+    private b2ContactFilter? m_contactFilter;
+    private b2ContactListener? m_contactListener;
 
     public b2ContactManager()
     {
@@ -26,7 +25,7 @@ public class b2ContactManager
 
     }
 
-    public b2Contact ContactList
+    public b2Contact? ContactList
     {
         get { return (m_contactList); }
         set { m_contactList = value; }
@@ -43,13 +42,13 @@ public class b2ContactManager
         set { m_broadPhase = value; } 
     }
 
-    public b2ContactListener ContactListener
+    public b2ContactListener? ContactListener
     {
         set { m_contactListener = value; }
         get { return (m_contactListener); }
     }
 
-    public b2ContactFilter ContactFilter
+    public b2ContactFilter? ContactFilter
     {
         set { m_contactFilter = value; }
         get { return (m_contactFilter); }
@@ -127,7 +126,7 @@ public class b2ContactManager
     public void Collide()
     {
         // Update awake contacts.
-        b2Contact c = m_contactList;
+        b2Contact? c = m_contactList;
         while (c != null)
         {
             b2Fixture fixtureA = c.FixtureA;
@@ -217,7 +216,7 @@ public class b2ContactManager
         // TODO_ERIN use a hash table to remove a potential bottleneck when both
         // bodies have a lot of contacts.
         // Does a contact already exist?
-        b2ContactEdge edge = bodyB.ContactList;
+        b2ContactEdge? edge = bodyB.ContactList;
         while (edge != null)
         {
             if (edge.Other == bodyA)

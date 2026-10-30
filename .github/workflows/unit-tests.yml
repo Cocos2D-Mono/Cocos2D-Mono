@@ -22,6 +22,10 @@ jobs:
         uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           global-json-file: global.json
+      # With global.json's rollForward, a newer SDK on the runner image wins over the
+      # one installed above, so log the SDK that builds.
+      - name: Show the .NET SDK version
+        run: dotnet --version
       - name: Test
         # Overriding the Cocos2DTargetFrameworks dial narrows the referenced
         # multi-target src/Cocos2DMono to the tested TFM so restore does not

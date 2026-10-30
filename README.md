@@ -78,6 +78,8 @@ dotnet build src/Cocos2DMono/Cocos2DMono.csproj -c Release -f $TFM -p:TargetFram
 
 A game can instead reference `src/Cocos2DMono/Cocos2DMono.csproj` from its own `net10.0-maccatalyst` or `net10.0-tvos` project: once step 3 has run, the engine finds the fork's assembly and adds the target on its own. `Directory.Build.props` documents the overrides for a fork checked out somewhere else.
 
+If the game builds its content with `MonoGame.Content.Builder.Task`, set `<MonoGamePlatform>iOS</MonoGamePlatform>` in its project for these targets. MonoGame's platform packages set that property, and these targets use the fork's assembly instead of a package. The content builder has no Mac Catalyst or tvOS platform anyway, and both run content built for iOS unchanged.
+
 # Getting Started
 
 Check out the [guides](https://cocos2d-mono.dev/docs/category/getting-started)!

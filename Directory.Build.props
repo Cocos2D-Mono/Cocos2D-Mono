@@ -123,21 +123,21 @@
     ==================== Warnings as errors in CI (C2D-198) ====================
 
     In CI ($(CI) is true: GitHub Actions sets it in every workflow, pack.yml included), a
-    compiler, analyzer or NuGet warning fails the build, except for the codes listed below.
-    Those still have warnings to clear. Each C2D-198 slice that clears a code deletes it
-    here, so don't add codes. Local builds keep warnings as warnings; build with
-    -p:CI=true to see what CI will do.
+    warning fails the build, except for the codes listed below. That covers compiler,
+    analyzer and NuGet warnings (TreatWarningsAsErrors), and the warnings other MSBuild
+    tasks log, with or without a code (MSBuildTreatWarningsAsErrors). The listed codes
+    still have warnings to clear, and they stay warnings for MSBuild too, because
+    MSBuildWarningsNotAsErrors defaults to WarningsNotAsErrors. Each C2D-198 slice that
+    clears a code deletes it here, so don't add codes. Local builds keep warnings as
+    warnings; build with -p:CI=true to see what CI will do.
 
     NuGet's audit warnings (NU1901-NU1904) fail it too, for direct and transitive
     packages. Update the package, or review the advisory and add a NuGetAuditSuppress
     item for it.
-
-    Warnings from other MSBuild tasks stay warnings: MSBuildTreatWarningsAsErrors is off.
-    The engine build logs one from MonoGame's content task ("No Content References
-    Found") that has no code, so MSBuildWarningsNotAsErrors couldn't exempt it.
   -->
   <PropertyGroup Condition="'$(CI)' == 'true'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <MSBuildTreatWarningsAsErrors>true</MSBuildTreatWarningsAsErrors>
     <!-- Android APIs obsoleted in later versions -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);CA1422</WarningsNotAsErrors>
     <!-- Trim analysis, which waits for the 3.0 trim-safety work -->

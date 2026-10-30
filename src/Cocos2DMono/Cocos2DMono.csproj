@@ -103,10 +103,6 @@
     <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
     <CheckEolWorkloads>false</CheckEolWorkloads>
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
-    <!-- MonoGame.Content.Builder.Task infers MonoGamePlatform from the TFM and has no
-         mapping for -maccatalyst (it errors out at build). Catalyst runs iOS-built
-         content unchanged, so it is the iOS content platform. -->
-    <MonoGamePlatform>iOS</MonoGamePlatform>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == '$(Cocos2DTvosTfm)'">
@@ -117,10 +113,6 @@
     <SupportedOSPlatformVersion>16.0</SupportedOSPlatformVersion>
     <CheckEolWorkloads>false</CheckEolWorkloads>
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
-    <!-- MGCB 3.8.5 has no tvOS content platform (mgcb rejects the value), and the fork's
-         tvOS MonoGame is the iOS platform code, so tvOS is the iOS content platform too:
-         games build content once for iOS and ship it to iOS, Catalyst, and tvOS. -->
-    <MonoGamePlatform>iOS</MonoGamePlatform>
   </PropertyGroup>
 
   <!-- Mobile TFMs: drop .snupkg generation. Apple/Android workloads emit
@@ -205,8 +197,13 @@
          transitively; game projects that use the content pipeline reference
          MonoGame.Content.Builder.Task directly (standard MonoGame practice).
          The Cocos2D-Mono.Core metapackage additionally excludes build assets
-         on its dependency edge as future-proofing. -->
-    <PackageReference Include="MonoGame.Content.Builder.Task" />
+         on its dependency edge as future-proofing.
+         The engine has no content of its own, so its own build leaves the package's
+         build assets out: otherwise MGCB's targets run here, find no .mgcb file and
+         warn, and CI fails on that warning (C2D-198). The packed dependency doesn't
+         change, because build assets are private by default and never reached
+         consumers. -->
+    <PackageReference Include="MonoGame.Content.Builder.Task" ExcludeAssets="build" />
     <!-- ICSharpCode.SharpZipLib types are imported by CCParticleSystem.cs.
          Required on every TFM. -->
     <PackageReference Include="SharpZipLib" />

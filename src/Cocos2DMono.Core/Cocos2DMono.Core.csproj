@@ -70,8 +70,8 @@
     <Product>Cocos2D-Mono.Core</Product>
     <Description>Cocos2D-Mono.Core is a metapackage variant of Cocos2D-Mono that excludes the MonoGame.Content.Builder.Task MSBuild target. Reference this package instead of Cocos2D-Mono if you do not use the MonoGame content pipeline. The runtime DLL (Cocos2DMono.dll) is identical - only the build-time content-pipeline flow differs.</Description>
     <PackageReleaseNotes>
+2.9.0 - Same engine as Cocos2D-Mono 2.9.0: the last nullable reference type annotations, fixes found while converting, and zlib through System.IO.Compression, with the bundled zlib port now obsolete. Read the CHANGELOG's Upgrading notes before updating.
 2.8.0 - Same engine as Cocos2D-Mono 2.8.0: more nullable reference type annotations, fixes found while converting, and gzip through System.IO.Compression. Read the CHANGELOG's Upgrading notes before updating.
-2.7.0 - Same engine as Cocos2D-Mono 2.7.0: the first nullable reference type annotations, plus fixes found while converting. Read the CHANGELOG's Upgrading notes before updating.
 - See https://github.com/Cocos2D-Mono/cocos2d-mono for the full changelog.
     </PackageReleaseNotes>
     <PackageTags>mono monogame cocos2d game gamedev 2d no-content-pipeline</PackageTags>

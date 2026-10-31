@@ -4,6 +4,34 @@ All notable changes to Cocos2D-Mono are recorded here. This file was introduced 
 2.5.10; earlier releases are described in their GitHub release notes / git history.
 The project follows [Semantic Versioning](https://semver.org/) where practical.
 
+## Unreleased
+
+### Fixed
+
+- Colour and opacity set through a `CCNode` reference now reach a layer, such as a
+  `CCLayerColor`, `CCLayerGradient`, `CCMenu`, `CCLayerMultiplex` or `CCControl`.
+  `CCLayerRGBA` declared its own colour and opacity members instead of overriding `CCNode`'s,
+  so such a call changed values that the layer doesn't draw from. `CCColorBlendAnimation` sets
+  its target's colour that way, so it didn't change a layer either.
+- Colour and opacity set through a `CCNode` reference now reach a `CCLabelBMFont`'s characters,
+  and so a `CCLabel`'s. The label declared its own colour and opacity members instead of
+  overriding `CCNode`'s, so such a call skipped the code that passes them on to the characters.
+  `CCColorBlendAnimation` didn't recolour a label either.
+- `PlistDocument.LoadFromXmlFile` reads a binary plist from a stream that returns fewer bytes
+  than asked for. It read the 8-byte header with a single `Read`, so after a short read it took
+  the plist for XML and threw `XmlException`. Only a custom seekable stream could do that: file
+  and memory streams return the whole header, and a stream that can't seek is copied into
+  memory first. So loading content wasn't affected.
+
+### Documentation
+
+- `CONTRIBUTING.md` says that CI treats every warning as an error, including NuGet's
+  vulnerability warnings and the warnings that MSBuild tasks log. Only the trim analysis
+  warnings are exempt, until 3.0. Building with `-p:CI=true` applies the same rules locally.
+- The README says how a Mac Catalyst or tvOS game that builds its content with
+  `MonoGame.Content.Builder.Task` sets `MonoGamePlatform`: to `iOS`, for those two targets
+  only.
+
 ## 2.9.0 - 2026-10-30
 
 The last of the nullable reference type annotations that started in 2.7.0. The director and

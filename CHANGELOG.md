@@ -31,6 +31,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - The README says how a Mac Catalyst or tvOS game that builds its content with
   `MonoGame.Content.Builder.Task` sets `MonoGamePlatform`: to `iOS`, for those two targets
   only.
+- The roadmap says how often releases ship: once a month, early in the month, with urgent
+  fixes in between.
 
 ## 2.9.0 - 2026-10-30
 

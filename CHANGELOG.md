@@ -6,6 +6,12 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 
 ## Unreleased
 
+### ⚠️ Upgrading
+
+- **Scroll views clip their content.** A `CCScrollView` or `CCTableView` now draws only what's
+  inside its view, as its `ClippingToBounds` property always said it did. A game that relied
+  on content drawing outside the view can set `ClippingToBounds` to false.
+
 ### Fixed
 
 - Colour and opacity set through a `CCNode` reference now reach a layer, such as a
@@ -22,6 +28,10 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   the plist for XML and threw `XmlException`. Only a custom seekable stream could do that: file
   and memory streams return the whole header, and a stream that can't seek is copied into
   memory first. So loading content wasn't affected.
+- A new `CCScrollView` or `CCTableView` clips its content to its view. Creating one set
+  `ClippingToBounds` to true without turning clipping on, so the view drew all of its content,
+  including cells scrolled out of it. A drag that started on one of those cells did nothing,
+  because a scroll view only takes touches inside its view.
 
 ### Documentation
 

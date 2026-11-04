@@ -32,6 +32,11 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   `ClippingToBounds` to true without turning clipping on, so the view drew all of its content,
   including cells scrolled out of it. A drag that started on one of those cells did nothing,
   because a scroll view only takes touches inside its view.
+- `CCTextureCache.RemoveUnusedTextures`, `CCSpriteFrameCache.RemoveUnusedSpriteFrames` and
+  `CCSpriteSheetCache.RemoveUnused` remove every entry that nothing else uses. Each kept the
+  last entry it looked at, whether anything used it or not, so the newest texture, frame or
+  sheet was never removed. A scene's own assets are usually the newest, so purging after
+  leaving a scene didn't free them.
 
 ### Documentation
 

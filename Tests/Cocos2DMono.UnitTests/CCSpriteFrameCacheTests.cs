@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Cocos2D;
 using Xunit;
@@ -236,6 +237,45 @@ public class CCSpriteFrameCacheTests
         var ex = Assert.Throws<InvalidDataException>(() => new CCAnimationCache().AddAnimationsWithDictionary(
             AnimationsPlist("c2d303-walk", entry, spriteSheets: new PlistArray())));
         Assert.Contains("'spriteframe'", ex.Message);
+    }
+
+    // RemoveUnusedSpriteFrames kept the last frame its loop visited, whether anything used it or
+    // not: the loop's enumerator was still on the stack when it collected (C2D-358).
+
+    [Fact]
+    public void SpriteFrameCache_RemoveUnused_RemovesEveryFrameNothingUses()
+    {
+        var cache = new CCSpriteFrameCache();
+        AddUnusedFrames(cache, "a.png", "b.png", "c.png");
+
+        cache.RemoveUnusedSpriteFrames();
+
+        Assert.Null(cache.SpriteFrameByName("a.png"));
+        Assert.Null(cache.SpriteFrameByName("b.png"));
+        Assert.Null(cache.SpriteFrameByName("c.png"));
+    }
+
+    [Fact]
+    public void SpriteFrameCache_RemoveUnused_KeepsAFrameStillInUse()
+    {
+        var cache = new CCSpriteFrameCache();
+        var inUse = new CCSpriteFrame(new CCTexture2D(), new CCRect(0, 0, 1, 1));
+        cache.AddSpriteFrame(inUse, "in-use.png");
+        AddUnusedFrames(cache, "a.png");
+
+        cache.RemoveUnusedSpriteFrames();
+
+        Assert.Same(inUse, cache.SpriteFrameByName("in-use.png"));
+    }
+
+    // Adds a 1x1 frame under each name. Not inlined, so no local in the test refers to the frames.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void AddUnusedFrames(CCSpriteFrameCache cache, params string[] names)
+    {
+        foreach (string name in names)
+        {
+            cache.AddSpriteFrame(new CCSpriteFrame(new CCTexture2D(), new CCRect(0, 0, 1, 1)), name);
+        }
     }
 
     // A format-3 sprite sheet plist with 1x1 frames that have the given names and aliases. A frame

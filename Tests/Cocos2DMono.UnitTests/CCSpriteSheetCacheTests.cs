@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Cocos2D;
 using Cocos2D.sprite_nodes;
@@ -67,9 +68,46 @@ public class CCSpriteSheetCacheTests : IDisposable
         Assert.NotNull(sheet["a.png"]);
     }
 
+    // RemoveUnused kept the last sheet its loop visited, whether anything used it or not: the
+    // loop's enumerator was still on the stack when it collected (C2D-358).
+
+    [Fact]
+    public void RemoveUnused_RemovesEverySheetNothingUses()
+    {
+        AddUnusedSheets("unused-a", "unused-b", "unused-c");
+
+        CCSpriteSheetCache.Instance.RemoveUnused();
+
+        Assert.Null(CCSpriteSheetCache.Instance.SpriteSheetForKey("unused-a"));
+        Assert.Null(CCSpriteSheetCache.Instance.SpriteSheetForKey("unused-b"));
+        Assert.Null(CCSpriteSheetCache.Instance.SpriteSheetForKey("unused-c"));
+    }
+
+    [Fact]
+    public void RemoveUnused_KeepsASheetStillInUse()
+    {
+        CCSpriteSheet inUse = CCSpriteSheetCache.Instance.AddSpriteSheet(new PlistDictionary(), new CCTexture2D(), "in-use");
+        AddUnusedSheets("unused-a");
+
+        CCSpriteSheetCache.Instance.RemoveUnused();
+
+        Assert.Same(inUse, CCSpriteSheetCache.Instance.SpriteSheetForKey("in-use"));
+    }
+
     public void Dispose()
     {
         // The cache is shared; drop it so each test starts empty.
         CCSpriteSheetCache.DestroyInstance();
+    }
+
+    // Adds a sheet without frames under each name. Not inlined, so no local in the test refers to
+    // the sheets.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void AddUnusedSheets(params string[] names)
+    {
+        foreach (string name in names)
+        {
+            CCSpriteSheetCache.Instance.AddSpriteSheet(new PlistDictionary(), new CCTexture2D(), name);
+        }
     }
 }

@@ -4,6 +4,34 @@ All notable changes to Cocos2D-Mono are recorded here. This file was introduced 
 2.5.10; earlier releases are described in their GitHub release notes / git history.
 The project follows [Semantic Versioning](https://semver.org/) where practical.
 
+## 2.9.1 - 2026-11-04
+
+A patch release with one fix: `CCLabel` works on Linux and macOS desktop again. From 2.6.0 to
+2.9.0, the package's first `CCLabel` threw on both. No API changes and nothing to migrate: bump
+the package reference to 2.9.1.
+
+### Fixed
+
+- **`CCLabel` on Linux and macOS no longer throws `TypeInitializationException`.** The package's
+  desktop assembly is built on Windows, so it carries the Windows label backend to every desktop
+  OS. That backend's code already hands Linux and macOS to the Skia backend, but it also made a
+  `System.Drawing` font collection in `CCLabel`'s type initializer, which throws on Linux and
+  macOS before that code can run. It now makes the collection the first time it loads a `.ttf`
+  font, which only happens on Windows. On Windows, the only change is when the collection is
+  made.
+
+  So 2.6.1's changes to the Linux and macOS label backend only reach the package's users now.
+  Labels there draw as they did in the 2.5.10 Linux and macOS packages: at about two-thirds of
+  the font size, with wide gaps between the letters, and with accents above capital letters cut
+  off. This release doesn't change that.
+
+### Changed (internal)
+
+- Before it publishes, `pack.yml` installs the packed packages on Linux, macOS and Windows and
+  checks `CCLabel` on each, with the new `Tests/Cocos2DMono.PackageCheck`. A build on Linux or
+  macOS compiles that OS's own label backend, so only the packed assembly shows what a game
+  gets there.
+
 ## 2.9.0 - 2026-10-30
 
 The last of the nullable reference type annotations that started in 2.7.0. The director and

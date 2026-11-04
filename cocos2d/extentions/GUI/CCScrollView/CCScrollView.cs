@@ -264,7 +264,8 @@ public class CCScrollView : CCLayer
             _touches = new List<CCTouch>();
             _delegate = null;
             _bounceable = true;
-            _clippingToBounds = true;
+            // The property, not its field: the setter is what turns clipping on.
+            ClippingToBounds = true;
             _direction = CCScrollViewDirection.Both;
             _container.Position = new CCPoint(0.0f, 0.0f);
             _touchLength = 0.0f;

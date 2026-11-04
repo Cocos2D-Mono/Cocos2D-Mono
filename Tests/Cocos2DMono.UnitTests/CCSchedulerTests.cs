@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using Cocos2D;
 using Microsoft.Xna.Framework;
 using Xunit;
@@ -137,6 +138,18 @@ public class CCSchedulerTests
     }
 
     [Fact]
+    public void Tick_WhenAHandlerRethrows_StillLetsTheTargetBeCollected()
+    {
+        // The scheduler passes what a timer throws to OnUnhandledException. A handler that
+        // rethrows skipped the tick's clean-up, so the array kept the target.
+        WeakReference target = RunAThrowingTimerWithARethrowingHandler();
+
+        Collect();
+
+        Assert.False(target.IsAlive);
+    }
+
+    [Fact]
     public void UnscheduleAll_LetsTheTargetsBeCollected()
     {
         WeakReference target = ScheduleThenUnscheduleAll(new CCScheduler());
@@ -156,6 +169,29 @@ public class CCSchedulerTests
         director.Scheduler.ScheduleSelector(_ => { }, node, 0f, CCScheduler.kCCRepeatForever, 0f, paused: false);
         director.Update(new GameTime(TimeSpan.Zero, TimeSpan.FromMilliseconds(16)));
         director.Scheduler.UnscheduleAllForTarget(node);
+        return new WeakReference(node);
+    }
+
+    // A timer's first tick only starts it, so the second tick fires it and throws. The handler
+    // and the node are removed again afterwards.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference RunAThrowingTimerWithARethrowingHandler()
+    {
+        CCDirector director = CCDirector.SharedDirector;
+        var node = new CCNode();
+        Action<Exception> rethrow = error => ExceptionDispatchInfo.Throw(error);
+        director.Scheduler.OnUnhandledException += rethrow;
+        try
+        {
+            director.Scheduler.ScheduleSelector(_ => throw new InvalidOperationException("Thrown by the test."), node, 0f, CCScheduler.kCCRepeatForever, 0f, paused: false);
+            director.Update(new GameTime(TimeSpan.Zero, TimeSpan.FromMilliseconds(16)));
+            Assert.Throws<InvalidOperationException>(() => director.Update(new GameTime(TimeSpan.Zero, TimeSpan.FromMilliseconds(16))));
+        }
+        finally
+        {
+            director.Scheduler.OnUnhandledException -= rethrow;
+            director.Scheduler.UnscheduleAllForTarget(node);
+        }
         return new WeakReference(node);
     }
 

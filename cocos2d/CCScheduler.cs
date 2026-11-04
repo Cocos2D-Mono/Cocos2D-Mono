@@ -227,6 +227,9 @@ namespace Cocos2D
         {
             _updateHashLocked = true;
 
+            // How many targets the timer walk below copies into s_pTmpSelectorArray, for finally.
+            int timerCount = 0;
+
             try
             {
                 if (TimeScale != 1.0f)
@@ -282,6 +285,7 @@ namespace Cocos2D
                         s_pTmpSelectorArray = new ICCSelectorProtocol[s_pTmpSelectorArray.Length * 2];
                     }
                     _hashForTimers.Keys.CopyTo(s_pTmpSelectorArray, 0);
+                    timerCount = count;
 
                     for (int i = 0; i < count; i++)
                     {
@@ -311,10 +315,6 @@ namespace Cocos2D
                             }
                         }
                     }
-
-                    // Empty the slots this walk used, so the shared array doesn't keep
-                    // unscheduled targets alive.
-                    Array.Clear(s_pTmpSelectorArray, 0, count);
                 }
 
                 // Delete all updates that are marked for deletion with null checks added on lists
@@ -362,6 +362,11 @@ namespace Cocos2D
                 // Always reset these fields in the finally block to ensure proper cleanup
                 _updateHashLocked = false;
                 _currentTarget = null;
+
+                // Empty the slots the timer walk used, so the shared array doesn't keep
+                // unscheduled targets alive. Here, because an OnUnhandledException handler can
+                // rethrow.
+                Array.Clear(s_pTmpSelectorArray, 0, timerCount);
             }
         }
 

@@ -16,6 +16,12 @@ name: pack (consolidated packages)
 # To re-run a publish, dispatch this workflow on the tag. Releases up to 2.6.1 used
 # unprefixed tags and were pushed by hand.
 #
+# Before anything publishes, `check-packages` installs the packed packages on Linux,
+# macOS and Windows and runs Tests/Cocos2DMono.PackageCheck against them (C2D-357).
+# The packed assembly is the only thing that shows what a game gets on each OS: this
+# job packs on Windows, so the package carries the Windows-compiled desktop label
+# backend everywhere, while the build cells compile each OS's own.
+#
 # The legacy 12-package line (Cocos2D-Mono.{Platform} / .Core.{Platform})
 # ended with 2.5.10; these consolidated packages replace it (Stage C4).
 
@@ -98,6 +104,42 @@ jobs:
             artifacts/*.nupkg
             artifacts/*.snupkg
 
+  # The packages as a game gets them, on each desktop OS. 2.6.0 to 2.9.0 shipped a
+  # CCLabel whose type initializer threw on Linux and macOS while every build cell was
+  # green, because those cells compile the engine on their own OS and never run the
+  # Windows-packed assembly (C2D-357). `publish` waits for all three.
+  check-packages:
+    name: Check the packed packages (${{ matrix.os }})
+    needs: pack
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          global-json-file: global.json
+
+      # Into artifacts/, where the check's nuget.config takes Cocos2D-Mono and its Box2D
+      # package from, and nowhere else.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: nuget-packages
+          path: artifacts
+
+      # An empty package cache, so the packages just packed are the ones restored.
+      - name: Run the package check
+        shell: bash
+        env:
+          NUGET_PACKAGES: ${{ runner.temp }}/package-check-packages
+        run: dotnet run --project Tests/Cocos2DMono.PackageCheck/Cocos2DMono.PackageCheck.csproj -c Release
+
   # GitHub creates a missing environment, with no protection rules, the first time a
   # job uses it. So before anything references `nuget`, check it exists and requires a
   # reviewer. A version tag fails here if not; any other run only warns, which keeps
@@ -129,7 +171,7 @@ jobs:
 
   publish:
     name: Publish to nuget.org
-    needs: [pack, environment-guard]
+    needs: [pack, environment-guard, check-packages]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     # nuget.org Trusted Publishing: no API key is stored anywhere. The job exchanges a

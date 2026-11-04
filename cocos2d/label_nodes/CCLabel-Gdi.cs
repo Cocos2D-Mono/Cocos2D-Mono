@@ -37,7 +37,14 @@ public partial class CCLabel
     private static Brush? _brush;
     private static Dictionary<char, KerningInfo> _abcValues = new Dictionary<char, KerningInfo>();
     private static Dictionary<string, FontFamily> _fontFamilyCache = new Dictionary<string, FontFamily>();
-    private static PrivateFontCollection _loadedFonts = new PrivateFontCollection();
+
+    // Made on first use, never in the type initializer. The package's net10.0 assembly is built
+    // on Windows, so it carries this backend to Linux and macOS too, where System.Drawing throws
+    // as soon as a PrivateFontCollection exists. Made eagerly, it threw from CCLabel's type
+    // initializer, before the OS checks below could hand those platforms to Skia (C2D-357).
+    // Nothing else here may touch System.Drawing outside those checks.
+    private static PrivateFontCollection? _loadedFontsStore;
+    private static PrivateFontCollection _loadedFonts => _loadedFontsStore ??= new PrivateFontCollection();
 
     [DllImport("gdi32.dll", SetLastError = true)]
     static extern IntPtr CreateCompatibleDC(IntPtr hdc);

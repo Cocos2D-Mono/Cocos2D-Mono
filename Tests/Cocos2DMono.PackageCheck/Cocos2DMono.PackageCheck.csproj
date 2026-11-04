@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Checks the packed Cocos2D-Mono package, not this repository's source (C2D-357). Program.cs
+  says why the two differ. pack.yml runs it on Linux, macOS and Windows before publishing.
+
+  Deliberately not in Cocos2DMono.sln: it can only restore once the package exists, and
+  pack.yml restores the solution before it packs.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(Cocos2DBaseTfm)</TargetFramework>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- The version under test is the repository's own Version (Directory.Build.props), which
+         is the one pack.yml packs. Central package management pins the versions of the
+         engine's dependencies; it has no say over the package being checked. -->
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <EngineVersion Condition="'$(EngineVersion)' == ''">$(Version)</EngineVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Restored from artifacts/ only; see nuget.config. -->
+    <PackageReference Include="Cocos2D-Mono" Version="[$(EngineVersion)]" />
+  </ItemGroup>
+
+</Project>

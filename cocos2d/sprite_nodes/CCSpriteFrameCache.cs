@@ -304,14 +304,7 @@ public class CCSpriteFrameCache
     {
         if (m_pSpriteFrames.Count > 0)
         {
-            var tmp = new Dictionary<string, WeakReference>();
-
-            foreach (var pair in m_pSpriteFrames)
-            {
-                tmp.Add(pair.Key, new WeakReference(pair.Value));
-            }
-
-            m_pSpriteFrames.Clear();
+            var tmp = CCCachePurge.TakeAsWeakReferences(m_pSpriteFrames);
 
             GC.Collect();
 

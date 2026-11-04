@@ -254,16 +254,10 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
     {
         if (m_pTextures.Count > 0)
         {
-            var tmp = new Dictionary<string, WeakReference>();
-
-            foreach (var pair in m_pTextures)
-            {
-                tmp.Add(pair.Key, new WeakReference(pair.Value));
-            }
+            var tmp = CCCachePurge.TakeAsWeakReferences(m_pTextures);
 #if DEBUG
-            int original = m_pTextures.Count;
+            int original = tmp.Count;
 #endif
-            m_pTextures.Clear();
 
             GC.Collect();
 

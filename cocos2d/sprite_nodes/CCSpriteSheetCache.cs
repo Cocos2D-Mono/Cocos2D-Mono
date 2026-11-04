@@ -104,14 +104,7 @@ public class CCSpriteSheetCache
     {
         if (_spriteSheets.Count > 0)
         {
-            var tmp = new Dictionary<string, WeakReference>();
-
-            foreach (var pair in _spriteSheets)
-            {
-                tmp.Add(pair.Key, new WeakReference(pair.Value));
-            }
-
-            _spriteSheets.Clear();
+            var tmp = CCCachePurge.TakeAsWeakReferences(_spriteSheets);
 
             GC.Collect();
 

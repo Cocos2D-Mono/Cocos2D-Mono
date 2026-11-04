@@ -43,6 +43,7 @@ UWP / Xbox-UWP support is maintained separately in the [Cocos2D-Mono.UWP](https:
 
 Cocos2D-Mono follows [Semantic Versioning](https://semver.org/) where practical.
 
+- **Release cadence.** A new version ships once a month, early in the month. An urgent fix can ship in between.
 - **Minor releases** add features and fixes. A minor release may also move to a new .NET or MonoGame baseline, with migration notes, as 2.6.0 did for .NET 10 and MonoGame 3.8.5.
 - **.NET versions.** The packages target the current LTS release of .NET, today .NET 10, and move to the next LTS release (.NET 12) once MonoGame supports it. Short-term support releases are skipped.
 - **Major releases** are where breaking API changes land. Anything removed in a major release is marked `[Obsolete]` in an earlier release first, naming its replacement.

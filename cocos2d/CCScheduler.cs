@@ -311,6 +311,10 @@ namespace Cocos2D
                             }
                         }
                     }
+
+                    // Empty the slots this walk used, so the shared array doesn't keep
+                    // unscheduled targets alive.
+                    Array.Clear(s_pTmpSelectorArray, 0, count);
                 }
 
                 // Delete all updates that are marked for deletion with null checks added on lists
@@ -625,6 +629,9 @@ namespace Cocos2D
                 // Element may be removed in unscheduleAllSelectorsForTarget
                 UnscheduleAllForTarget(s_pTmpHashSelectorArray[i].Target);
             }
+
+            // Empty the slots this walk used, so the shared array doesn't keep the targets alive.
+            Array.Clear(s_pTmpHashSelectorArray, 0, count);
 
             // Updates selectors
             if (minPriority < 0 && _updatesNegList.Count > 0)

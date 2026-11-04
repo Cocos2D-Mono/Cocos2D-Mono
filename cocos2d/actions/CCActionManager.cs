@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -25,8 +26,11 @@ public class CCActionManager : ICCSelectorProtocol
 
         for (int i = 0; i < count; i++)
         {
+            // An action that calls RemoveAllActions refills this shared array and empties it, so a
+            // slot can be empty by the time the walk reaches it.
+            CCNode? key = _tmpKeysArray[i];
             HashElement? elt;
-            if (!_targets.TryGetValue(_tmpKeysArray[i], out elt))
+            if (key == null || !_targets.TryGetValue(key, out elt))
             {
                 continue;
             }
@@ -79,6 +83,9 @@ public class CCActionManager : ICCSelectorProtocol
                 DeleteHashElement(_currentTarget);
             }
         }
+
+        // Empty the slots this walk used, so the shared array doesn't keep the targets alive.
+        Array.Clear(_tmpKeysArray, 0, count);
 
         // issue #635
         _currentTarget = null;
@@ -216,6 +223,9 @@ public class CCActionManager : ICCSelectorProtocol
         {
             RemoveAllActionsFromTarget(_tmpKeysArray[i]);
         }
+
+        // Empty the slots this walk used, so the shared array doesn't keep the targets alive.
+        Array.Clear(_tmpKeysArray, 0, count);
     }
 
     public void RemoveAllActionsFromTarget(CCNode? target)

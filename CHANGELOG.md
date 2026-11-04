@@ -32,6 +32,11 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   `ClippingToBounds` to true without turning clipping on, so the view drew all of its content,
   including cells scrolled out of it. A drag that started on one of those cells did nothing,
   because a scroll view only takes touches inside its view.
+- A node whose actions and scheduled selectors have stopped can be garbage-collected, and its
+  scene with it. `CCScheduler` and `CCActionManager` copied their targets into static arrays
+  on each update and never emptied them, so the last nodes to run an action or a scheduled
+  selector stayed reachable until later updates overwrote their slots. A `CCActionManager`
+  dropped with actions still running kept its targets alive the same way.
 
 ### Documentation
 

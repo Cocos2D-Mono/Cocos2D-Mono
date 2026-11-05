@@ -106,11 +106,6 @@ public class CCActionManager : ICCSelectorProtocol
         }
     }
 
-    ~CCActionManager()
-    {
-        RemoveAllActions();
-    }
-
     protected void DeleteHashElement(HashElement element)
     {
         element.Actions.Clear();

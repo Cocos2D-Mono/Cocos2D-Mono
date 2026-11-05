@@ -48,6 +48,13 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   threw: more than 256 at first. `CCScheduler.UnscheduleAll` and
   `CCActionManager.RemoveAllActions` grew their arrays the same way, and threw for that many
   targets too.
+- Dropping a `CCActionManager` that still has actions no longer makes other managers skip
+  some nodes' actions for a frame. When the garbage collector finalized the dropped manager,
+  its finalizer called `RemoveAllActions` on the finalizer thread. That copies into the static
+  array that every manager's update walks, then empties it. `CCActionManager` no longer has a
+  finalizer: all it did was remove references between objects that were already unreachable.
+  The director's manager is dropped only when a game replaces it, through
+  `CCDirector.ActionManager` or by calling `CCDirector.Init` again.
 
 ### Documentation
 

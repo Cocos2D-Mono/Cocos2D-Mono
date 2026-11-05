@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using Cocos2D;
@@ -159,6 +160,56 @@ public class CCSchedulerTests
         Assert.False(target.IsAlive);
     }
 
+    // The tests below come from C2D-361. The tick and UnscheduleAll grew their static arrays by
+    // doubling them once, so more than twice as many timer targets as an array had slots made
+    // CopyTo throw ArgumentException. The arrays only grow, so each test takes its number of
+    // targets from the array's current length.
+
+    [Fact]
+    public void Tick_WithMoreThanTwiceAsManyTimerTargetsAsSlots_RunsEveryTimer()
+    {
+        CCDirector director = CCDirector.SharedDirector;
+        CCNode[] nodes = NewNodes(2 * ScratchSlots("s_pTmpSelectorArray") + 1);
+        int runs = 0;
+        try
+        {
+            foreach (CCNode node in nodes)
+            {
+                director.Scheduler.ScheduleSelector(_ => runs++, node, 0f, CCScheduler.kCCRepeatForever, 0f, paused: false);
+            }
+
+            // A timer's first tick only starts it, so the second tick runs it.
+            director.Update(new GameTime(TimeSpan.Zero, TimeSpan.FromMilliseconds(16)));
+            director.Update(new GameTime(TimeSpan.Zero, TimeSpan.FromMilliseconds(16)));
+
+            Assert.Equal(nodes.Length, runs);
+        }
+        finally
+        {
+            foreach (CCNode node in nodes)
+            {
+                director.Scheduler.UnscheduleAllForTarget(node);
+            }
+        }
+    }
+
+    [Fact]
+    public void UnscheduleAll_WithMoreThanTwiceAsManyTimerTargetsAsSlots_UnschedulesThemAll()
+    {
+        var scheduler = new CCScheduler();
+        CCNode[] nodes = NewNodes(2 * ScratchSlots("s_pTmpHashSelectorArray") + 1);
+        foreach (CCNode node in nodes)
+        {
+            scheduler.ScheduleSelector(_ => { }, node, 1f, CCScheduler.kCCRepeatForever, 0f, paused: true);
+        }
+        Assert.All(nodes, node => Assert.True(scheduler.IsTargetPaused(node)));
+
+        scheduler.UnscheduleAll();
+
+        // Once removed, a target is unknown to the scheduler, which reports it as not paused.
+        Assert.All(nodes, node => Assert.False(scheduler.IsTargetPaused(node)));
+    }
+
     // The tick is internal, so this runs one through the shared director, which leaves nothing
     // scheduled afterwards. Not inlined, so no local in the test refers to the node.
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -202,6 +253,17 @@ public class CCSchedulerTests
         scheduler.ScheduleSelector(_ => { }, node, 1f, CCScheduler.kCCRepeatForever, 0f, paused: false);
         scheduler.UnscheduleAll();
         return new WeakReference(node);
+    }
+
+    private static CCNode[] NewNodes(int count) =>
+        Enumerable.Range(0, count).Select(_ => new CCNode()).ToArray();
+
+    // The number of slots in one of the scheduler's static scratch arrays, which are private.
+    private static int ScratchSlots(string field)
+    {
+        FieldInfo? info = typeof(CCScheduler).GetField(field, BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(info);
+        return ((Array)info.GetValue(null)!).Length;
     }
 
     private static void Collect()

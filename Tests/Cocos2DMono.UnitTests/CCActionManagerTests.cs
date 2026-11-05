@@ -1,15 +1,18 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Cocos2D;
 using Xunit;
 
 namespace Cocos2DMono.UnitTests;
 
-// CCActionManager copied its targets into a static array for each walk and never cleared it, so a
-// node stayed reachable after its actions were removed, and with it its parent and scene (C2D-358).
 // Each test uses its own manager and leaves it empty, because a manager's finalizer calls
 // RemoveAllActions, which walks the same static array.
 public class CCActionManagerTests
 {
+    // The tests below come from C2D-358. CCActionManager copied its targets into a static array for
+    // each walk and never cleared it, so a node stayed reachable after its actions were removed, and
+    // with it its parent and scene.
+
     [Fact]
     public void Update_LetsATargetBeCollectedOnceItsActionsAreRemoved()
     {
@@ -76,6 +79,35 @@ public class CCActionManagerTests
         Assert.Equal(0, manager.NumberOfRunningActionsInTarget(second));
     }
 
+    // From C2D-361. RemoveAllActions grew the static array by doubling it once, so more than twice
+    // as many targets as the array had slots made CopyTo throw ArgumentException. The array only
+    // grows, so the test takes its number of targets from the array's current length.
+    [Fact]
+    public void RemoveAllActions_WithMoreThanTwiceAsManyTargetsAsSlots_RemovesThemAll()
+    {
+        var manager = new CCActionManager();
+        CCNode[] nodes = Enumerable.Range(0, 2 * ScratchSlots() + 1).Select(_ => new CCNode()).ToArray();
+        try
+        {
+            foreach (CCNode node in nodes)
+            {
+                manager.AddAction(new CCDelayTime(1f), node, false);
+            }
+
+            manager.RemoveAllActions();
+
+            Assert.All(nodes, node => Assert.Equal(0, manager.NumberOfRunningActionsInTarget(node)));
+        }
+        finally
+        {
+            // Leave the manager empty even when RemoveAllActions throws.
+            foreach (CCNode node in nodes)
+            {
+                manager.RemoveAllActionsFromTarget(node);
+            }
+        }
+    }
+
     // Not inlined, so no local in a test refers to the node.
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static WeakReference RunForOneUpdateThenRemove(CCActionManager manager)
@@ -113,6 +145,14 @@ public class CCActionManagerTests
         var node = new CCNode();
         manager.AddAction(new CCDelayTime(1f), node, false);
         return new WeakReference(node, trackResurrection: true);
+    }
+
+    // The number of slots in the managers' static scratch array, which is private.
+    private static int ScratchSlots()
+    {
+        FieldInfo? info = typeof(CCActionManager).GetField("_tmpKeysArray", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(info);
+        return ((Array)info.GetValue(null)!).Length;
     }
 
     private static void Collect()

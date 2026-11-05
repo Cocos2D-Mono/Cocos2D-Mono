@@ -5,8 +5,6 @@ using Xunit;
 
 namespace Cocos2DMono.UnitTests;
 
-// Each test uses its own manager and leaves it empty, because a manager's finalizer calls
-// RemoveAllActions, which walks the same static array.
 public class CCActionManagerTests
 {
     // The tests below come from C2D-358. CCActionManager copied its targets into a static array for
@@ -36,9 +34,10 @@ public class CCActionManagerTests
     [Fact]
     public void AManagerDroppedWithATarget_DoesNotKeepTheTargetAlive()
     {
-        // The finalizer's RemoveAllActions copied the dropped manager's targets into the static
-        // array, which kept them alive after the manager was gone. A weak reference that tracks
-        // resurrection sees that; a short one is cleared before the finalizer runs.
+        // Until C2D-362, managers had a finalizer. Its RemoveAllActions copied the dropped
+        // manager's targets into the static array, which kept them alive after the manager was
+        // gone. The weak reference tracks resurrection so that it would see that: a short one is
+        // cleared before finalizers run.
         WeakReference target = DropAManagerThatHasATarget();
 
         Collect();
@@ -87,25 +86,44 @@ public class CCActionManagerTests
     {
         var manager = new CCActionManager();
         CCNode[] nodes = Enumerable.Range(0, 2 * ScratchSlots() + 1).Select(_ => new CCNode()).ToArray();
-        try
+        foreach (CCNode node in nodes)
         {
-            foreach (CCNode node in nodes)
-            {
-                manager.AddAction(new CCDelayTime(1f), node, false);
-            }
-
-            manager.RemoveAllActions();
-
-            Assert.All(nodes, node => Assert.Equal(0, manager.NumberOfRunningActionsInTarget(node)));
+            manager.AddAction(new CCDelayTime(1f), node, false);
         }
-        finally
+
+        manager.RemoveAllActions();
+
+        Assert.All(nodes, node => Assert.Equal(0, manager.NumberOfRunningActionsInTarget(node)));
+    }
+
+    // From C2D-362. A manager's finalizer called RemoveAllActions, which copies into the static
+    // array that Update walks and then empties it. So when the GC finalized a dropped manager
+    // during another manager's walk, the walk found empty slots and skipped those targets.
+    [Fact]
+    public void Update_WhenADroppedManagerIsFinalizedDuringTheWalk_StepsEveryTarget()
+    {
+        // The finalizer thread runs alongside the game thread. To run it at a known point in the
+        // walk, the first target's action drops a manager whose two targets fill the walk's two
+        // slots, then waits for the GC to finalize it.
+        var manager = new CCActionManager();
+        int steps = 0;
+        bool dropped = false;
+        Action step = () =>
         {
-            // Leave the manager empty even when RemoveAllActions throws.
-            foreach (CCNode node in nodes)
+            steps++;
+            if (!dropped)
             {
-                manager.RemoveAllActionsFromTarget(node);
+                dropped = true;
+                DropAManagerWithTargets(2);
+                Collect();
             }
-        }
+        };
+        manager.AddAction(new CCCallFunc(step), new CCNode(), false);
+        manager.AddAction(new CCCallFunc(step), new CCNode(), false);
+
+        manager.Update(0.1f);
+
+        Assert.Equal(2, steps);
     }
 
     // Not inlined, so no local in a test refers to the node.
@@ -145,6 +163,16 @@ public class CCActionManagerTests
         var node = new CCNode();
         manager.AddAction(new CCDelayTime(1f), node, false);
         return new WeakReference(node, trackResurrection: true);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void DropAManagerWithTargets(int count)
+    {
+        var manager = new CCActionManager();
+        for (int i = 0; i < count; i++)
+        {
+            manager.AddAction(new CCDelayTime(1f), new CCNode(), false);
+        }
     }
 
     // The number of slots in the managers' static scratch array, which is private.

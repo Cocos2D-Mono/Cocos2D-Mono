@@ -53,8 +53,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   its finalizer called `RemoveAllActions` on the finalizer thread. That copies into the static
   array that every manager's update walks, then empties it. `CCActionManager` no longer has a
   finalizer: all it did was remove references between objects that were already unreachable.
-  Only a manager that a game creates itself could cause this, since the director's lasts as
-  long as the director.
+  The director's manager is dropped only when a game replaces it, through
+  `CCDirector.ActionManager` or by calling `CCDirector.Init` again.
 
 ### Documentation
 

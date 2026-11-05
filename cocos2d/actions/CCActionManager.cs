@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -23,10 +24,34 @@ public class CCActionManager : ICCSelectorProtocol
 
         _targets.Keys.CopyTo(_tmpKeysArray, 0);
 
+        // The scheduler catches what an action throws and the game goes on, so the clean-up has to
+        // happen then too.
+        try
+        {
+            UpdateTargets(count, dt);
+        }
+        finally
+        {
+            // Empty the slots this walk used, so the shared array doesn't keep the targets alive.
+            Array.Clear(_tmpKeysArray, 0, count);
+
+            // issue #635
+            _currentTarget = null;
+        }
+    }
+
+    #endregion
+
+    // Steps the actions of the first count targets in the shared array.
+    private void UpdateTargets(int count, float dt)
+    {
         for (int i = 0; i < count; i++)
         {
+            // An action that calls RemoveAllActions refills this shared array and empties it, so a
+            // slot can be empty by the time the walk reaches it.
+            CCNode? key = _tmpKeysArray[i];
             HashElement? elt;
-            if (!_targets.TryGetValue(_tmpKeysArray[i], out elt))
+            if (key == null || !_targets.TryGetValue(key, out elt))
             {
                 continue;
             }
@@ -79,12 +104,7 @@ public class CCActionManager : ICCSelectorProtocol
                 DeleteHashElement(_currentTarget);
             }
         }
-
-        // issue #635
-        _currentTarget = null;
     }
-
-    #endregion
 
     ~CCActionManager()
     {
@@ -216,6 +236,9 @@ public class CCActionManager : ICCSelectorProtocol
         {
             RemoveAllActionsFromTarget(_tmpKeysArray[i]);
         }
+
+        // Empty the slots this walk used, so the shared array doesn't keep the targets alive.
+        Array.Clear(_tmpKeysArray, 0, count);
     }
 
     public void RemoveAllActionsFromTarget(CCNode? target)

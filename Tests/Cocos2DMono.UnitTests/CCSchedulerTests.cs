@@ -1,4 +1,7 @@
+using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using Cocos2D;
+using Microsoft.Xna.Framework;
 using Xunit;
 
 namespace Cocos2DMono.UnitTests;
@@ -118,5 +121,93 @@ public class CCSchedulerTests
         });
 
         Assert.Null(error);
+    }
+
+    // The tests below come from C2D-358. The tick and UnscheduleAll copied the timers' targets into
+    // static arrays and never cleared them, so a target stayed reachable after it was unscheduled,
+    // and with it whatever it referred to, such as a departed scene.
+
+    [Fact]
+    public void Tick_LetsAnUnscheduledTargetBeCollected()
+    {
+        WeakReference target = ScheduleForOneTickThenUnschedule();
+
+        Collect();
+
+        Assert.False(target.IsAlive);
+    }
+
+    [Fact]
+    public void Tick_WhenAHandlerRethrows_StillLetsTheTargetBeCollected()
+    {
+        // The scheduler passes what a timer throws to OnUnhandledException. A handler that
+        // rethrows skipped the tick's clean-up, so the array kept the target.
+        WeakReference target = RunAThrowingTimerWithARethrowingHandler();
+
+        Collect();
+
+        Assert.False(target.IsAlive);
+    }
+
+    [Fact]
+    public void UnscheduleAll_LetsTheTargetsBeCollected()
+    {
+        WeakReference target = ScheduleThenUnscheduleAll(new CCScheduler());
+
+        Collect();
+
+        Assert.False(target.IsAlive);
+    }
+
+    // The tick is internal, so this runs one through the shared director, which leaves nothing
+    // scheduled afterwards. Not inlined, so no local in the test refers to the node.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference ScheduleForOneTickThenUnschedule()
+    {
+        CCDirector director = CCDirector.SharedDirector;
+        var node = new CCNode();
+        director.Scheduler.ScheduleSelector(_ => { }, node, 0f, CCScheduler.kCCRepeatForever, 0f, paused: false);
+        director.Update(new GameTime(TimeSpan.Zero, TimeSpan.FromMilliseconds(16)));
+        director.Scheduler.UnscheduleAllForTarget(node);
+        return new WeakReference(node);
+    }
+
+    // A timer's first tick only starts it, so the second tick fires it and throws. The handler
+    // and the node are removed again afterwards.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference RunAThrowingTimerWithARethrowingHandler()
+    {
+        CCDirector director = CCDirector.SharedDirector;
+        var node = new CCNode();
+        Action<Exception> rethrow = error => ExceptionDispatchInfo.Throw(error);
+        director.Scheduler.OnUnhandledException += rethrow;
+        try
+        {
+            director.Scheduler.ScheduleSelector(_ => throw new InvalidOperationException("Thrown by the test."), node, 0f, CCScheduler.kCCRepeatForever, 0f, paused: false);
+            director.Update(new GameTime(TimeSpan.Zero, TimeSpan.FromMilliseconds(16)));
+            Assert.Throws<InvalidOperationException>(() => director.Update(new GameTime(TimeSpan.Zero, TimeSpan.FromMilliseconds(16))));
+        }
+        finally
+        {
+            director.Scheduler.OnUnhandledException -= rethrow;
+            director.Scheduler.UnscheduleAllForTarget(node);
+        }
+        return new WeakReference(node);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference ScheduleThenUnscheduleAll(CCScheduler scheduler)
+    {
+        var node = new CCNode();
+        scheduler.ScheduleSelector(_ => { }, node, 1f, CCScheduler.kCCRepeatForever, 0f, paused: false);
+        scheduler.UnscheduleAll();
+        return new WeakReference(node);
+    }
+
+    private static void Collect()
+    {
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
     }
 }

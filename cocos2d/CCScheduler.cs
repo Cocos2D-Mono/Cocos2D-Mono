@@ -280,7 +280,7 @@ namespace Cocos2D
                 if (_hashForTimers != null)
                 {
                     var count = _hashForTimers.Keys.Count;
-                    if (s_pTmpSelectorArray.Length < count)
+                    while (s_pTmpSelectorArray.Length < count)
                     {
                         s_pTmpSelectorArray = new ICCSelectorProtocol[s_pTmpSelectorArray.Length * 2];
                     }
@@ -622,7 +622,7 @@ namespace Cocos2D
         public void UnscheduleAllWithMinPriority(int minPriority)
         {
             var count = _hashForTimers.Values.Count;
-            if (s_pTmpHashSelectorArray.Length < count)
+            while (s_pTmpHashSelectorArray.Length < count)
             {
                 s_pTmpHashSelectorArray = new HashTimeEntry[s_pTmpHashSelectorArray.Length * 2];
             }

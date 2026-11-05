@@ -225,7 +225,7 @@ public class CCActionManager : ICCSelectorProtocol
     public void RemoveAllActions()
     {
         int count = _targets.Keys.Count;
-        if (_tmpKeysArray.Length < count)
+        while (_tmpKeysArray.Length < count)
         {
             _tmpKeysArray = new CCNode[_tmpKeysArray.Length * 2];
         }

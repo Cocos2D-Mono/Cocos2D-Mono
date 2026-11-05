@@ -42,6 +42,12 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   on each update and never emptied them, so the last nodes to run an action or a scheduled
   selector stayed reachable until later updates overwrote their slots. A `CCActionManager`
   dropped with actions still running kept its targets alive the same way.
+- Scheduling selectors on many nodes at once no longer makes `CCDirector.Update` throw
+  `ArgumentException`. `CCScheduler` copies its timers' targets into an array that grew by
+  doubling only once, so a frame with more than twice as many targets as the array had slots
+  threw: more than 256 at first. `CCScheduler.UnscheduleAll` and
+  `CCActionManager.RemoveAllActions` grew their arrays the same way, and threw for that many
+  targets too.
 
 ### Documentation
 

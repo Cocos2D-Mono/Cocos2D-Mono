@@ -57,15 +57,13 @@ public class CCLabelTests
     }
 
     // Runs CCLabel.InitializeFont on a new atlas, as a label does when it's given a font, and
-    // returns the font it made and the atlas. The atlas and the font cache are shared by every
-    // label, so they're put back afterwards. On Windows this draws with GDI+, and on Linux and
-    // macOS with Skia.
+    // returns the font it made and the atlas. Every label shares the atlas, the allocator that
+    // places glyphs in it and the font cache, so they're all put back afterwards. On Windows this
+    // draws with GDI+, and on Linux and macOS with Skia.
     private static (CCBMFontConfiguration Font, int[] Atlas, int AtlasWidth) InitializeFont(
         string fontName, float fontSize, string text)
     {
-        var texture = CCLabel.m_pTexture;
-        var data = CCLabel.m_pData;
-        var fonts = new Dictionary<string, CCBMFontConfiguration>(CCLabelBMFont.s_pConfigurations);
+        var shared = new SharedLabelState();
         CCLabel.m_pTexture = null;
         CCLabel.m_pData = null;
         CCLabelBMFont.s_pConfigurations.Clear();
@@ -84,13 +82,55 @@ public class CCLabelTests
         }
         finally
         {
-            CCLabel.m_pTexture = texture;
-            CCLabel.m_pData = data;
+            shared.Restore();
+        }
+    }
+
+    // What CCLabel.InitializeFont changes that every label shares, saved when this is made: the
+    // atlas, the allocator that places glyphs in it, and the font cache.
+    private sealed class SharedLabelState
+    {
+        private const BindingFlags Private = BindingFlags.Static | BindingFlags.NonPublic;
+        private static readonly string[] AllocatorFields = ["_width", "_height", "_used"];
+
+        private readonly CCTexture2D? _texture = CCLabel.m_pTexture;
+        private readonly int[]? _data = CCLabel.m_pData;
+        private readonly CCLabel.ivec3[] _nodes = Nodes.ToArray();
+        private readonly int[] _allocator = Array.ConvertAll(AllocatorFields, name => (int)Field(name).GetValue(null)!);
+        private readonly bool _textureDirty = (bool)Field("m_bTextureDirty").GetValue(null)!;
+        private readonly Dictionary<string, CCBMFontConfiguration> _fonts = new(CCLabelBMFont.s_pConfigurations);
+
+        private static CCRawList<CCLabel.ivec3> Nodes => (CCRawList<CCLabel.ivec3>)Field("_nodes").GetValue(null)!;
+
+        public void Restore()
+        {
+            // The texture made for the new atlas, which nothing else holds.
+            if (CCLabel.m_pTexture != _texture)
+            {
+                CCLabel.m_pTexture?.Dispose();
+            }
+            CCLabel.m_pTexture = _texture;
+            CCLabel.m_pData = _data;
+
+            Nodes.Clear();
+            Nodes.AddRange(_nodes);
+            for (int i = 0; i < AllocatorFields.Length; i++)
+            {
+                Field(AllocatorFields[i]).SetValue(null, _allocator[i]);
+            }
+            Field("m_bTextureDirty").SetValue(null, _textureDirty);
+
             CCLabelBMFont.s_pConfigurations.Clear();
-            foreach (var pair in fonts)
+            foreach (var pair in _fonts)
             {
                 CCLabelBMFont.s_pConfigurations.Add(pair.Key, pair.Value);
             }
+        }
+
+        private static FieldInfo Field(string name)
+        {
+            return typeof(CCLabel).GetField(name, Private)
+                ?? throw new MissingFieldException(typeof(CCLabel).FullName, name);
         }
     }
 

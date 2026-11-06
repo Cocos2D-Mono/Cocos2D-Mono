@@ -55,6 +55,15 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   finalizer: all it did was remove references between objects that were already unreachable.
   The director's manager is dropped only when a game replaces it, through
   `CCDirector.ActionManager` or by calling `CCDirector.Init` again.
+- Loading textures with `CCTextureCache.AddImageAsync` no longer races the game thread.
+  - The loading thread scheduled each load's callback itself, while the game thread's update
+    walked the same timers without a lock, so a callback could be lost. Callbacks now run on
+    the game thread at the end of the next update, a frame sooner than before.
+  - Only `AddImage` took the cache's lock, so looking up, removing or purging textures during
+    a load raced the loading thread's writes. Every method that reads or changes the cache
+    now takes it.
+  - A load requested just as the loading thread finished could wait forever, along with
+    every load after it.
 
 ### Documentation
 

@@ -207,6 +207,10 @@ namespace Cocos2D
         private bool _currentTargetSalvaged;
         private bool _updateHashLocked;
 
+        // What RunOnNextTick queued, from any thread, for the next tick to run on the game thread.
+        // The list is also the lock that guards it.
+        private readonly List<Action> _queuedActions = new List<Action>();
+
         public float TimeScale = 1.0f;
 
         public event Action<Exception>? OnUnhandledException;
@@ -367,6 +371,69 @@ namespace Cocos2D
                 // unscheduled targets alive. Here, because an OnUnhandledException handler can
                 // rethrow.
                 Array.Clear(s_pTmpSelectorArray, 0, timerCount);
+            }
+
+            // After the finally, so the tick's state is reset: what these do to the scheduler
+            // takes effect as it would from outside a tick.
+            RunQueuedActions();
+        }
+
+        /// <summary>
+        /// Runs <paramref name="action"/> on the game thread, at the end of the next tick. Unlike the
+        /// rest of the scheduler, this is safe to call from any thread.
+        /// </summary>
+        /// <remarks>
+        /// The tick passes what an action throws to <see cref="OnUnhandledException"/>, as it does for
+        /// timers and update targets. An action queued while the queue runs waits for the tick after.
+        /// </remarks>
+        internal void RunOnNextTick(Action action)
+        {
+            lock (_queuedActions)
+            {
+                _queuedActions.Add(action);
+            }
+        }
+
+        private void RunQueuedActions()
+        {
+            Action[] actions;
+            lock (_queuedActions)
+            {
+                if (_queuedActions.Count == 0)
+                {
+                    return;
+                }
+                actions = _queuedActions.ToArray();
+                _queuedActions.Clear();
+            }
+
+            int next = 0;
+            try
+            {
+                while (next < actions.Length)
+                {
+                    Action action = actions[next++];
+                    try
+                    {
+                        action();
+                    }
+                    catch (Exception exception)
+                    {
+                        OnUnhandledException?.Invoke(exception);
+                    }
+                }
+            }
+            finally
+            {
+                // A handler that rethrows ends the tick early. The actions it didn't reach go back to
+                // the front of the queue, for the next tick.
+                if (next < actions.Length)
+                {
+                    lock (_queuedActions)
+                    {
+                        _queuedActions.InsertRange(0, new ArraySegment<Action>(actions, next, actions.Length - next));
+                    }
+                }
             }
         }
 

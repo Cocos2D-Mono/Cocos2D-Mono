@@ -53,11 +53,12 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
                     {
                         var texture = AddImage(image.FileName);
 						CCLog.Log("Loaded texture: {0}", image.FileName);
-                        if (image.Action != null)
+                        Action<CCTexture2D?>? action = image.Action;
+                        if (action != null)
                         {
-                            CCDirector.SharedDirector.Scheduler.ScheduleSelector(
-                                f => image.Action(texture), this, 0, 0, 0, false
-                                );
+                            // The scheduler isn't thread-safe, so the callback waits for the game
+                            // thread's next tick instead of being scheduled from this thread.
+                            CCDirector.SharedDirector.Scheduler.RunOnNextTick(() => action(texture));
                         }
                     }
                     catch (Exception ex)
@@ -95,14 +96,23 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
         }
     }
 
+    // Every method that reads or changes m_pTextures takes _dictLock, because AddImageAsync's worker
+    // adds to it from another thread.
+
     public void UnloadContent()
     {
-        m_pTextures.Clear();
+        lock (_dictLock)
+        {
+            m_pTextures.Clear();
+        }
     }
 
     public bool Contains(string assetFile)
     {
-        return m_pTextures.ContainsKey(assetFile);
+        lock (_dictLock)
+        {
+            return m_pTextures.ContainsKey(assetFile);
+        }
     }
 
     public void AddImageAsync(string fileimage, Action<CCTexture2D?>? action)
@@ -112,11 +122,13 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
         lock (_asyncLoadedImages)
         {
             _asyncLoadedImages.Add(new AsyncStruct() {FileName = fileimage, Action = action});
-        }
 
-        if (_task == null)
-        {
-            _task = CCTask.RunAsync(_processingAction);
+            // Under the lock: the worker clears _task under it when it finds nothing left to load,
+            // so it can't finish and clear it before this sets it.
+            if (_task == null)
+            {
+                _task = CCTask.RunAsync(_processingAction);
+            }
         }
     }
 
@@ -235,7 +247,10 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
         try
         {
             key = CreateAssetKey(key);
-            m_pTextures.TryGetValue(key, out texture);
+            lock (_dictLock)
+            {
+                m_pTextures.TryGetValue(key, out texture);
+            }
         }
         catch (ArgumentNullException)
         {
@@ -247,45 +262,53 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
 
     public void RemoveAllTextures()
     {
-        m_pTextures.Clear();
+        lock (_dictLock)
+        {
+            m_pTextures.Clear();
+        }
     }
 
     public void RemoveUnusedTextures()
     {
-        if (m_pTextures.Count > 0)
+        // Held from the snapshot to the restore, so that the worker can't add a texture in between,
+        // which the restore would then drop or collide with.
+        lock (_dictLock)
         {
-            var tmp = CCCachePurge.TakeAsWeakReferences(m_pTextures);
-#if DEBUG
-            int original = tmp.Count;
-#endif
-
-            GC.Collect();
-
-#if DEBUG
-            int culled = 0;
-            long memory = 0L;
-#endif
-            foreach (var pair in tmp)
+            if (m_pTextures.Count > 0)
             {
-                if (pair.Value.Target is CCTexture2D tex)
-                {
-                    m_pTextures.Add(pair.Key, tex);
+                var tmp = CCCachePurge.TakeAsWeakReferences(m_pTextures);
 #if DEBUG
-                    memory += (long)tex.TotalBytes;
-                    CCLog.Log("CCTextureCache: RemoveUnusedTextures, saving {0}", tex.ToString());
+                int original = tmp.Count;
+#endif
+
+                GC.Collect();
+
+#if DEBUG
+                int culled = 0;
+                long memory = 0L;
+#endif
+                foreach (var pair in tmp)
+                {
+                    if (pair.Value.Target is CCTexture2D tex)
+                    {
+                        m_pTextures[pair.Key] = tex;
+#if DEBUG
+                        memory += (long)tex.TotalBytes;
+                        CCLog.Log("CCTextureCache: RemoveUnusedTextures, saving {0}", tex.ToString());
+#endif
+                    }
+#if DEBUG
+                    else {
+                        culled++;
+                    }
 #endif
                 }
 #if DEBUG
-                else {
-                    culled++;
-                }
+                memory = memory >> 10; // KB
+                memory = memory >> 10; // MB
+                CCLog.Log("CCTextureCache: RemoveUnusedTextures removed {0} out of {1} textures for {2} MB.", culled, original, memory);
 #endif
             }
-#if DEBUG
-            memory = memory >> 10; // KB
-            memory = memory >> 10; // MB
-            CCLog.Log("CCTextureCache: RemoveUnusedTextures removed {0} out of {1} textures for {2} MB.", culled, original, memory);
-#endif
         }
     }
 
@@ -296,20 +319,23 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
             return;
         }
 
-        string? key = null;
-
-        foreach (var pair in m_pTextures)
+        lock (_dictLock)
         {
-            if (pair.Value == texture)
+            string? key = null;
+
+            foreach (var pair in m_pTextures)
             {
-                key = pair.Key;
-                break;
+                if (pair.Value == texture)
+                {
+                    key = pair.Key;
+                    break;
+                }
             }
-        }
 
-        if (key != null)
-        {
-            m_pTextures.Remove(key);
+            if (key != null)
+            {
+                m_pTextures.Remove(key);
+            }
         }
     }
 
@@ -320,7 +346,10 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
             return;
         }
         textureKeyName = CreateAssetKey(textureKeyName);
-        m_pTextures.Remove(textureKeyName);
+        lock (_dictLock)
+        {
+            m_pTextures.Remove(textureKeyName);
+        }
     }
 
     public void DumpCachedTextureInfo()
@@ -328,7 +357,11 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
         int count = 0;
         int total = 0;
 
-        var copy = m_pTextures.ToList();
+        List<KeyValuePair<string, CCTexture2D>> copy;
+        lock (_dictLock)
+        {
+            copy = m_pTextures.ToList();
+        }
 
         foreach (var pair in copy)
         {
@@ -350,7 +383,13 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
     {
         if (m_pTextures != null)
         {
-            foreach (CCTexture2D t in m_pTextures.Values)
+            // A copy, so the textures are disposed outside the lock.
+            CCTexture2D[] textures;
+            lock (_dictLock)
+            {
+                textures = m_pTextures.Values.ToArray();
+            }
+            foreach (CCTexture2D t in textures)
             {
                 t.Dispose();
             }

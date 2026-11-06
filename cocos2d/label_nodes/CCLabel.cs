@@ -33,7 +33,14 @@ public partial class CCLabel : CCLabelBMFont
 
     public static CCTexture2D? m_pTexture;
     private static CCSize _atlasTextureSize = new CCSize(0, 0);
-    
+
+    // How far right and down GetBitmapData moved the glyph it just drew, to keep ink that reaches
+    // back past where the glyph starts, or above the top of its line, inside the bitmap.
+    // InitializeFont takes it off the glyph's offsets, which can then be negative, as a .fnt
+    // file's can. Only the Skia backend moves glyphs.
+    private static int _glyphShiftX;
+    private static int _glyphShiftY;
+
     protected static bool m_bTextureDirty = true;
 
     protected string m_FontName = "arial";
@@ -275,6 +282,8 @@ public partial class CCLabel : CCLabelBMFont
             unsafe
             {
                 int stride;
+                _glyphShiftX = 0;
+                _glyphShiftY = 0;
                 byte* pBase = GetBitmapData(s, out stride);
 
                 int minX = w;
@@ -334,8 +343,8 @@ public partial class CCLabel : CCLabelBMFont
                     {
                         charID = chars[i],
                         rect = new CCRect(regionX, region.y, regionWidth, region.height),
-                        xOffset = minX,
-                        yOffset = minY,
+                        xOffset = minX - _glyphShiftX,
+                        yOffset = minY - _glyphShiftY,
                         xKern = (int)Math.Ceiling(info.A + info.B + info.C),
                         xAdvance = (int)Math.Ceiling(info.A + info.B + info.C) + m_FontSpacing
                     };

@@ -36,6 +36,7 @@ public class CCLabelSkiaTests
     [Theory]
     [InlineData('É')] // É: its accent was cut off.
     [InlineData('Å')] // Å
+    [InlineData('Ǻ')] // Ǻ, which reaches above Arial's ascent, so it reached above the bitmap
     [InlineData('g')]      // reaches below the baseline
     [InlineData('j')]      // reaches back past where it starts, too
     [InlineData('.')]      // drawn below the area searched, so it disappeared
@@ -68,6 +69,41 @@ public class CCLabelSkiaTests
             Glyph drawn = skia.Draw(glyph);
             Assert.InRange(drawn.Bottom + 1, ascent - 1, ascent + 1);
         }
+    }
+
+    [Fact]
+    public void PutsInkAboveTheAscentAboveTheTopOfTheLine()
+    {
+        // Ǻ reaches about 4 pixels above Arial's ascent at 40 points.
+        const char tall = 'Ǻ';
+        var skia = new Backend("Skia", FontName, FontSize, tall.ToString());
+        using SKFont font = skia.FontInPixels(FontSize);
+        font.MeasureText(tall.ToString(), out SKRect bounds);
+        float top = -font.Metrics.Ascent + bounds.Top;
+
+        Glyph drawn = skia.Draw(tall);
+
+        // Its offset from the top of the line is negative, and it still sits on the baseline.
+        Assert.InRange(drawn.Top, top - 1, top + 1);
+        Assert.InRange(drawn.Bottom + 1, -font.Metrics.Ascent - 1, -font.Metrics.Ascent + 1);
+    }
+
+    [Fact]
+    public void DrawsACombiningAccentBackOverTheLetterBeforeIt()
+    {
+        // Verdana's combining acute accent doesn't advance, and is drawn wholly left of where it
+        // starts, over the letter before it. Before, it fell outside the bitmap and was lost.
+        const char accent = '́';
+        var skia = new Backend("Skia", "Verdana", FontSize, accent.ToString());
+        using SKFont font = skia.FontInPixels(FontSize);
+        font.MeasureText(accent.ToString(), out SKRect bounds);
+        // Where GDI+ would put a glyph: a sixth of an em right of where it starts, plus its bearing.
+        float left = FontSize * 96 / 72 / 6 + bounds.Left;
+
+        Glyph drawn = skia.Draw(accent);
+
+        Assert.InRange(drawn.Width, bounds.Width - 1, bounds.Width + 2);
+        Assert.InRange(drawn.Left, left - 1, left + 1);
     }
 
     [Fact]
@@ -135,8 +171,8 @@ public class CCLabelSkiaTests
         Assert.True(mismatches.Count == 0, string.Join(Environment.NewLine, mismatches));
     }
 
-    // Where a glyph's pixels are in the bitmap a backend draws it into: what CCLabel takes as its
-    // offset from the top left of its line, and its size in the atlas.
+    // Where a glyph's pixels are, from the top left of its line, as CCLabel takes its offsets, and
+    // the size they take in the atlas.
     private readonly record struct Glyph(int Left, int Top, int Width, int Height)
     {
         public int Bottom => Top + Height - 1;
@@ -185,8 +221,9 @@ public class CCLabelSkiaTests
             return new SKFont(typeface, sizeInPoints * 96 / 72);
         }
 
-        // As CCLabel.InitializeFont does it: measure the glyph, have it drawn, and search the
-        // measured size, plus two pixels each way, for pixels that aren't zero.
+        // As CCLabel.InitializeFont does it: measure the glyph, have it drawn, search the measured
+        // size, plus two pixels each way, for pixels that aren't zero, and take off how far the
+        // backend moved the glyph to fit it in.
         public unsafe Glyph Draw(char glyph)
         {
             string text = glyph.ToString();
@@ -194,9 +231,15 @@ public class CCLabelSkiaTests
             int width = (int)Math.Ceiling(size.Width + 2);
             int height = (int)Math.Ceiling(size.Height + 2);
 
+            FieldInfo shiftX = typeof(CCLabel).GetField("_glyphShiftX", Private)!;
+            FieldInfo shiftY = typeof(CCLabel).GetField("_glyphShiftY", Private)!;
+            shiftX.SetValue(null, 0);
+            shiftY.SetValue(null, 0);
             object?[] args = [text, null];
             var pixels = (byte*)Pointer.Unbox(Call("GetBitmapData", [typeof(string), typeof(int).MakeByRefType()], args)!);
             int stride = (int)args[1]!;
+            int movedX = (int)shiftX.GetValue(null)!;
+            int movedY = (int)shiftY.GetValue(null)!;
 
             int left = width, top = height, right = -1, bottom = -1;
             for (int y = 0; y < height; y++)
@@ -213,7 +256,9 @@ public class CCLabelSkiaTests
                     }
                 }
             }
-            return right < 0 ? new Glyph(-1, -1, 0, 0) : new Glyph(left, top, right - left + 1, bottom - top + 1);
+            return right < 0
+                ? new Glyph(-1, -1, 0, 0)
+                : new Glyph(left - movedX, top - movedY, right - left + 1, bottom - top + 1);
         }
 
         private object? Call(string name, Type[] parameters, params object?[] args)

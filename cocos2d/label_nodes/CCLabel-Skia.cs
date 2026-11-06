@@ -151,15 +151,26 @@ public partial class CCLabel
 
     // The bitmap GetBitmapDataSkia draws a glyph into, which CCLabel searches for the glyph's
     // pixels: wide enough for the margin, the glyph and its advance, and tall enough for the
-    // glyph below the top of its line.
+    // glyph below the top of its line, with room for its overhang.
     private CCSize GetMeasureStringSkia(string text)
     {
         using var font = new SKFont(_currentTypeface, _currentFontSize);
 
         var advance = font.MeasureText(text, out var bounds);
+        var overhang = GetOverhangSkia(font, bounds);
         return new CCSize(
-            SkiaLeftMargin + Math.Max(advance, bounds.Right),
-            -font.Metrics.Ascent + Math.Max(font.Metrics.Descent, bounds.Bottom));
+            overhang.Left + SkiaLeftMargin + Math.Max(advance, bounds.Right),
+            overhang.Top - font.Metrics.Ascent + Math.Max(font.Metrics.Descent, bounds.Bottom));
+    }
+
+    // How many whole pixels a glyph reaches past the margin on the left, as a combining accent
+    // does, and above the top of its line, as a stacked accent can. A font's ascent needn't cover
+    // every glyph, and on Linux and macOS it may come from a different table than on Windows: in
+    // Nimbus Sans it's the height of a capital. Both are zero for most glyphs.
+    private static (int Left, int Top) GetOverhangSkia(SKFont font, SKRect bounds)
+    {
+        return ((int)MathF.Ceiling(MathF.Max(0, -bounds.Left - SkiaLeftMargin)),
+            (int)MathF.Ceiling(MathF.Max(0, font.Metrics.Ascent - bounds.Top)));
     }
 
     [MemberNotNull(nameof(_bitmapSkia), nameof(_canvas))]
@@ -196,11 +207,17 @@ public partial class CCLabel
 
 
         using var font = new SKFont(_currentTypeface, _currentFontSize);
+        font.MeasureText(s, out var bounds);
+        var overhang = GetOverhangSkia(font, bounds);
 
         // With the top of the line at the top of the bitmap, as GDI+ draws it, so the baseline is
         // the ascent below it. CCLabel takes how far the glyph's pixels start from the top as the
-        // glyph's offset from the top of its line.
-        _canvas.DrawText(s, SkiaLeftMargin, -font.Metrics.Ascent, SKTextAlign.Left, font, paint);
+        // glyph's offset from the top of its line. A glyph that overhangs is moved right and down
+        // by as much, which CCLabel takes back off its offsets.
+        _canvas.DrawText(s, overhang.Left + SkiaLeftMargin, overhang.Top - font.Metrics.Ascent,
+            SKTextAlign.Left, font, paint);
+        _glyphShiftX = overhang.Left;
+        _glyphShiftY = overhang.Top;
 
         stride = _bitmapSkia.RowBytes;
 

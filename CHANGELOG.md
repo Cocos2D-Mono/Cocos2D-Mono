@@ -72,11 +72,12 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     drawn at 68% of it. So text was about half as tall as on Windows, but spaced for its full
     size, with wide gaps between the letters.
   - Full stops, commas, hyphens and underscores disappeared, and accents above capitals were
-    cut off.
+    cut off. A glyph that reaches above the font's ascent, like a stacked accent, is now drawn
+    whole too.
   - Lines were spaced by the height of a capital rather than by the font's line spacing, so
     the lines of a label were less than half as far apart as on Windows.
   - A label with a character that doesn't advance, such as a combining accent, threw
-    `KeyNotFoundException`.
+    `KeyNotFoundException`. A combining accent is now drawn over the letter before it.
 
 ### Documentation
 

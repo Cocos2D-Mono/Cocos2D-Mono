@@ -78,6 +78,11 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     the lines of a label were less than half as far apart as on Windows.
   - A label with a character that doesn't advance, such as a combining accent, threw
     `KeyNotFoundException`. A combining accent is now drawn over the letter before it.
+- A space in a `CCLabel` no longer draws a faint dot just below the line, on any platform. A
+  glyph with no pixels, like a space, was given a pixel of the label atlas, copied from the
+  glyph before it. After some glyphs that pixel wasn't transparent: in Arial, after an "l". Now
+  a glyph with no pixels takes no room in the atlas and draws nothing, as a space in a `.fnt`
+  file does.
 
 ### Documentation
 

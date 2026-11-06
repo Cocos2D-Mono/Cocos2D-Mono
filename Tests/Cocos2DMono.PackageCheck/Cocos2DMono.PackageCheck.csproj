@@ -13,6 +13,8 @@
     <TargetFramework>$(Cocos2DBaseTfm)</TargetFramework>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- The text-size check reads the pixels a label backend draws through the pointer it returns. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- The version under test is the repository's own Version (Directory.Build.props), which
          is the one pack.yml packs. Central package management pins the versions of the
          engine's dependencies; it has no say over the package being checked. -->

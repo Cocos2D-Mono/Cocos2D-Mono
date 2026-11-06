@@ -11,6 +11,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - **Scroll views clip their content.** A `CCScrollView` or `CCTableView` now draws only what's
   inside its view, as its `ClippingToBounds` property always said it did. A game that relied
   on content drawing outside the view can set `ClippingToBounds` to false.
+- **Labels on Linux and macOS are about twice as tall.** `CCLabel` now draws text there at the
+  size Windows does, taking the font size in points as Windows always has. A game that chose
+  its label sizes on Linux or macOS may want smaller ones.
 
 ### Fixed
 
@@ -64,6 +67,16 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     now takes it.
   - A load requested just as the loading thread finished could wait forever, along with
     every load after it.
+- `CCLabel` draws all of its text on Linux and macOS, at the size and spacing that Windows uses.
+  - The font size was taken in pixels, where Windows takes points, and each glyph was then
+    drawn at 68% of it. So text was about half as tall as on Windows, but spaced for its full
+    size, with wide gaps between the letters.
+  - Full stops, commas, hyphens and underscores disappeared, and accents above capitals were
+    cut off.
+  - Lines were spaced by the height of a capital rather than by the font's line spacing, so
+    the lines of a label were less than half as far apart as on Windows.
+  - A label with a character that doesn't advance, such as a combining accent, threw
+    `KeyNotFoundException`.
 
 ### Documentation
 
@@ -75,6 +88,11 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   only.
 - The roadmap says how often releases ship: once a month, early in the month, with urgent
   fixes in between.
+
+### Changed (internal)
+
+- The package check that `pack.yml` runs on Linux, macOS and Windows also checks the size
+  `CCLabel` draws text at, and that it draws all of each glyph.
 
 ## 2.9.1 - 2026-11-04
 

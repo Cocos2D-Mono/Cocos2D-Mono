@@ -19,6 +19,15 @@ public partial class CCLabel
     private static Dictionary<char, KerningInfo> _kerningInfo = new Dictionary<char, KerningInfo>();
     private static Dictionary<string, SKTypeface> _typefaceCache = new Dictionary<string, SKTypeface>();
 
+    // A label's font size is in points, as on Windows, where GDI+ and DirectWrite draw a point as
+    // 96/72 of a pixel at the usual 96 DPI. Skia's sizes are in pixels.
+    private const float SkiaPixelsPerPoint = 96f / 72f;
+
+    // GDI+ draws a string about a sixth of an em to the right of where it's asked to, so on Windows
+    // each glyph sits that far right of where it advances from. Skia draws them as far in, which
+    // also leaves room for a glyph that reaches back past where it starts, like j.
+    private static float SkiaLeftMargin => _currentFontSize / 6;
+
 #if (LINUX || MACOS)
 
     private string CreateFont(string fontName, float fontSize, CCRawList<char> charset)
@@ -100,7 +109,7 @@ public partial class CCLabel
             _currentTypeface = typeface;
         }
 
-        _currentFontSize = fontSize;
+        _currentFontSize = fontSize * SkiaPixelsPerPoint;
 
         GetKerningInfoSkia(charset);
 
@@ -119,32 +128,49 @@ public partial class CCLabel
         {
             if (!_kerningInfo.ContainsKey(ch))
             {
-                var width = font.MeasureText(ch.ToString());
-                if (width > 0)
+                // CCLabel uses only the sum, as the glyph's advance, so all of it goes in B, as
+                // on Android. It's rounded to the nearest pixel, since CCLabel rounds the sum up,
+                // which would add half a pixel a glyph on average. A glyph that doesn't advance,
+                // like a combining accent, needs an entry too.
+                _kerningInfo[ch] = new KerningInfo
                 {
-                    _kerningInfo[ch] = new KerningInfo
-                    {
-                        A = 1, // SkiaSharp doesn't provide explicit ABC spacing; adjust as needed
-                        B = width,
-                        C = 1
-                    };
-                }
+                    A = 0,
+                    B = MathF.Round(font.MeasureText(ch.ToString())),
+                    C = 0
+                };
             }
         }
     }
 
+    // The line height, which GDI+'s Font.GetHeight gives on Windows: ascent, descent and leading.
     private float GetFontHeightSkia()
     {
         using var font = new SKFont(_currentTypeface, _currentFontSize);
-        return font.Metrics.CapHeight;
+        return font.Spacing;
     }
 
+    // The bitmap GetBitmapDataSkia draws a glyph into, which CCLabel searches for the glyph's
+    // pixels: wide enough for the margin, the glyph and its advance, and tall enough for the
+    // glyph below the top of its line, with room for its overhang.
     private CCSize GetMeasureStringSkia(string text)
     {
         using var font = new SKFont(_currentTypeface, _currentFontSize);
 
-        font.MeasureText(text, out var bounds);
-        return new CCSize(bounds.Width, bounds.Height);
+        var advance = font.MeasureText(text, out var bounds);
+        var overhang = GetOverhangSkia(font, bounds);
+        return new CCSize(
+            overhang.Left + SkiaLeftMargin + Math.Max(advance, bounds.Right),
+            overhang.Top - font.Metrics.Ascent + Math.Max(font.Metrics.Descent, bounds.Bottom));
+    }
+
+    // How many whole pixels a glyph reaches past the margin on the left, as a combining accent
+    // does, and above the top of its line, as a stacked accent can. A font's ascent needn't cover
+    // every glyph, and on Linux and macOS it may come from a different table than on Windows: in
+    // Nimbus Sans it's the height of a capital. Both are zero for most glyphs.
+    private static (int Left, int Top) GetOverhangSkia(SKFont font, SKRect bounds)
+    {
+        return ((int)MathF.Ceiling(MathF.Max(0, -bounds.Left - SkiaLeftMargin)),
+            (int)MathF.Ceiling(MathF.Max(0, font.Metrics.Ascent - bounds.Top)));
     }
 
     [MemberNotNull(nameof(_bitmapSkia), nameof(_canvas))]
@@ -180,9 +206,18 @@ public partial class CCLabel
         };
 
 
-        using var font = new SKFont(_currentTypeface, _currentFontSize *.68f);
+        using var font = new SKFont(_currentTypeface, _currentFontSize);
+        font.MeasureText(s, out var bounds);
+        var overhang = GetOverhangSkia(font, bounds);
 
-        _canvas.DrawText(s, 0, _currentFontSize/2, SKTextAlign.Left, font, paint);
+        // With the top of the line at the top of the bitmap, as GDI+ draws it, so the baseline is
+        // the ascent below it. CCLabel takes how far the glyph's pixels start from the top as the
+        // glyph's offset from the top of its line. A glyph that overhangs is moved right and down
+        // by as much, which CCLabel takes back off its offsets.
+        _canvas.DrawText(s, overhang.Left + SkiaLeftMargin, overhang.Top - font.Metrics.Ascent,
+            SKTextAlign.Left, font, paint);
+        _glyphShiftX = overhang.Left;
+        _glyphShiftY = overhang.Top;
 
         stride = _bitmapSkia.RowBytes;
 

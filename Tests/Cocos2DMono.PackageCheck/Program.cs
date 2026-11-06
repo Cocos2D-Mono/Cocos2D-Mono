@@ -68,6 +68,42 @@ else
     });
 }
 
+// The size the backends draw text at, and whether they draw all of each glyph. On Linux and macOS,
+// Skia drew glyphs about half as tall as GDI+ does on Windows, cut off accents, and lost full stops,
+// which it drew outside the area CCLabel takes a glyph's pixels from (C2D-360). "Arial" is a
+// substitute where it isn't installed, so this checks proportions rather than exact sizes.
+Check("CCLabel draws text at its size in points", () =>
+{
+    // A 40-point em is 53 pixels, since Windows draws a point as 96/72 of a pixel. A capital is
+    // 0.6 to 0.8 of an em in common fonts.
+    const float em = 40f * 96 / 72;
+    object label = NewLabel();
+    CallLabel(label, "CreateFont", [typeof(string), typeof(float), typeof(CCRawList<char>)],
+        "Arial", 40f, new CCRawList<char>("HEÉ.".ToCharArray()));
+
+    (_, int capital) = DrawnSize(label, 'H');
+    if (capital < 0.6f * em || capital > 0.8f * em)
+    {
+        throw new InvalidOperationException(
+            $"an H is {capital} pixels tall, but at 40 points it should be {0.6f * em:0} to {0.8f * em:0}");
+    }
+
+    (_, int e) = DrawnSize(label, 'E');
+    (_, int eAcute) = DrawnSize(label, 'É');
+    if (eAcute < e + 0.1f * em)
+    {
+        throw new InvalidOperationException($"an É is {eAcute} pixels tall and an E {e}: the accent is cut off");
+    }
+
+    (int dotWidth, int dotHeight) = DrawnSize(label, '.');
+    if (dotWidth == 0)
+    {
+        throw new InvalidOperationException("a full stop has no pixels");
+    }
+
+    return $"an H is {capital} pixels tall, an É {eAcute - e} taller than an E, and a full stop {dotWidth}x{dotHeight}";
+});
+
 Console.WriteLine(failures == 0 ? "The package passed." : $"The package failed {failures} check(s).");
 return failures == 0 ? 0 : 1;
 
@@ -92,29 +128,69 @@ void Check(string name, Func<string?> body)
     }
 }
 
-// The public constructors build the label's texture, which needs a graphics device, so this
-// calls the backends' font entry point directly, on a label whose constructor never ran.
-// CreateFont only uses the backend's static state.
-static string CreateFont(string fontName)
+// The public constructors build the label's texture, which needs a graphics device, so the checks
+// call the backends' methods directly, on a label whose constructor never ran. The backends keep
+// their font and bitmap in static fields.
+static object NewLabel()
 {
-    MethodInfo createFont = typeof(CCLabel).GetMethod(
-            "CreateFont",
-            BindingFlags.Instance | BindingFlags.NonPublic,
-            [typeof(string), typeof(float), typeof(CCRawList<char>)])
-        ?? throw new MissingMethodException(
-            "CCLabel.CreateFont(string, float, CCRawList<char>) is gone. This check calls the label backends' font entry point; point it at the new one.");
-
     object label = RuntimeHelpers.GetUninitializedObject(typeof(CCLabel));
-    var charset = new CCRawList<char>("CCLabel".ToCharArray());
+    // CCNode's finalizer runs Cleanup, which throws on a node whose constructor never ran.
+    GC.SuppressFinalize(label);
+    return label;
+}
+
+static object? CallLabel(object label, string name, Type[] parameters, params object?[] args)
+{
+    MethodInfo method = typeof(CCLabel).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic, parameters)
+        ?? throw new MissingMethodException(
+            $"CCLabel.{name}({string.Join(", ", Array.ConvertAll(parameters, p => p.Name))}) is gone. These checks call the label backends' methods; point them at the new ones.");
     try
     {
-        return (string)createFont.Invoke(label, [fontName, 40f, charset])!;
+        return method.Invoke(label, args);
     }
     catch (TargetInvocationException ex) when (ex.InnerException is not null)
     {
         ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
         throw;
     }
+}
+
+// CreateFont is the backends' font entry point.
+static string CreateFont(string fontName)
+{
+    return (string)CallLabel(NewLabel(), "CreateFont", [typeof(string), typeof(float), typeof(CCRawList<char>)],
+        fontName, 40f, new CCRawList<char>("CCLabel".ToCharArray()))!;
+}
+
+// The size of a glyph's pixels, found as CCLabel finds them: the backend measures the glyph and draws
+// it, and CCLabel searches the measured size, plus two pixels each way, for pixels that aren't zero.
+static unsafe (int Width, int Height) DrawnSize(object label, char glyph)
+{
+    string text = glyph.ToString();
+    var size = (CCSize)CallLabel(label, "GetMeasureString", [typeof(string)], text)!;
+    int width = (int)Math.Ceiling(size.Width + 2);
+    int height = (int)Math.Ceiling(size.Height + 2);
+
+    object?[] args = [text, null];
+    var pixels = (byte*)Pointer.Unbox(CallLabel(label, "GetBitmapData", [typeof(string), typeof(int).MakeByRefType()], args)!);
+    int stride = (int)args[1]!;
+
+    int left = width, top = height, right = -1, bottom = -1;
+    for (int y = 0; y < height; y++)
+    {
+        var row = (int*)(pixels + y * stride);
+        for (int x = 0; x < width; x++)
+        {
+            if (row[x] != 0)
+            {
+                left = Math.Min(left, x);
+                right = Math.Max(right, x);
+                top = Math.Min(top, y);
+                bottom = Math.Max(bottom, y);
+            }
+        }
+    }
+    return right < 0 ? (0, 0) : (right - left + 1, bottom - top + 1);
 }
 
 // A font file the OS ships, with the family it holds, so the .ttf check can tell a font that

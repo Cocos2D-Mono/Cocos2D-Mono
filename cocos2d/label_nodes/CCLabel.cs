@@ -290,6 +290,7 @@ public partial class CCLabel : CCLabelBMFont
                 int maxX = 0;
                 int minY = h;
                 int maxY = 0;
+                bool hasPixels = false;
 
                 for (int y = 0; y < h; y++)
                 {
@@ -299,12 +300,31 @@ public partial class CCLabel : CCLabelBMFont
                     {
                         if (row[x] != 0)
                         {
+                            hasPixels = true;
                             minX = Math.Min(minX, x);
                             maxX = Math.Max(maxX, x);
                             minY = Math.Min(minY, y);
                             maxY = Math.Max(maxY, y);
                         }
                     }
+                }
+
+                // A glyph with no pixels, like a space, takes no room in the atlas. As a space in a
+                // .fnt file does, it has an empty rect, so it draws nothing and only advances. With
+                // a region of its own, it got its one pixel from data, which still held the previous
+                // glyph's pixels, and drew that pixel as a dot.
+                if (!hasPixels)
+                {
+                    var info = GetKerningInfo(chars[i]);
+                    fontConfig.CharacterSet.Add(chars[i]);
+                    fontConfig.m_pFontDefDictionary.Add(chars[i], new CCBMFontConfiguration.CCBMFontDef()
+                    {
+                        charID = chars[i],
+                        rect = CCRect.Zero,
+                        xKern = (int)Math.Ceiling(info.A + info.B + info.C),
+                        xAdvance = (int)Math.Ceiling(info.A + info.B + info.C) + m_FontSpacing
+                    });
+                    continue;
                 }
 
                 w = Math.Max(maxX - minX + 1, 1);

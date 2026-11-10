@@ -109,16 +109,30 @@ public class CCTextFieldTTF : CCLabelTTF, ICCTargetedTouchDelegate
                     {
                         canceled = false;
 
-                        ScheduleOnce(
-                            time =>
+                        // This runs on a thread-pool thread, and the scheduler isn't thread-safe, so
+                        // ScheduleOnce goes through the scheduler's queue, which calls it on the game
+                        // thread. The selector is still this node's, so it waits while the node is
+                        // paused, and Cleanup removes it. A node already cleaned up by then gets no
+                        // selector: one scheduled on a node that isn't running starts paused, so it
+                        // would never run, and the scheduler would keep the node alive.
+                        Scheduler.RunOnNextTick(() =>
+                        {
+                            if (IsCleanedUp)
                             {
-                                DoEndEditing(ref newText, ref canceled);
+                                return;
+                            }
 
-                                if (!canceled)
+                            ScheduleOnce(
+                                time =>
                                 {
-                                    Text = newText;
-                                }
-                            }, 0);
+                                    DoEndEditing(ref newText, ref canceled);
+
+                                    if (!canceled)
+                                    {
+                                        Text = newText;
+                                    }
+                                }, 0);
+                        });
                     }
                 });
 #else

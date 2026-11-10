@@ -47,23 +47,19 @@ public static class CCTask
 
     #endregion
 
-    private class TaskSelector : ICCSelectorProtocol
-    {
-        public void Update(float dt)
-        {
-        }
-    }
-
-    private static ICCSelectorProtocol _taskSelector = new TaskSelector();
-
     /// <summary>
-    /// Schedules the given action to run on the next scheduler tick (the main loop).
+    /// Runs the given action on the game thread, at the end of the scheduler's next update. It's
+    /// safe to call from any thread, unlike the scheduler's own methods.
     /// </summary>
+    /// <remarks>
+    /// Called during an update, the action runs at the end of that update. It runs even while the
+    /// scheduler's targets are paused. What it throws goes to
+    /// <see cref="CCScheduler.OnUnhandledException"/>.
+    /// </remarks>
     /// <param name="action">The action to run.</param>
     public static void RunOnScheduler(Action action)
     {
-        var scheduler = CCDirector.SharedDirector.Scheduler;
-        scheduler.ScheduleSelector(f => action(), _taskSelector, 0, 0, 0, false);
+        CCDirector.SharedDirector.Scheduler.RunOnNextTick(action);
     }
 
     /// <summary>
@@ -78,10 +74,10 @@ public static class CCTask
 		
     /// <summary>
     /// Runs the given action asynchronously on a background <see cref="Task"/>, then optionally
-    /// invokes a completion callback via the scheduler (the main loop).
+    /// runs a completion callback on the game thread, as <see cref="RunOnScheduler"/> does.
     /// </summary>
     /// <param name="action">The action to run in the background.</param>
-    /// <param name="taskCompleted">Optional callback invoked on the scheduler after the action completes.</param>
+    /// <param name="taskCompleted">Optional callback, run on the game thread after the action completes.</param>
     /// <returns>The started background task.</returns>
     public static object RunAsync(Action action, Action<object?>? taskCompleted)
     {
@@ -92,8 +88,9 @@ public static class CCTask
 
                 if (taskCompleted != null)
                 {
-                    var scheduler = CCDirector.SharedDirector.Scheduler;
-                    scheduler.ScheduleSelector(f => taskCompleted(null), _taskSelector, 0, 0, 0, false);
+                    // On the background thread, so it goes through the scheduler's queue: the rest
+                    // of the scheduler isn't thread-safe.
+                    RunOnScheduler(() => taskCompleted(null));
                 }
             }
             );

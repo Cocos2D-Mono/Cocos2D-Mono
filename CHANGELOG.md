@@ -83,6 +83,19 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   glyph before it. After some glyphs that pixel wasn't transparent: in Arial, after an "l". Now
   a glyph with no pixels takes no room in the atlas and draws nothing, as a space in a `.fnt`
   file does.
+- `CCTask.RunOnScheduler`, and the completion callback that `CCTask.RunAsync` takes, no longer
+  race the game thread when they're used from another thread, as they're meant to be. Each
+  scheduled a timer from the calling thread, while the game thread's update walked the same
+  timers without a lock, so the action could be lost.
+  - They now go through a queue that the game thread runs at the end of its next update, a frame
+    sooner than the timer did. Called during an update, the action runs at the end of that
+    update, two frames sooner than before.
+  - Unlike the timer, the action doesn't wait while the scheduler's targets are paused, as
+    `CCScheduler.PauseAllTargets` pauses them.
+  - A `CCTextFieldTTF` on Android, iOS and Windows (DirectX) scheduled the end of its editing
+    from the keyboard's thread the same way. It now schedules it from the game thread, so the
+    edit ends a frame later than before. If the text field is cleaned up before then, the edit
+    is dropped. Before, it left a paused timer that never ran and kept the text field in memory.
 
 ### Documentation
 

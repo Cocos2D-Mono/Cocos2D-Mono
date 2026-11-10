@@ -90,8 +90,12 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   - They now go through a queue that the game thread runs at the end of its next update, a frame
     sooner than the timer did. Called during an update, the action runs at the end of that
     update, two frames sooner than before.
+  - Unlike the timer, the action doesn't wait while the scheduler's targets are paused, as
+    `CCScheduler.PauseAllTargets` pauses them.
   - A `CCTextFieldTTF` on Android, iOS and Windows (DirectX) scheduled the end of its editing
-    from the keyboard's thread the same way. It now schedules it from the game thread.
+    from the keyboard's thread the same way. It now schedules it from the game thread, so the
+    edit ends a frame later than before. If the text field is cleaned up before then, the edit
+    is dropped. Before, it left a paused timer that never ran and kept the text field in memory.
 
 ### Documentation
 

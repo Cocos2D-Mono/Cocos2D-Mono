@@ -917,6 +917,9 @@ public class CCNode : ICCSelectorProtocol, ICCFocusable, ICCTargetedTouchDelegat
 
     private bool _cleaned = false;
 
+    // Whether Cleanup has run since the node was last added to a parent.
+    internal bool IsCleanedUp => _cleaned;
+
     ~CCNode()
     {
         //unregisterScriptHandler();

@@ -104,8 +104,13 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     stored first is kept, and the other is disposed.
   - `AddImage` reloads a cached texture that has lost its image, so both threads could reload
     it at once. `CCTexture2D.Reinit` now reloads a texture once at a time: a call made while
-    another thread is reloading the texture returns at once, and the texture is ready when
-    that reload finishes.
+    another thread is reloading the texture returns at once. It can't wait for that reload,
+    because on OpenGL that could deadlock the game thread.
+  - So until the other thread's reload finishes, about a frame later, the texture has no
+    image. `AddImage` can return it without one, and a sprite drawn with it in that time is
+    drawn without its image. This only happens to a texture that has lost its image: after
+    `CCGraphicsResource.DisposeAllResources`, a device reset, or unloading the content
+    manager.
 
 ### Documentation
 

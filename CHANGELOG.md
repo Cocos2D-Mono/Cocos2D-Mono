@@ -111,6 +111,12 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     drawn without its image. This only happens to a texture that has lost its image: after
     `CCGraphicsResource.DisposeAllResources`, a device reset, or unloading the content
     manager.
+- Loading content on two threads at once no longer corrupts `CCContentManager`, as when the
+  game thread loads while `CCTextureCache.AddImageAsync` is loading.
+  - Its dictionaries of loaded and failed assets had no lock, so two loads at once could corrupt
+    one for good, and every load after that threw `InvalidOperationException`. They now take a
+    lock. Change `SearchPaths` and `SearchResolutionsOrder` before loading on another thread,
+    because code that changes those lists can't take it.
 
 ### Documentation
 

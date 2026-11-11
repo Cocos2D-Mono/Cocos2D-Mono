@@ -151,7 +151,6 @@ public class CCContentManager : ContentManager
     // What this content manager's loads created that Unload disposes. MonoGame records them in a list
     // of its own, which has no lock, unless ReadAsset is given a callback to record them.
     private readonly List<IDisposable> _disposables = new List<IDisposable>();
-    private readonly Action<IDisposable> _recordDisposable;
 
     // How many times Unload has run, so that a load can tell whether one ran while it loaded.
     private int _unloads;
@@ -159,13 +158,11 @@ public class CCContentManager : ContentManager
     public CCContentManager(IServiceProvider serviceProvider) : base(serviceProvider)
     {
         _loadedAssets = new Dictionary<string, AssetEntry>();
-        _recordDisposable = RecordDisposable;
     }
 
     public CCContentManager(IServiceProvider serviceProvider, string rootDirectory) : base(serviceProvider, rootDirectory)
     {
         _loadedAssets = new Dictionary<string, AssetEntry>();
-        _recordDisposable = RecordDisposable;
     }
 
     public T? TryLoad<T>(string assetName)
@@ -340,6 +337,15 @@ public class CCContentManager : ContentManager
             unloads = _unloads;
         }
 
+        // What this load creates goes into _disposables, for Unload, and into this list, so that a
+        // duplicate can be disposed whole: an asset such as a SpriteFont isn't disposable itself.
+        var created = new List<IDisposable>();
+        Action<IDisposable> record = disposable =>
+        {
+            created.Add(disposable);
+            RecordDisposable(disposable);
+        };
+
         T result;
 
         bool useContentReader = true;
@@ -350,7 +356,7 @@ public class CCContentManager : ContentManager
             if (typeof (T) == typeof (string))
             {
                 //TODO: No need CCContent, use TileContainer
-                var content = ReadAsset<CCContent>(path, _recordDisposable);
+                var content = ReadAsset<CCContent>(path, record);
                 result = (T) (object) (content.Content
                     ?? throw new ContentLoadException("The asset " + assetName + " has no content."));
 
@@ -359,7 +365,7 @@ public class CCContentManager : ContentManager
             else
             {
                 // Load the asset.
-                result = ReadAsset<T>(path, _recordDisposable);
+                result = ReadAsset<T>(path, record);
             }
         }
         catch (ContentLoadException)
@@ -391,7 +397,7 @@ public class CCContentManager : ContentManager
                     catch (Exception)
                     {
                         //TODO: Remove This
-                        var content = ReadAsset<CCContent>(path, _recordDisposable);
+                        var content = ReadAsset<CCContent>(path, record);
                         result = (T) (object) new PlistDocument(content.Content
                             ?? throw new ContentLoadException("The asset " + assetName + " has no content."));
                     }
@@ -426,18 +432,24 @@ public class CCContentManager : ContentManager
 
         var assetEntry = new AssetEntry(result, path, weakReference, useContentReader);
 
-        IDisposable? duplicate = null;
+        List<IDisposable>? duplicate = null;
         lock (_lock)
         {
             if (_loadedAssets.TryGetValue(assetName, out AssetEntry? stored) && stored.Asset is T kept &&
                 !ReferenceEquals(kept, result))
             {
                 // Another thread stored the same asset while this one loaded it. The one stored
-                // first is kept, so that every caller gets the one in the cache.
-                duplicate = result as IDisposable;
-                if (duplicate != null)
+                // first is kept, so that every caller gets the one in the cache, and everything
+                // this load created is disposed.
+                duplicate = created;
+                if (result is IDisposable own && !duplicate.Contains(own))
                 {
-                    _disposables.Remove(duplicate);
+                    // An asset that no ContentReader read, such as a texture from an image file.
+                    duplicate.Add(own);
+                }
+                foreach (IDisposable disposable in duplicate)
+                {
+                    _disposables.Remove(disposable);
                 }
                 result = kept;
             }
@@ -455,7 +467,13 @@ public class CCContentManager : ContentManager
         }
 
         // Outside the lock, which is never held while an asset is disposed.
-        duplicate?.Dispose();
+        if (duplicate != null)
+        {
+            foreach (IDisposable disposable in duplicate)
+            {
+                disposable.Dispose();
+            }
+        }
 
         return result;
     }

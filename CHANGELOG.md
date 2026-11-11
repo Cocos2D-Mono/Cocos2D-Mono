@@ -124,7 +124,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     of it loads it again.
   - Two threads that load the same asset at once get the same one. Before, each got its own,
     the second replaced the first in the content manager, and the first stayed in memory until
-    `Unload`. Now the one stored first is kept, and the other is disposed.
+    `Unload`. Now the one stored first is kept, and everything the other load created is
+    disposed, such as a `SpriteFont`'s texture.
 
 ### Documentation
 

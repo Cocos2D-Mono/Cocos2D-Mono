@@ -176,6 +176,28 @@ public class CCContentManagerTests
     }
 
     [Fact]
+    public void Load_WhenTwoThreadsLoadTheSameAssetAtOnce_DisposesEverythingTheOtherLoadCreated()
+    {
+        DisposableAsset.Created.Clear();
+        using var bothLoading = new Barrier(2);
+        var content = new TestContentManager
+        {
+            Xnb = Xnb(new[] { typeof(ContainerAssetReader), typeof(DisposableAssetReader) }, 1, 2),
+            WhileLoading = () => WaitForTheOtherLoad(bothLoading),
+        };
+
+        (ContainerAsset mine, ContainerAsset? theirs) = LoadOnTwoThreads(content, () => content.Load<ContainerAsset>("c2d-373-container"));
+
+        Assert.Same(mine, theirs);
+        Assert.NotNull(mine.Inner);
+        Assert.False(mine.Inner.IsDisposed);
+        Assert.Equal(2, DisposableAsset.Created.Count);
+        DisposableAsset dropped = Assert.Single(DisposableAsset.Created, asset => asset != mine.Inner);
+        // The container isn't disposable, so only the record of what the load created finds this.
+        Assert.True(dropped.IsDisposed, "What the other load created wasn't disposed.");
+    }
+
+    [Fact]
     public void Unload_DisposesWhatALoadCreated()
     {
         var content = new TestContentManager { Xnb = DisposableAssetXnb() };
@@ -224,18 +246,27 @@ public class CCContentManagerTests
     }
 
     // An uncompressed XNB file for DesktopGL that holds one DisposableAsset.
-    private static byte[] DisposableAssetXnb()
+    private static byte[] DisposableAssetXnb() => Xnb(new[] { typeof(DisposableAssetReader) }, 1);
+
+    // An uncompressed XNB file for DesktopGL with the given type readers. Each object is the 1-based
+    // index of the reader that reads it, in the order they're read: the asset first, then what its
+    // reader reads.
+    private static byte[] Xnb(Type[] readers, params int[] objects)
     {
         using var body = new MemoryStream();
         using (var writer = new BinaryWriter(body, Encoding.UTF8, leaveOpen: true))
         {
-            Type reader = typeof(DisposableAssetReader);
-            writer.Write7BitEncodedInt(1);
-            writer.Write(reader.FullName + ", " + reader.Assembly.GetName().Name);
-            writer.Write(0);
+            writer.Write7BitEncodedInt(readers.Length);
+            foreach (Type reader in readers)
+            {
+                writer.Write(reader.FullName + ", " + reader.Assembly.GetName().Name);
+                writer.Write(0);
+            }
             writer.Write7BitEncodedInt(0);
-            // The asset, read by the first reader.
-            writer.Write7BitEncodedInt(1);
+            foreach (int reader in objects)
+            {
+                writer.Write7BitEncodedInt(reader);
+            }
         }
 
         using var xnb = new MemoryStream();
@@ -278,6 +309,18 @@ public class CCContentManagerTests
         public bool IsDisposed { get; private set; }
 
         public void Dispose() => IsDisposed = true;
+    }
+
+    // An asset that isn't disposable but holds one that is, as a SpriteFont holds its texture.
+    public sealed class ContainerAsset
+    {
+        public DisposableAsset? Inner { get; init; }
+    }
+
+    public sealed class ContainerAssetReader : ContentTypeReader<ContainerAsset>
+    {
+        protected override ContainerAsset Read(ContentReader input, ContainerAsset existingInstance) =>
+            new ContainerAsset { Inner = input.ReadObject<DisposableAsset>() };
     }
 
     // MonoGame finds this by the name in the XNB, and creates it through its public constructor.

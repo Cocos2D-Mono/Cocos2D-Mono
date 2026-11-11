@@ -46,6 +46,8 @@ public class CCContentManagerTests
     [InlineData(nameof(CCContentManager.Unload))]
     [InlineData("ReloadGraphicsAssets")]
     [InlineData("AssetDisposing")]
+    [InlineData("AddSearchPath")]
+    [InlineData("RemoveSearchPath")]
     public void UsingItsCollections_WaitsForTheLock(string method)
     {
         CCContentManager content = NewContentManager();
@@ -58,6 +60,9 @@ public class CCContentManagerTests
             // Protected, and private: the device reset calls the first, and disposing an asset the second.
             "ReloadGraphicsAssets" => () => Invoke(content, "ReloadGraphicsAssets"),
             "AssetDisposing" => () => Invoke(content, "AssetDisposing", new object(), EventArgs.Empty),
+            // Internal, for CCParticleSystem, which adds its plist's folder while it loads.
+            "AddSearchPath" => () => Invoke(content, "AddSearchPath", "c2d-373-folder"),
+            "RemoveSearchPath" => () => Invoke(content, "RemoveSearchPath", "c2d-373-folder"),
             _ => throw new ArgumentOutOfRangeException(nameof(method), method, null),
         };
 

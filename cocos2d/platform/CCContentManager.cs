@@ -581,6 +581,30 @@ public class CCContentManager : ContentManager
         get { return _searchPaths; }
     }
 
+    // For the library's own changes to SearchPaths, which take the lock, unlike changes made
+    // through the list. Returns whether it added the path.
+    internal bool AddSearchPath(string path)
+    {
+        lock (_lock)
+        {
+            if (_searchPaths.Contains(path))
+            {
+                return false;
+            }
+
+            _searchPaths.Add(path);
+            return true;
+        }
+    }
+
+    internal void RemoveSearchPath(string path)
+    {
+        lock (_lock)
+        {
+            _searchPaths.Remove(path);
+        }
+    }
+
     private void CheckDefaultPath(List<string> paths)
     {
         for (int i = paths.Count - 1; i >= 0; i--)

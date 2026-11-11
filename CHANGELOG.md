@@ -116,7 +116,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   - Its dictionaries of loaded and failed assets had no lock, so two loads at once could corrupt
     one for good, and every load after that threw `InvalidOperationException`. They now take a
     lock. Change `SearchPaths` and `SearchResolutionsOrder` before loading on another thread,
-    because code that changes those lists can't take it.
+    because code that changes those lists can't take it. `CCParticleSystem`, which adds its
+    plist's folder to `SearchPaths` while it loads, now goes through the lock.
   - An asset loaded while `Unload` ran is no longer kept. `Unload` disposed what the load had
     created, and the load then kept it, so every later load of it returned the disposed asset: a
     texture never drew again. Such a load now leaves the asset uncached, and the next load

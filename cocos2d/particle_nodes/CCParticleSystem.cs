@@ -391,23 +391,29 @@ public class CCParticleSystem : CCNode, ICCTextureProtocol
     {
         PlistDocument doc = CCContentManager.SharedContentManager.Load<PlistDocument>(plistFile);
         PlistDictionary dictionary = doc.GetRootDictionary(plistFile);
-        // Add the directory containing the plist file as a search path
+        // Add the directory containing the plist file as a search path, while the particle system
+        // loads its texture. Through the content manager's lock, because AddImageAsync's worker can
+        // be reading the search paths.
         int idx = plistFile.LastIndexOf('/');
         string? pathToRemove = null;
         if(idx > -1) {
             string path = plistFile.Substring(0, idx);
-            if (!CCContentManager.SharedContentManager.SearchPaths.Contains(path))
+            if (CCContentManager.SharedContentManager.AddSearchPath(path))
             {
-                CCContentManager.SharedContentManager.SearchPaths.Add(path);
                 pathToRemove = path;
             }
         }
-        bool ret = InitWithDictionary(dictionary);
-        if (pathToRemove != null)
+        try
         {
-            CCContentManager.SharedContentManager.SearchPaths.Remove(pathToRemove);
+            return InitWithDictionary(dictionary);
         }
-        return (ret);
+        finally
+        {
+            if (pathToRemove != null)
+            {
+                CCContentManager.SharedContentManager.RemoveSearchPath(pathToRemove);
+            }
+        }
     }
 
     public bool InitWithDictionary(PlistDictionary dictionary)

@@ -102,6 +102,10 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     caller's texture, often a sprite's, wasn't in the cache: `RemoveTexture` and
     `RemoveUnusedTextures` didn't see it, and the image was in memory twice. Now the texture
     stored first is kept, and the other is disposed.
+  - `AddImage` reloads a cached texture that has lost its image, so both threads could reload
+    it at once. `CCTexture2D.Reinit` now reloads a texture once at a time: a call made while
+    another thread is reloading the texture returns at once, and the texture is ready when
+    that reload finishes.
 
 ### Documentation
 

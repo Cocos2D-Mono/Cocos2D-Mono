@@ -18,6 +18,7 @@ public class CCTextureCacheTests : IDisposable
     private const string InUseKey = "c2d-358-in-use";
     private const string AsyncKey = "c2d-363-async";
     private const string LockKey = "c2d-363-lock";
+    private const string SameFile = "c2d-367-same.png";
 
     private static readonly GameTime OneFrame = new GameTime(TimeSpan.Zero, TimeSpan.FromMilliseconds(16));
 
@@ -162,6 +163,62 @@ public class CCTextureCacheTests : IDisposable
         }
     }
 
+    // The test below comes from C2D-367. AddImage loads a file outside the cache's lock, so two
+    // threads that added the same file at once both loaded it, and the second texture replaced the
+    // first in the cache. The first caller's texture was then not in the cache. The test supplies
+    // the loaded textures, because loading an image needs a graphics device.
+
+    [Fact]
+    public void AddImage_WhenTwoThreadsAddTheSameFileAtOnce_GivesBothTheTextureTheCacheKeeps()
+    {
+        CCTextureCache cache = NewCache();
+        var loaded = new List<CCTexture2D>();
+        using var bothLoading = new Barrier(2);
+        SetImageLoader(cache, file =>
+        {
+            var texture = new CCTexture2D();
+            lock (loaded)
+            {
+                loaded.Add(texture);
+            }
+
+            // Neither load finishes until both threads have missed the cache, as when the game
+            // thread adds a file that AddImageAsync's worker is loading.
+            Assert.True(bothLoading.SignalAndWait(TimeSpan.FromSeconds(10)), "The other thread didn't load the file too.");
+            return texture;
+        });
+
+        CCTexture2D? theirs = null;
+        Exception? error = null;
+        var other = new Thread(() =>
+        {
+            try
+            {
+                theirs = cache.AddImage(SameFile);
+            }
+            catch (Exception exception)
+            {
+                error = exception;
+            }
+        })
+        { IsBackground = true };
+        other.Start();
+
+        CCTexture2D? mine = cache.AddImage(SameFile);
+
+        Assert.True(other.Join(TimeSpan.FromSeconds(10)), "The other thread's AddImage didn't finish.");
+        if (error != null)
+        {
+            ExceptionDispatchInfo.Throw(error);
+        }
+        Assert.NotNull(mine);
+        Assert.Same(mine, theirs);
+        Assert.Same(mine, cache.TextureForKey(SameFile));
+        Assert.Equal(2, loaded.Count);
+        CCTexture2D dropped = Assert.Single(loaded, texture => texture != mine);
+        Assert.True(dropped.IsDisposed, "The texture that the cache didn't keep wasn't disposed.");
+    }
+
     public void Dispose()
     {
         // The cache is shared, so take out what the test put in.
@@ -196,6 +253,14 @@ public class CCTextureCacheTests : IDisposable
     // A cache of the test's own, through the private constructor.
     private static CCTextureCache NewCache() =>
         Assert.IsType<CCTextureCache>(Activator.CreateInstance(typeof(CCTextureCache), nonPublic: true));
+
+    // Makes AddImage take its textures from the test instead of loading images.
+    private static void SetImageLoader(CCTextureCache cache, Func<string, CCTexture2D?> loader)
+    {
+        FieldInfo? field = typeof(CCTextureCache).GetField("_loadImage", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(field);
+        field.SetValue(cache, loader);
+    }
 
     // The lock that guards the cache's dictionary.
     private static object CacheLock(CCTextureCache cache)

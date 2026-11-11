@@ -96,6 +96,12 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     from the keyboard's thread the same way. It now schedules it from the game thread, so the
     edit ends a frame later than before. If the text field is cleaned up before then, the edit
     is dropped. Before, it left a paused timer that never ran and kept the text field in memory.
+- Adding the same file to `CCTextureCache` from two threads at once, as when a game adds a file
+  that `AddImageAsync` is loading, gives both threads the same texture.
+  - Both loaded the file, and the second texture replaced the first in the cache. So the first
+    caller's texture, often a sprite's, wasn't in the cache: `RemoveTexture` and
+    `RemoveUnusedTextures` didn't see it, and the image was in memory twice. Now the texture
+    stored first is kept, and the other is disposed.
 
 ### Documentation
 

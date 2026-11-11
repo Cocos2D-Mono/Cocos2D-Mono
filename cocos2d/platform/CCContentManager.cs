@@ -153,6 +153,9 @@ public class CCContentManager : ContentManager
     private readonly List<IDisposable> _disposables = new List<IDisposable>();
     private readonly Action<IDisposable> _recordDisposable;
 
+    // How many times Unload has run, so that a load can tell whether one ran while it loaded.
+    private int _unloads;
+
     public CCContentManager(IServiceProvider serviceProvider) : base(serviceProvider)
     {
         _loadedAssets = new Dictionary<string, AssetEntry>();
@@ -317,6 +320,7 @@ public class CCContentManager : ContentManager
             disposables = _disposables.ToArray();
             _disposables.Clear();
             _loadedAssets.Clear();
+            _unloads++;
         }
 
         foreach (IDisposable disposable in disposables)
@@ -330,6 +334,12 @@ public class CCContentManager : ContentManager
 
     private T InternalLoad<T>(string assetName, string path, bool weakReference)
     {
+        int unloads;
+        lock (_lock)
+        {
+            unloads = _unloads;
+        }
+
         T result;
 
         bool useContentReader = true;
@@ -418,11 +428,16 @@ public class CCContentManager : ContentManager
 
         lock (_lock)
         {
-            _loadedAssets[assetName] = assetEntry;
-
-            if (result is GraphicsResource resource)
+            // An Unload while this loaded disposed what the load had created by then, so the asset
+            // isn't kept. The next load of it loads it again.
+            if (unloads == _unloads)
             {
-                resource.Disposing += AssetDisposing;
+                _loadedAssets[assetName] = assetEntry;
+
+                if (result is GraphicsResource resource)
+                {
+                    resource.Disposing += AssetDisposing;
+                }
             }
         }
 

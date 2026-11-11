@@ -91,7 +91,84 @@ public class CCContentManagerTests
         }
     }
 
+    [Fact]
+    public void Load_WhenUnloadRunsDuringTheLoad_DoesntKeepTheAsset()
+    {
+        using var file = new TextAsset("c2d-373-unload.txt");
+        using var loading = new ManualResetEventSlim();
+        using var unloaded = new ManualResetEventSlim();
+        var content = new PausingContentManager(() =>
+        {
+            loading.Set();
+            unloaded.Wait(WaitLimit);
+        });
+
+        string? text = null;
+        Exception? error = null;
+        var other = new Thread(() =>
+        {
+            try
+            {
+                text = content.Load<string>(file.Name);
+            }
+            catch (Exception exception)
+            {
+                error = exception;
+            }
+        })
+        { IsBackground = true };
+        other.Start();
+        Assert.True(loading.Wait(WaitLimit), "The load didn't start.");
+
+        content.Unload();
+        unloaded.Set();
+
+        Assert.True(other.Join(WaitLimit), "The load didn't finish.");
+        if (error != null)
+        {
+            ExceptionDispatchInfo.Throw(error);
+        }
+        Assert.Equal(file.Text, text);
+        // Unload disposed what the load had recorded by then, so the asset mustn't stay cached.
+        Assert.Empty(Collection(content, "_loadedAssets"));
+    }
+
     private static CCContentManager NewContentManager() => new CCContentManager(new GameServiceContainer());
+
+    // Runs an action inside each load's OpenStream, which ReadAsset calls first, so that a test can
+    // act while a load runs. The tests' assets have no XNB, so the load then reads the file itself.
+    private sealed class PausingContentManager : CCContentManager
+    {
+        private readonly Action _whileLoading;
+
+        public PausingContentManager(Action whileLoading) : base(new GameServiceContainer())
+        {
+            _whileLoading = whileLoading;
+        }
+
+        protected override Stream OpenStream(string assetName)
+        {
+            _whileLoading();
+            return base.OpenStream(assetName);
+        }
+    }
+
+    // A text file next to the tests, where TitleContainer looks, deleted afterwards.
+    private sealed class TextAsset : IDisposable
+    {
+        public TextAsset(string name)
+        {
+            Name = name;
+            Text = "Written by " + name;
+            File.WriteAllText(Path.Combine(AppContext.BaseDirectory, name), Text);
+        }
+
+        public string Name { get; }
+
+        public string Text { get; }
+
+        public void Dispose() => File.Delete(Path.Combine(AppContext.BaseDirectory, Name));
+    }
 
     // Tries to load assets that don't exist, each of which the content manager records as failed.
     private static Exception? LoadMissing(CCContentManager content, string prefix, int count, ManualResetEventSlim start)

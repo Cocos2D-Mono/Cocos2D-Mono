@@ -96,6 +96,21 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     from the keyboard's thread the same way. It now schedules it from the game thread, so the
     edit ends a frame later than before. If the text field is cleaned up before then, the edit
     is dropped. Before, it left a paused timer that never ran and kept the text field in memory.
+- Adding the same file to `CCTextureCache` from two threads at once, as when a game adds a file
+  that `AddImageAsync` is loading, gives both threads the same texture.
+  - Both loaded the file, and the second texture replaced the first in the cache. So the first
+    caller's texture, often a sprite's, wasn't in the cache: `RemoveTexture` and
+    `RemoveUnusedTextures` didn't see it, and the image was in memory twice. Now the texture
+    stored first is kept, and the other is disposed.
+  - `AddImage` reloads a cached texture that has lost its image, so both threads could reload
+    it at once. `CCTexture2D.Reinit` now reloads a texture once at a time: a call made while
+    another thread is reloading the texture returns at once. It can't wait for that reload,
+    because on OpenGL that could deadlock the game thread.
+  - So until the other thread's reload finishes, about a frame later, the texture has no
+    image. `AddImage` can return it without one, and a sprite drawn with it in that time is
+    drawn without its image. This only happens to a texture that has lost its image: after
+    `CCGraphicsResource.DisposeAllResources`, a device reset, or unloading the content
+    manager.
 
 ### Documentation
 

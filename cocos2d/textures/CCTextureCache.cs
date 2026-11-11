@@ -147,32 +147,62 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
         return (assetName);
     }
 
-    public CCTexture2D? AddImage(string fileimage)
-		{
-			Debug.Assert (!String.IsNullOrEmpty (fileimage), "TextureCache: fileimage MUST not be NULL");
+    // Loads the texture for a file. It's a field so that the unit tests can supply the texture:
+    // loading an image needs a graphics device.
+    private Func<string, CCTexture2D?> _loadImage = LoadImage;
 
-			CCTexture2D? texture = null;
+    private static CCTexture2D? LoadImage(string file)
+    {
+        var texture = new CCTexture2D();
+        return texture.InitWithFile(file) ? texture : null;
+    }
+
+    public CCTexture2D? AddImage(string fileimage)
+    {
+        Debug.Assert(!String.IsNullOrEmpty(fileimage), "TextureCache: fileimage MUST not be NULL");
+
+        CCTexture2D? texture = null;
 
         var assetName = CreateAssetKey(fileimage);
 
-			lock (_dictLock) {
-				m_pTextures.TryGetValue (assetName, out texture);
-			}
-			if (texture == null) {
-				texture = new CCTexture2D ();
+        lock (_dictLock)
+        {
+            m_pTextures.TryGetValue(assetName, out texture);
+        }
+        if (texture == null)
+        {
+            // The load runs outside the lock. On OpenGL, a thread other than the game thread waits
+            // for the game thread to create the texture, so the game thread mustn't wait for the
+            // lock while AddImageAsync's worker loads.
+            CCTexture2D? loaded = _loadImage(fileimage);
+            if (loaded == null)
+            {
+                return null;
+            }
 
-				if (texture.InitWithFile (fileimage)) {
-					lock (_dictLock) {
-						m_pTextures [assetName] = texture;
-					}
-				} else {
-					return null;
-				}
-			} else if (!texture.IsTextureDefined) {
-				texture.Reinit ();
-			}
-			return texture;
-		}
+            // Another thread can add the same file meanwhile, as when the game thread adds a file
+            // that AddImageAsync is loading. The texture stored first is kept, so that every caller
+            // gets the one in the cache.
+            lock (_dictLock)
+            {
+                if (!m_pTextures.TryGetValue(assetName, out texture))
+                {
+                    m_pTextures.Add(assetName, loaded);
+                    texture = loaded;
+                }
+            }
+
+            if (texture != loaded)
+            {
+                loaded.Dispose();
+            }
+        }
+        else if (!texture.IsTextureDefined)
+        {
+            texture.Reinit();
+        }
+        return texture;
+    }
 
     public CCTexture2D? AddImage(byte[] data, string assetName, SurfaceFormat format)
     {

@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -71,6 +72,10 @@ public class CCTexture2D : CCGraphicsResource
 
     private bool _managed;
     private bool _antialiased;
+
+    // 1 while Reinit reloads the texture. AddImage can find that a cached texture has lost its
+    // image on the game thread and on AddImageAsync's worker at once.
+    private int _reloading;
 
     /// <summary>
     /// Default antialiased state for newly created textures. Set to false for pixel-perfect rendering.
@@ -792,6 +797,26 @@ public class CCTexture2D : CCGraphicsResource
     }
 
     public override void Reinit()
+    {
+        // A reload already running does the work, so this call returns. It doesn't wait for that
+        // reload: on OpenGL, a thread other than the game thread waits for the game thread to
+        // create the texture, so a game thread waiting for AddImageAsync's worker would deadlock.
+        if (Interlocked.CompareExchange(ref _reloading, 1, 0) != 0)
+        {
+            return;
+        }
+
+        try
+        {
+            Reload();
+        }
+        finally
+        {
+            Volatile.Write(ref _reloading, 0);
+        }
+    }
+
+    private void Reload()
     {
 			CCLog.Log("reinit called on {1} '{0}' {2}", ToString(),
             _cacheInfo.CacheType,

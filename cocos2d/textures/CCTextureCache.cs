@@ -147,32 +147,47 @@ public partial class CCTextureCache : IDisposable, ICCSelectorProtocol
         return (assetName);
     }
 
-    public CCTexture2D? AddImage(string fileimage)
-		{
-			Debug.Assert (!String.IsNullOrEmpty (fileimage), "TextureCache: fileimage MUST not be NULL");
+    // Loads the texture for a file. It's a field so that the unit tests can supply the texture:
+    // loading an image needs a graphics device.
+    private Func<string, CCTexture2D?> _loadImage = LoadImage;
 
-			CCTexture2D? texture = null;
+    private static CCTexture2D? LoadImage(string file)
+    {
+        var texture = new CCTexture2D();
+        return texture.InitWithFile(file) ? texture : null;
+    }
+
+    public CCTexture2D? AddImage(string fileimage)
+    {
+        Debug.Assert(!String.IsNullOrEmpty(fileimage), "TextureCache: fileimage MUST not be NULL");
+
+        CCTexture2D? texture = null;
 
         var assetName = CreateAssetKey(fileimage);
 
-			lock (_dictLock) {
-				m_pTextures.TryGetValue (assetName, out texture);
-			}
-			if (texture == null) {
-				texture = new CCTexture2D ();
+        lock (_dictLock)
+        {
+            m_pTextures.TryGetValue(assetName, out texture);
+        }
+        if (texture == null)
+        {
+            texture = _loadImage(fileimage);
+            if (texture == null)
+            {
+                return null;
+            }
 
-				if (texture.InitWithFile (fileimage)) {
-					lock (_dictLock) {
-						m_pTextures [assetName] = texture;
-					}
-				} else {
-					return null;
-				}
-			} else if (!texture.IsTextureDefined) {
-				texture.Reinit ();
-			}
-			return texture;
-		}
+            lock (_dictLock)
+            {
+                m_pTextures[assetName] = texture;
+            }
+        }
+        else if (!texture.IsTextureDefined)
+        {
+            texture.Reinit();
+        }
+        return texture;
+    }
 
     public CCTexture2D? AddImage(byte[] data, string assetName, SurfaceFormat format)
     {

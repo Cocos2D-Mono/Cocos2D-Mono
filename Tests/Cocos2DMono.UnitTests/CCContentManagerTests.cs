@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
+using System.Text;
 using Cocos2D;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -97,11 +98,14 @@ public class CCContentManagerTests
         using var file = new TextAsset("c2d-373-unload.txt");
         using var loading = new ManualResetEventSlim();
         using var unloaded = new ManualResetEventSlim();
-        var content = new PausingContentManager(() =>
+        var content = new TestContentManager
         {
-            loading.Set();
-            unloaded.Wait(WaitLimit);
-        });
+            WhileLoading = () =>
+            {
+                loading.Set();
+                unloaded.Wait(WaitLimit);
+            },
+        };
 
         string? text = null;
         Exception? error = null;
@@ -133,23 +137,155 @@ public class CCContentManagerTests
         Assert.Empty(Collection(content, "_loadedAssets"));
     }
 
+    [Fact]
+    public void Load_WhenTwoThreadsLoadTheSameAssetAtOnce_GivesBothTheOneItKeeps()
+    {
+        using var file = new TextAsset("c2d-373-same.txt");
+        using var bothLoading = new Barrier(2);
+        var content = new TestContentManager { WhileLoading = () => WaitForTheOtherLoad(bothLoading) };
+
+        (string mine, string? theirs) = LoadOnTwoThreads(content, () => content.Load<string>(file.Name));
+
+        Assert.Same(mine, theirs);
+        Assert.Same(mine, content.Load<string>(file.Name));
+    }
+
+    [Fact]
+    public void Load_WhenTwoThreadsLoadTheSameAssetAtOnce_DisposesTheOneItDoesntKeep()
+    {
+        DisposableAsset.Created.Clear();
+        using var bothLoading = new Barrier(2);
+        var content = new TestContentManager
+        {
+            Xnb = DisposableAssetXnb(),
+            WhileLoading = () => WaitForTheOtherLoad(bothLoading),
+        };
+
+        (DisposableAsset mine, DisposableAsset? theirs) = LoadOnTwoThreads(content, () => content.Load<DisposableAsset>("c2d-373-disposable"));
+
+        Assert.Same(mine, theirs);
+        Assert.False(mine.IsDisposed);
+        Assert.Equal(2, DisposableAsset.Created.Count);
+        DisposableAsset dropped = Assert.Single(DisposableAsset.Created, asset => asset != mine);
+        Assert.True(dropped.IsDisposed, "The asset that the content manager didn't keep wasn't disposed.");
+    }
+
+    [Fact]
+    public void Unload_DisposesWhatALoadCreated()
+    {
+        var content = new TestContentManager { Xnb = DisposableAssetXnb() };
+
+        DisposableAsset asset = content.Load<DisposableAsset>("c2d-373-recorded");
+
+        // Recorded by the content manager, under its lock, not in MonoGame's list, which has none.
+        Assert.Contains(asset, Collection(content, "_disposables").Cast<object>());
+        content.Unload();
+        Assert.True(asset.IsDisposed);
+    }
+
     private static CCContentManager NewContentManager() => new CCContentManager(new GameServiceContainer());
 
-    // Runs an action inside each load's OpenStream, which ReadAsset calls first, so that a test can
-    // act while a load runs. The tests' assets have no XNB, so the load then reads the file itself.
-    private sealed class PausingContentManager : CCContentManager
-    {
-        private readonly Action _whileLoading;
+    // Holds each load until the other thread's load of the same asset has also missed the cache.
+    private static void WaitForTheOtherLoad(Barrier bothLoading) =>
+        Assert.True(bothLoading.SignalAndWait(WaitLimit), "The other thread didn't load the asset too.");
 
-        public PausingContentManager(Action whileLoading) : base(new GameServiceContainer())
+    // Runs the same load on another thread and on this one, and returns both results.
+    private static (T Mine, T? Theirs) LoadOnTwoThreads<T>(CCContentManager content, Func<T> load) where T : class
+    {
+        T? theirs = null;
+        Exception? error = null;
+        var other = new Thread(() =>
         {
-            _whileLoading = whileLoading;
+            try
+            {
+                theirs = load();
+            }
+            catch (Exception exception)
+            {
+                error = exception;
+            }
+        })
+        { IsBackground = true };
+        other.Start();
+
+        T mine = load();
+
+        Assert.True(other.Join(WaitLimit), "The other thread's load didn't finish.");
+        if (error != null)
+        {
+            ExceptionDispatchInfo.Throw(error);
         }
+        return (mine, theirs);
+    }
+
+    // An uncompressed XNB file for DesktopGL that holds one DisposableAsset.
+    private static byte[] DisposableAssetXnb()
+    {
+        using var body = new MemoryStream();
+        using (var writer = new BinaryWriter(body, Encoding.UTF8, leaveOpen: true))
+        {
+            Type reader = typeof(DisposableAssetReader);
+            writer.Write7BitEncodedInt(1);
+            writer.Write(reader.FullName + ", " + reader.Assembly.GetName().Name);
+            writer.Write(0);
+            writer.Write7BitEncodedInt(0);
+            // The asset, read by the first reader.
+            writer.Write7BitEncodedInt(1);
+        }
+
+        using var xnb = new MemoryStream();
+        using (var writer = new BinaryWriter(xnb))
+        {
+            writer.Write("XNBd"u8);
+            writer.Write((byte)5);
+            writer.Write((byte)0);
+            writer.Write(10 + (int)body.Length);
+            writer.Write(body.ToArray());
+        }
+        return xnb.ToArray();
+    }
+
+    // Runs an action inside each load's OpenStream, which ReadAsset calls first, so that a test can
+    // act while a load runs. With no XNB, the load then looks for the file itself, as for a text file.
+    private sealed class TestContentManager : CCContentManager
+    {
+        public TestContentManager() : base(new GameServiceContainer())
+        {
+        }
+
+        public Action WhileLoading { get; init; } = () => { };
+
+        public byte[]? Xnb { get; init; }
 
         protected override Stream OpenStream(string assetName)
         {
-            _whileLoading();
-            return base.OpenStream(assetName);
+            WhileLoading();
+            return Xnb != null ? new MemoryStream(Xnb) : base.OpenStream(assetName);
+        }
+    }
+
+    // An asset that's disposable but needs no graphics device. The tests in a class run one at a
+    // time, so they can share the list of the ones the reader created.
+    public sealed class DisposableAsset : IDisposable
+    {
+        public static readonly List<DisposableAsset> Created = new List<DisposableAsset>();
+
+        public bool IsDisposed { get; private set; }
+
+        public void Dispose() => IsDisposed = true;
+    }
+
+    // MonoGame finds this by the name in the XNB, and creates it through its public constructor.
+    public sealed class DisposableAssetReader : ContentTypeReader<DisposableAsset>
+    {
+        protected override DisposableAsset Read(ContentReader input, DisposableAsset existingInstance)
+        {
+            var asset = new DisposableAsset();
+            lock (DisposableAsset.Created)
+            {
+                DisposableAsset.Created.Add(asset);
+            }
+            return asset;
         }
     }
 

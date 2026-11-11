@@ -121,6 +121,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     created, and the load then kept it, so every later load of it returned the disposed asset: a
     texture never drew again. Such a load now leaves the asset uncached, and the next load
     of it loads it again.
+  - Two threads that load the same asset at once get the same one. Before, each got its own,
+    the second replaced the first in the content manager, and the first stayed in memory until
+    `Unload`. Now the one stored first is kept, and the other is disposed.
 
 ### Documentation
 

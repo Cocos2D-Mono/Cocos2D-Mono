@@ -426,11 +426,22 @@ public class CCContentManager : ContentManager
 
         var assetEntry = new AssetEntry(result, path, weakReference, useContentReader);
 
+        IDisposable? duplicate = null;
         lock (_lock)
         {
-            // An Unload while this loaded disposed what the load had created by then, so the asset
-            // isn't kept. The next load of it loads it again.
-            if (unloads == _unloads)
+            if (_loadedAssets.TryGetValue(assetName, out AssetEntry? stored) && stored.Asset is T kept &&
+                !ReferenceEquals(kept, result))
+            {
+                // Another thread stored the same asset while this one loaded it. The one stored
+                // first is kept, so that every caller gets the one in the cache.
+                duplicate = result as IDisposable;
+                if (duplicate != null)
+                {
+                    _disposables.Remove(duplicate);
+                }
+                result = kept;
+            }
+            else if (unloads == _unloads)
             {
                 _loadedAssets[assetName] = assetEntry;
 
@@ -439,7 +450,12 @@ public class CCContentManager : ContentManager
                     resource.Disposing += AssetDisposing;
                 }
             }
+            // Otherwise an Unload while this loaded disposed what the load had created by then, so
+            // the asset isn't kept. The next load of it loads it again.
         }
+
+        // Outside the lock, which is never held while an asset is disposed.
+        duplicate?.Dispose();
 
         return result;
     }

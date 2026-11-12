@@ -77,7 +77,7 @@ public class BreakableTest : Test
     public override void Initialize()
     {
         //load texture that will represent the physics body
-        Texture2D polygonTexture = CCApplication.SharedApplication.Content.Load<Texture2D>("box2d/rock");
+        Texture2D polygonTexture = CCApplication.SharedApplication.Content.Load<Texture2D>("box2d/Rock");
 
         //Create an array to hold the data from the texture
         uint[] data = new uint[polygonTexture.Width * polygonTexture.Height];

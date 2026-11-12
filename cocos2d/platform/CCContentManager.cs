@@ -142,6 +142,19 @@ public class CCContentManager : ContentManager
 
     private Dictionary<Tuple<string, Type>, string?> _failedAssets = new Dictionary<Tuple<string, Type>, string?>();
 
+    // Guards the collections above and _disposables: AddImageAsync's worker loads through the shared
+    // content manager while the game thread loads too. It's never held while an asset loads or is
+    // disposed. On OpenGL, a thread other than the game thread waits for the game thread to create a
+    // texture, so the game thread mustn't wait for this lock while the worker loads.
+    private readonly object _lock = new object();
+
+    // What this content manager's loads created that Unload disposes. MonoGame records them in a list
+    // of its own, which has no lock, unless ReadAsset is given a callback to record them.
+    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+
+    // How many times Unload has run, so that a load can tell whether one ran while it loaded.
+    private int _unloads;
+
     public CCContentManager(IServiceProvider serviceProvider) : base(serviceProvider)
     {
         _loadedAssets = new Dictionary<string, AssetEntry>();
@@ -160,9 +173,12 @@ public class CCContentManager : ContentManager
     public T? TryLoad<T>(string assetName, bool weakReference)
     {
         var assetKey = Tuple.Create(assetName, typeof(T));
-        if (_failedAssets.ContainsKey(assetKey))
+        lock (_lock)
         {
-            return default(T);
+            if (_failedAssets.ContainsKey(assetKey))
+            {
+                return default(T);
+            }
         }
 
         try
@@ -171,8 +187,11 @@ public class CCContentManager : ContentManager
         }
         catch (Exception)
         {
-            _failedAssets[assetKey] = null;
-            
+            lock (_lock)
+            {
+                _failedAssets[assetKey] = null;
+            }
+
             return default(T);
         }
     }
@@ -180,25 +199,31 @@ public class CCContentManager : ContentManager
     public override T Load<T>(string assetName)
     {
         var assetKey = Tuple.Create(assetName, typeof(T));
-        if (_failedAssets.ContainsKey(assetKey))
+        lock (_lock)
         {
-            throw new ContentLoadException("Failed to load the asset file from " + assetName);
+            if (_failedAssets.ContainsKey(assetKey))
+            {
+                throw new ContentLoadException("Failed to load the asset file from " + assetName);
+            }
         }
-            
+
         try
         {
             return Load<T>(assetName, false);
         }
         catch (Exception)
         {
-            _failedAssets[assetKey] = null;
+            lock (_lock)
+            {
+                _failedAssets[assetKey] = null;
+            }
 
             throw;
         }
     }
 
     public T Load<T>(string assetName, bool weakReference)
-    {            
+    {
         if (string.IsNullOrEmpty(assetName))
         {
             throw new ArgumentNullException("assetName");
@@ -206,9 +231,17 @@ public class CCContentManager : ContentManager
 
         // Check for a previously loaded asset first
         AssetEntry? entry;
-        if (_loadedAssets.TryGetValue(assetName, out entry))
+        object? loaded = null;
+        lock (_lock)
         {
-            if (entry.Asset is T asset)
+            if (_loadedAssets.TryGetValue(assetName, out entry))
+            {
+                loaded = entry.Asset;
+            }
+        }
+        if (entry != null)
+        {
+            if (loaded is T asset)
             {
                 return asset;
             }
@@ -218,14 +251,11 @@ public class CCContentManager : ContentManager
             }
         }
 
-        var realName = GetRealName(assetName);
+        var (realName, searchPaths, resolutionsOrder) = GetSearch(assetName);
 
-        CheckDefaultPath(_searchPaths);
-        CheckDefaultPath(_searchResolutionsOrder);
-
-        foreach (var searchPath in _searchPaths)
+        foreach (var searchPath in searchPaths)
         {
-            foreach (string resolutionOrder  in _searchResolutionsOrder)
+            foreach (string resolutionOrder in resolutionsOrder)
             {
                 var path = Path.Combine(Path.Combine(searchPath, resolutionOrder), realName);
 
@@ -254,15 +284,68 @@ public class CCContentManager : ContentManager
         return assetName;
     }
 
+    // An asset's real name and copies of the paths to look for it in, so that they can be tried
+    // outside the lock.
+    private (string RealName, string[] SearchPaths, string[] ResolutionsOrder) GetSearch(string assetName)
+    {
+        lock (_lock)
+        {
+            CheckDefaultPath(_searchPaths);
+            CheckDefaultPath(_searchResolutionsOrder);
+
+            return (GetRealName(assetName), _searchPaths.ToArray(), _searchResolutionsOrder.ToArray());
+        }
+    }
+
+    // ReadAsset calls this for each disposable object it creates, on the thread that loads.
+    private void RecordDisposable(IDisposable disposable)
+    {
+        lock (_lock)
+        {
+            if (!_disposables.Contains(disposable))
+            {
+                _disposables.Add(disposable);
+            }
+        }
+    }
+
     public override void Unload()
     {
-        base.Unload();
+        IDisposable[] disposables;
+        lock (_lock)
+        {
+            disposables = _disposables.ToArray();
+            _disposables.Clear();
+            _loadedAssets.Clear();
+            _unloads++;
+        }
 
-        _loadedAssets.Clear();
+        foreach (IDisposable disposable in disposables)
+        {
+            disposable.Dispose();
+        }
+
+        // Disposes what MonoGame recorded itself, as when the device reset reloaded assets.
+        base.Unload();
     }
 
     private T InternalLoad<T>(string assetName, string path, bool weakReference)
     {
+        int unloads;
+        lock (_lock)
+        {
+            unloads = _unloads;
+        }
+
+        // What this load creates goes into _disposables, for Unload, and into this list, so that a
+        // duplicate can be disposed whole: an asset such as a SpriteFont isn't disposable itself.
+        var created = new List<IDisposable>();
+        Action<IDisposable> record = disposable =>
+        {
+            created.Add(disposable);
+            RecordDisposable(disposable);
+        };
+
         T result;
 
         bool useContentReader = true;
@@ -273,7 +356,7 @@ public class CCContentManager : ContentManager
             if (typeof (T) == typeof (string))
             {
                 //TODO: No need CCContent, use TileContainer
-                var content = ReadAsset<CCContent>(path, null);
+                var content = ReadAsset<CCContent>(path, record);
                 result = (T) (object) (content.Content
                     ?? throw new ContentLoadException("The asset " + assetName + " has no content."));
 
@@ -282,7 +365,7 @@ public class CCContentManager : ContentManager
             else
             {
                 // Load the asset.
-                result = ReadAsset<T>(path, null);
+                result = ReadAsset<T>(path, record);
             }
         }
         catch (ContentLoadException)
@@ -314,7 +397,7 @@ public class CCContentManager : ContentManager
                     catch (Exception)
                     {
                         //TODO: Remove This
-                        var content = ReadAsset<CCContent>(path, null);
+                        var content = ReadAsset<CCContent>(path, record);
                         result = (T) (object) new PlistDocument(content.Content
                             ?? throw new ContentLoadException("The asset " + assetName + " has no content."));
                     }
@@ -349,24 +432,64 @@ public class CCContentManager : ContentManager
 
         var assetEntry = new AssetEntry(result, path, weakReference, useContentReader);
 
-        _loadedAssets[assetName] = assetEntry;
-
-        if (result is GraphicsResource resource)
+        List<IDisposable>? duplicate = null;
+        lock (_lock)
         {
-            resource.Disposing += AssetDisposing;
+            if (_loadedAssets.TryGetValue(assetName, out AssetEntry? stored) && stored.Asset is T kept &&
+                !ReferenceEquals(kept, result))
+            {
+                // Another thread stored the same asset while this one loaded it. The one stored
+                // first is kept, so that every caller gets the one in the cache, and everything
+                // this load created is disposed.
+                duplicate = created;
+                if (result is IDisposable own && !duplicate.Contains(own))
+                {
+                    // An asset that no ContentReader read, such as a texture from an image file.
+                    duplicate.Add(own);
+                }
+                foreach (IDisposable disposable in duplicate)
+                {
+                    _disposables.Remove(disposable);
+                }
+                result = kept;
+            }
+            else if (unloads == _unloads)
+            {
+                _loadedAssets[assetName] = assetEntry;
+
+                if (result is GraphicsResource resource)
+                {
+                    resource.Disposing += AssetDisposing;
+                }
+            }
+            // Otherwise an Unload while this loaded disposed what the load had created by then, so
+            // the asset isn't kept. The next load of it loads it again.
+        }
+
+        // Outside the lock, which is never held while an asset is disposed.
+        if (duplicate != null)
+        {
+            foreach (IDisposable disposable in duplicate)
+            {
+                disposable.Dispose();
+            }
         }
 
         return result;
     }
 
+    // Runs on whichever thread disposes the asset.
     private void AssetDisposing(object? sender, EventArgs e)
     {
-        foreach (var loadedAsset in _loadedAssets)
+        lock (_lock)
         {
-            if (loadedAsset.Value.Asset == sender)
+            foreach (var loadedAsset in _loadedAssets)
             {
-                _loadedAssets.Remove(loadedAsset.Key);
-                return;
+                if (loadedAsset.Value.Asset == sender)
+                {
+                    _loadedAssets.Remove(loadedAsset.Key);
+                    return;
+                }
             }
         }
     }
@@ -374,27 +497,34 @@ public class CCContentManager : ContentManager
 #if MONOGAME
     protected override void ReloadGraphicsAssets()
     {
-        foreach (var pair in _loadedAssets)
+        lock (_lock)
         {
-            if (pair.Value.UseContentReader && pair.Value.Asset != null)
+            foreach (var pair in _loadedAssets)
             {
-                LoadedAssets.Add(pair.Value.AssetFileName, pair.Value.Asset);
-            }
-        }
-
-        base.ReloadGraphicsAssets();
-
-        foreach (var pair in LoadedAssets)
-        {
-            foreach (var pair2 in _loadedAssets)
-            {
-                if (pair2.Value.AssetFileName == pair.Key)
+                if (pair.Value.UseContentReader && pair.Value.Asset != null)
                 {
-                    _loadedAssets[pair2.Key].Asset = pair.Value;
+                    LoadedAssets.Add(pair.Value.AssetFileName, pair.Value.Asset);
                 }
             }
         }
-        
+
+        // Outside the lock, because it reloads the assets.
+        base.ReloadGraphicsAssets();
+
+        lock (_lock)
+        {
+            foreach (var pair in LoadedAssets)
+            {
+                foreach (var pair2 in _loadedAssets)
+                {
+                    if (pair2.Value.AssetFileName == pair.Key)
+                    {
+                        _loadedAssets[pair2.Key].Asset = pair.Value;
+                    }
+                }
+            }
+        }
+
         LoadedAssets.Clear();
     }
 #else
@@ -402,23 +532,23 @@ public class CCContentManager : ContentManager
     // protected, so this public one hides it rather than overriding it.
     public new void ReloadGraphicsAssets()
     {
-        foreach (var asset in _loadedAssets)
+        lock (_lock)
         {
-            asset.Value.Asset = null;
+            foreach (var asset in _loadedAssets)
+            {
+                asset.Value.Asset = null;
+            }
         }
     }
 #endif
 
     public Stream GetAssetStream(string assetName)
     {
-        var realName = GetRealName(assetName);
+        var (realName, searchPaths, resolutionsOrder) = GetSearch(assetName);
 
-        CheckDefaultPath(_searchPaths);
-        CheckDefaultPath(_searchResolutionsOrder);
-
-        foreach (var searchPath in _searchPaths)
+        foreach (var searchPath in searchPaths)
         {
-            foreach (string resolutionOrder in _searchResolutionsOrder)
+            foreach (string resolutionOrder in resolutionsOrder)
             {
                 var path = Path.Combine(Path.Combine(RootDirectory, Path.Combine(searchPath, resolutionOrder)), realName);
 
@@ -449,14 +579,48 @@ public class CCContentManager : ContentManager
         //TODO: Load lookup names from PlistDictionary
     }
 
+    /// <summary>
+    /// The resolution folders that loads look in, in order. Change the list before loading content
+    /// on another thread, such as with <see cref="CCTextureCache.AddImageAsync"/>: loads read it
+    /// under a lock that changing it doesn't take.
+    /// </summary>
     public List<string> SearchResolutionsOrder
     {
         get { return _searchResolutionsOrder; }
     }
 
+    /// <summary>
+    /// The folders that loads look in, in order. Change the list before loading content on another
+    /// thread, such as with <see cref="CCTextureCache.AddImageAsync"/>: loads read it under a lock
+    /// that changing it doesn't take.
+    /// </summary>
     public List<string> SearchPaths
     {
         get { return _searchPaths; }
+    }
+
+    // For the library's own changes to SearchPaths, which take the lock, unlike changes made
+    // through the list. Returns whether it added the path.
+    internal bool AddSearchPath(string path)
+    {
+        lock (_lock)
+        {
+            if (_searchPaths.Contains(path))
+            {
+                return false;
+            }
+
+            _searchPaths.Add(path);
+            return true;
+        }
+    }
+
+    internal void RemoveSearchPath(string path)
+    {
+        lock (_lock)
+        {
+            _searchPaths.Remove(path);
+        }
     }
 
     private void CheckDefaultPath(List<string> paths)

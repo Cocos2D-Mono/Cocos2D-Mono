@@ -111,6 +111,21 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     drawn without its image. This only happens to a texture that has lost its image: after
     `CCGraphicsResource.DisposeAllResources`, a device reset, or unloading the content
     manager.
+- Loading content on two threads at once no longer corrupts `CCContentManager`, as when the
+  game thread loads while `CCTextureCache.AddImageAsync` is loading.
+  - Its dictionaries of loaded and failed assets had no lock, so two loads at once could corrupt
+    one for good, and every load after that threw `InvalidOperationException`. They now take a
+    lock. Change `SearchPaths` and `SearchResolutionsOrder` before loading on another thread,
+    because code that changes those lists can't take it. `CCParticleSystem`, which adds its
+    plist's folder to `SearchPaths` while it loads, now goes through the lock.
+  - An asset loaded while `Unload` ran is no longer kept. `Unload` disposed what the load had
+    created, and the load then kept it, so every later load of it returned the disposed asset: a
+    texture never drew again. Such a load now leaves the asset uncached, and the next load
+    of it loads it again.
+  - Two threads that load the same asset at once get the same one. Before, each got its own,
+    the second replaced the first in the content manager, and the first stayed in memory until
+    `Unload`. Now the one stored first is kept, and everything the other load created is
+    disposed, such as a `SpriteFont`'s texture.
 
 ### Documentation
 

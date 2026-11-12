@@ -219,7 +219,7 @@ public class ParticleDemo : CCLayerColor
 
         AddChild(menu, 100);
 
-        CCLabelAtlas labelAtlas = new CCLabelAtlas("0000", "Images/fps_Images", 12, 32, '.');
+        CCLabelAtlas labelAtlas = new CCLabelAtlas("0000", "Images/fps_images", 12, 32, '.');
         AddChild(labelAtlas, 100, ParticleTestScene.kTagLabelAtlas);
         labelAtlas.Position = new CCPoint(s.Width - 66, 50);
 

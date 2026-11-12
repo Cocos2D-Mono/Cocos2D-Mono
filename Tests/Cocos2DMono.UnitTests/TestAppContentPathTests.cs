@@ -6,11 +6,12 @@ namespace Cocos2DMono.UnitTests;
 // Android's asset paths are case-sensitive and Windows' aren't, so a path in the test app whose case
 // differs from its file's loads on Windows but not on Android (C2D-375). ParticleTest asked for
 // "Images/fps_Images", and on Android the app ended when the scene opened. The test app builds only
-// for its platforms, so this reads its source instead: every quoted path that names one of its
-// content files has to match the file's case.
+// for its platforms, so this reads its source instead. Any string literal without escapes that
+// names one of its content files, ignoring case, has to match the file's case. A path that the code
+// builds from parts isn't checked.
 public class TestAppContentPathTests
 {
-    private static readonly Regex QuotedPath = new Regex("\"([A-Za-z0-9_\\-./]+/[A-Za-z0-9_\\-.]+)\"");
+    private static readonly Regex StringLiteral = new Regex("\"([^\"\\\\\\r\\n]+)\"");
 
     [Fact]
     public void ContentPathsInTheTestApp_MatchTheirFilesCase()
@@ -23,7 +24,9 @@ public class TestAppContentPathTests
         foreach (string file in Directory.EnumerateFiles(content, "*", SearchOption.AllDirectories))
         {
             string path = Relative(content, file);
-            if (path.StartsWith("bin/", StringComparison.Ordinal) || path.StartsWith("obj/", StringComparison.Ordinal))
+            // The build output, and the content project itself, which the code never loads.
+            if (path.StartsWith("bin/", StringComparison.Ordinal) || path.StartsWith("obj/", StringComparison.Ordinal) ||
+                path == "Content.mgcb")
             {
                 continue;
             }
@@ -49,7 +52,7 @@ public class TestAppContentPathTests
             string[] lines = File.ReadAllLines(source);
             for (int i = 0; i < lines.Length; i++)
             {
-                foreach (Match match in QuotedPath.Matches(lines[i]))
+                foreach (Match match in StringLiteral.Matches(lines[i]))
                 {
                     string path = match.Groups[1].Value;
                     foreach (string form in new[] { path, WithoutExtension(path) })

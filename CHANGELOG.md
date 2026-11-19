@@ -23,8 +23,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     texture importer still lists `.tif` and `.tiff`, so convert any to PNG first.
   - On WindowsDX, MonoGame no longer brings in `SharpDX.Mathematics`. A game that uses its
     types, such as `SharpDX.Color4`, must reference that package itself. Earlier versions of
-    Cocos2D-Mono draw WindowsDX labels with it, so a WindowsDX game on one of them should stay
-    on MonoGame 3.8.5.1 or earlier.
+    Cocos2D-Mono draw WindowsDX labels with it too. So a WindowsDX game that stays on one of
+    them and moves to MonoGame 3.8.6 or later must reference the package as well, or its
+    labels can't load. MonoGame 3.8.5.1 and earlier still bring it in.
 - **Mac Catalyst and tvOS from source:** our MonoGame fork is now on MonoGame 3.8.6.1, at a new
   commit. Check the fork out again at the commit that `MONOGAME_FORK_REF` names in
   `.github/workflows/build.yml`, and rebuild its Mac Catalyst or tvOS project.

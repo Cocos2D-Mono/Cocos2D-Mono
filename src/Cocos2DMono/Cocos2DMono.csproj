@@ -13,7 +13,7 @@
         net10.0-ios26.0     iOS      (replaces cocos2d.iOS).
         net10.0-maccatalyst26.0
                             Mac Catalyst (C2D-238). MonoGame publishes no maccatalyst
-                            package (still true at 3.8.5), so this TFM references the
+                            package (still true at 3.8.6.1), so this TFM references the
                             Catalyst MonoGame.Framework built from our fork, and only
                             joins the TFM list on a macOS host that has it - see the
                             repo-root Directory.Build.props.

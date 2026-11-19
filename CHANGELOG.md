@@ -14,6 +14,29 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - **Labels on Linux and macOS are about twice as tall.** `CCLabel` now draws text there at the
   size Windows does, taking the font size in points as Windows always has. A game that chose
   its label sizes on Linux or macOS may want smaller ones.
+- **MonoGame 3.8.6.1.** The packages now need MonoGame 3.8.6.1 or later, instead of 3.8.5.
+  - A game that references a MonoGame package itself, such as `MonoGame.Framework.DesktopGL`
+    or `MonoGame.Content.Builder.Task`, must move it to 3.8.6.1 too. With an older one, NuGet
+    stops the restore with error NU1605, a package downgrade.
+  - Move the MGCB tools in the game's `.config/dotnet-tools.json` to 3.8.6.1 as well, so its
+    content builds with the same MonoGame. MGCB 3.8.6.1 can't import TIFF images, although its
+    texture importer still lists `.tif` and `.tiff`, so convert any to PNG first.
+  - On WindowsDX, MonoGame no longer brings in `SharpDX.Mathematics`. A game that uses its
+    types, such as `SharpDX.Color4`, must reference that package itself. Earlier versions of
+    Cocos2D-Mono draw WindowsDX labels with it, so a WindowsDX game on one of them should stay
+    on MonoGame 3.8.5.1 or earlier.
+
+### Changed
+
+- **MonoGame 3.8.5 → 3.8.6.1.** MonoGame's fixes in
+  [3.8.6](https://github.com/MonoGame/MonoGame/releases/tag/v3.8.6) and
+  [3.8.6.1](https://github.com/MonoGame/MonoGame/releases/tag/v3.8.6.1) come with it. Among them:
+  - On DesktopGL, clearing the screen or a render texture clears all of it, even while a
+    scissor rectangle is set, as XNA did.
+  - A disposed render target, such as the one behind a `CCRenderTexture`, can be
+    garbage-collected. MonoGame's graphics device could keep a reference to it.
+  - On WindowsDX, MonoGame no longer depends on old .NET Core 2 packages, such as
+    `System.Net.Http` 4.3.4, and it moves to SharpDX 4.2.0.
 
 ### Fixed
 

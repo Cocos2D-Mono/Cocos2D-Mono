@@ -5,7 +5,7 @@
     <Version>2.9.1</Version>
 
     <!-- Centralized MonoGame version for all projects -->
-    <MonoGameVersion>3.8.5</MonoGameVersion>
+    <MonoGameVersion>3.8.6.1</MonoGameVersion>
 
     <!-- Several legacy csprojs relocate BaseIntermediateOutputPath per configuration
          (e.g. obj\DesktopGL\Release) from the csproj body - too late for the SDK's
@@ -59,7 +59,7 @@
   <!--
     ============ Mac Catalyst (C2D-238) and tvOS (C2D-239): fork-built MonoGame ============
 
-    MonoGame publishes no maccatalyst or tvos package (still true at 3.8.5), so those
+    MonoGame publishes no maccatalyst or tvos package (still true at 3.8.6.1), so those
     TFMs build against the MonoGame.Framework assemblies produced by our fork:
       https://github.com/Cocos2D-Mono/MonoGame   (branch cocos2d-mono)
       dotnet build MonoGame.Framework/MonoGame.Framework.MacCatalyst.csproj -c <Configuration>

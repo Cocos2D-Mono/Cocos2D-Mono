@@ -9,6 +9,7 @@ using System.Text;
 using SharpDX;
 using SharpDX.Direct2D1;
 using SharpDX.DirectWrite;
+using SharpDX.Mathematics.Interop;
 using SharpDX.WIC;
 using Factory = SharpDX.Direct2D1.Factory;
 using FactoryImaging = SharpDX.WIC.ImagingFactory;
@@ -202,7 +203,6 @@ public partial class CCLabel
         glyphRun.FontFace = fontFace;
         glyphRun.FontSize = _currentDIP;
 
-        var BrushColor = SharpDX.Color.White;
         /*
         SharpDX.DirectWrite.Matrix mtrx = new SharpDX.DirectWrite.Matrix();
         mtrx.M11 = 1F;
@@ -303,7 +303,7 @@ public partial class CCLabel
 
                 if (_brush == null)
                 {
-                    _brush = new SolidColorBrush(_renderTarget, new Color4(new Color3(1, 1, 1), 1.0f));
+                    _brush = new SolidColorBrush(_renderTarget, new RawColor4(1, 1, 1, 1));
                 }
 
             }
@@ -341,7 +341,7 @@ public partial class CCLabel
     }
 
     GCHandle pinnedArray;
-    private static Color4 TransparentColor = new Color4(new Color3(1, 1.0f, 1.0f), 0.0f);
+    private static RawColor4 TransparentColor = new RawColor4(1, 1, 1, 0);
 
     private unsafe byte* GetBitmapData(string s, out int stride)
     {
@@ -362,7 +362,8 @@ public partial class CCLabel
         _renderTarget.Clear(TransparentColor);
         _renderTarget.AntialiasMode = AntialiasMode.Aliased;
         textFormat.TextAlignment = TextAlignment.Center;
-        _renderTarget.DrawText(s, textFormat, new RectangleF(0, 0, w, h), _brush);
+        // RawRectangleF takes left, top, right and bottom, so from the origin they're w and h.
+        _renderTarget.DrawText(s, textFormat, new RawRectangleF(0, 0, w, h), _brush);
 
         _renderTarget.EndDraw();
 

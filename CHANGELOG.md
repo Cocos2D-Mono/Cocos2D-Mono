@@ -142,6 +142,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 
 - The package check that `pack.yml` runs on Linux, macOS and Windows also checks the size
   `CCLabel` draws text at, and that it draws all of each glyph.
+- The test app builds its content with MGCB 3.8.6.1, the MonoGame it runs on. It was still on
+  3.8.4.1. It no longer builds `Images/test_image.tiff`, which MGCB 3.8.6.1 can't import: the
+  PNG and JPEG copies build the same asset.
 - WindowsDX labels pass Direct2D the colour and rectangle types from SharpDX itself, so the
   engine no longer needs `SharpDX.Mathematics`, which MonoGame 3.8.6.1 doesn't bring in.
 

@@ -142,6 +142,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 
 - The package check that `pack.yml` runs on Linux, macOS and Windows also checks the size
   `CCLabel` draws text at, and that it draws all of each glyph.
+- WindowsDX labels pass Direct2D the colour and rectangle types from SharpDX itself, so the
+  engine no longer needs `SharpDX.Mathematics`, which MonoGame 3.8.6.1 doesn't bring in.
 
 ## 2.9.1 - 2026-11-04
 

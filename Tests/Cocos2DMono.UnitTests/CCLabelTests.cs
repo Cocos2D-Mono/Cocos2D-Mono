@@ -6,6 +6,7 @@ using System.Runtime.ExceptionServices;
 using System.Runtime.Versioning;
 using Cocos2D;
 using Xunit;
+using Xunit.Sdk;
 
 namespace Cocos2DMono.UnitTests;
 
@@ -103,19 +104,19 @@ public class CCLabelTests
     // accent a few pixels from where the glyph's outline puts it.
     [WindowsTheory]
     // \u0300 to \u0303 are combining accents: grave, acute, circumflex and tilde.
-    [InlineData("Arial", 40, "Ǻ\u0301\u0300")]     // Ǻ lost its top; the accents, their left edge.
-    [InlineData("Times New Roman", 40, "Ǻ\u0301")]
-    [InlineData("Verdana", 40, "\u0301\u0300")]   // These accents are drawn wholly left of the box.
-    [InlineData("Segoe UI", 40, "\u0301\u0300")]  // These reach past its right edge.
-    [InlineData("Georgia", 20, "\u0301\u0302Ấ")]  // Hinted above the top of the line.
-    [InlineData("Courier New", 8, "\u0300\u0301\u0303")]
-    [InlineData("Gabriola", 8, "Ǻ")]
-    [InlineData("Arial", 12, "Ǻ\u0301")]
+    [InstalledFontData("Arial", 40, "Ǻ\u0301\u0300")]     // Ǻ lost its top; the accents, their left edge.
+    [InstalledFontData("Times New Roman", 40, "Ǻ\u0301")]
+    [InstalledFontData("Verdana", 40, "\u0301\u0300")]   // These accents are drawn wholly left of the box.
+    [InstalledFontData("Segoe UI", 40, "\u0301\u0300")]  // These reach past its right edge.
+    [InstalledFontData("Georgia", 20, "\u0301\u0302Ấ")]  // Hinted above the top of the line.
+    [InstalledFontData("Courier New", 8, "\u0300\u0301\u0303")]
+    [InstalledFontData("Gabriola", 8, "Ǻ")]
+    [InstalledFontData("Arial", 12, "Ǻ\u0301")]
     // Glyphs GDI+ doesn't draw where their outline is: Trebuchet MS's lower, Segoe Script's wider.
-    [InlineData("Trebuchet MS", 56, "_µ(")]
-    [InlineData("Segoe Script", 40, "bqn")]
+    [InstalledFontData("Trebuchet MS", 56, "_µ(")]
+    [InstalledFontData("Segoe Script", 40, "bqn")]
     // Glyphs that always fitted.
-    [InlineData("Arial", 40, "HgjÉ_W")]
+    [InstalledFontData("Arial", 40, "HgjÉ_W")]
     [SupportedOSPlatform("windows")]
     public void InitializeFont_KeepsAllOfAGlyphGdiPlusDraws(string fontName, float fontSize, string text)
     {
@@ -287,5 +288,35 @@ public class CCLabelTests
             m_bTextureDirty = true;
             return true;
         }
+    }
+}
+
+// A row of data for a theory that draws with a font through GDI+, skipped where the font isn't
+// installed. GDI+ draws a font it can't find with another, so the row would otherwise pass
+// without testing the font it names. CI's unit tests run on Windows Server, which may lack some.
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+internal sealed class InstalledFontDataAttribute : DataAttribute
+{
+    private readonly object[] _row;
+
+    public InstalledFontDataAttribute(string fontName, float fontSize, string text)
+    {
+        _row = [fontName, fontSize, text];
+        if (OperatingSystem.IsWindows() && !IsInstalled(fontName))
+        {
+            Skip = $"{fontName} isn't installed.";
+        }
+    }
+
+    public override IEnumerable<object[]> GetData(MethodInfo testMethod)
+    {
+        return [_row];
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static bool IsInstalled(string fontName)
+    {
+        using var font = new Font(fontName, 12);
+        return string.Equals(font.Name, fontName, StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -41,6 +41,10 @@ public struct b2ContactRegister
 {
     public ContactType contactType;
     public bool isPrimary;
+
+    // Whether Box2D has a contact for this pair of shape types. It has none between two edges, an
+    // edge and a chain, or two chains, so their entries keep the default values.
+    internal bool isRegistered;
 }
 
 /// <summary>
@@ -148,11 +152,13 @@ public class b2Contact : b2ReusedObject<b2Contact>
 
         s_registers[(int)type1, (int)type2].contactType = createType;
         s_registers[(int)type1, (int)type2].isPrimary = true;
+        s_registers[(int)type1, (int)type2].isRegistered = true;
 
         if (type1 != type2)
         {
             s_registers[(int)type2, (int)type1].contactType = createType;
             s_registers[(int)type2, (int)type1].isPrimary = false;
+            s_registers[(int)type2, (int)type1].isRegistered = true;
         }
     }
 
@@ -207,41 +213,66 @@ public class b2Contact : b2ReusedObject<b2Contact>
     }
 
 
-    public static b2Contact Create(b2Fixture fixtureA, int indexA, b2Fixture fixtureB, int indexB)
+    /// <summary>
+    /// Makes the contact between two fixtures, taking it from the pool. Returns null when Box2D has
+    /// no contact for their shapes: it has none between two edges, an edge and a chain, or two
+    /// chains. The contact may take the fixtures in the other order.
+    /// </summary>
+    public static b2Contact? Create(b2Fixture fixtureA, int indexA, b2Fixture fixtureB, int indexB)
     {
-
         b2ShapeType type1 = fixtureA.ShapeType;
         b2ShapeType type2 = fixtureB.ShapeType;
 
         Debug.Assert(0 <= type1 && type1 < b2ShapeType.e_typeCount);
         Debug.Assert(0 <= type2 && type2 < b2ShapeType.e_typeCount);
 
-        var contact = Create();
-
-        //Type createFcn = s_registers[(int)type1, (int)type2].contactType;
-
-        contact._type = s_registers[(int) type1, (int) type2].contactType;
-
-        //if (createFcn != null)
+        b2ContactRegister register = s_registers[(int)type1, (int)type2];
+        if (!register.isRegistered)
         {
-            if (s_registers[(int)type1, (int)type2].isPrimary)
-            {
-                //return ((b2Contact)Activator.CreateInstance(createFcn, new object[] { fixtureA, indexA, fixtureB, indexB }));
-                contact.Init(fixtureA, indexA, fixtureB, indexB);
-            }
-            else
-            {
-                //return ((b2Contact)Activator.CreateInstance(createFcn, new object[] { fixtureB, indexB, fixtureA, indexA }));
-                contact.Init(fixtureB, indexB, fixtureA, indexA);
-            }
+            return null;
         }
+
+        var contact = Create();
+        contact.InitAs(register, fixtureA, indexA, fixtureB, indexB);
         return contact;
     }
 
+    /// <summary>
+    /// Makes the contact between two fixtures, as
+    /// <see cref="Create(b2Fixture, int, b2Fixture, int)"/> does, but not from the pool. The
+    /// contact may take the fixtures in the other order.
+    /// </summary>
+    /// <exception cref="ArgumentException">Box2D has no contact for the fixtures' shapes: it has
+    /// none between two edges, an edge and a chain, or two chains.</exception>
     public b2Contact(b2Fixture fA, int indexA, b2Fixture fB, int indexB)
         : this()
     {
-        Init(fA, indexA, fB, indexB);
+        b2ContactRegister register = s_registers[(int)fA.ShapeType, (int)fB.ShapeType];
+        if (!register.isRegistered)
+        {
+            throw new ArgumentException(
+                "Box2D has no contact between these shapes: edges and chains don't collide with each other.",
+                nameof(fB));
+        }
+
+        InitAs(register, fA, indexA, fB, indexB);
+    }
+
+    // Sets the contact's type, and takes the fixtures in the order its type does: for a polygon and
+    // a circle, the polygon is always fixture A.
+    [MemberNotNull(nameof(FixtureA), nameof(FixtureB))]
+    private void InitAs(b2ContactRegister register, b2Fixture fA, int indexA, b2Fixture fB, int indexB)
+    {
+        _type = register.contactType;
+
+        if (register.isPrimary)
+        {
+            Init(fA, indexA, fB, indexB);
+        }
+        else
+        {
+            Init(fB, indexB, fA, indexA);
+        }
     }
 
     [MemberNotNull(nameof(FixtureA), nameof(FixtureB))]

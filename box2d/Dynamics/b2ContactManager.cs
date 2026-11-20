@@ -256,8 +256,8 @@ public class b2ContactManager
             return;
         }
 
-        // Call the factory.
-        b2Contact c = b2Contact.Create(fixtureA, indexA, fixtureB, indexB);
+        // Call the factory. Box2D has no contact for some pairs of shapes, such as two edges.
+        b2Contact? c = b2Contact.Create(fixtureA, indexA, fixtureB, indexB);
         if (c == null)
         {
             return;

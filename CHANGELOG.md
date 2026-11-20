@@ -170,6 +170,16 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     the second replaced the first in the content manager, and the first stayed in memory until
     `Unload`. Now the one stored first is kept, and everything the other load created is
     disposed, such as a `SpriteFont`'s texture.
+- Box2D's `b2World.Step` no longer throws `InvalidCastException` when an edge or chain shape on a
+  dynamic body meets another edge or chain. Box2D doesn't collide edges and chains with each
+  other, so they pass through each other. But `b2Contact.Create` made a circle contact for such a
+  pair, and its first update cast the edge to a circle. Now `b2Contact.Create` returns null for
+  them, as Box2D's own factory does, and the world makes no contact.
+  - `b2Contact.Create` is now annotated as returning `b2Contact?`.
+  - A contact made with `b2Contact`'s public constructor was always a circle contact, so one made
+    for any other shapes threw `InvalidCastException` when it updated. The constructor now makes
+    the contact that `b2Contact.Create` would, with its fixtures in the same order, and throws
+    `ArgumentException` for two edges or chains.
 
 ### Documentation
 

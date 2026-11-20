@@ -1,5 +1,9 @@
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
+using System.Runtime.Versioning;
 using Cocos2D;
 using Xunit;
 
@@ -88,6 +92,96 @@ public class CCLabelTests
                         $"'{c}' at ({left}, {top}), {right - left}x{bottom - top}, has 0x{texel:X8} beside it, at ({x}, {y}).");
                 }
             }
+        }
+    }
+
+    // Regression tests from C2D-370. On Windows, CCLabel searched only the box GDI+ lays a glyph out
+    // in for the glyph's pixels: from the top of its line, and from a sixth of an em left of where
+    // the glyph starts to as far right of its advance. GDI+ draws past that box, and what it drew
+    // there was lost: ink above the font's ascent, like the acute on Ǻ, and combining accents that
+    // GDI+ draws left or right of the box. GDI+ also hints what it draws, which can move a small
+    // accent a few pixels from where the glyph's outline puts it.
+    [WindowsTheory]
+    // \u0300 to \u0303 are combining accents: grave, acute, circumflex and tilde.
+    [InlineData("Arial", 40, "Ǻ\u0301\u0300")]     // Ǻ lost its top; the accents, their left edge.
+    [InlineData("Times New Roman", 40, "Ǻ\u0301")]
+    [InlineData("Verdana", 40, "\u0301\u0300")]   // These accents are drawn wholly left of the box.
+    [InlineData("Segoe UI", 40, "\u0301\u0300")]  // These reach past its right edge.
+    [InlineData("Georgia", 20, "\u0301\u0302Ấ")]  // Hinted above the top of the line.
+    [InlineData("Courier New", 8, "\u0300\u0301\u0303")]
+    [InlineData("Gabriola", 8, "Ǻ")]
+    [InlineData("Arial", 12, "Ǻ\u0301")]
+    // Glyphs GDI+ doesn't draw where their outline is: Trebuchet MS's lower, Segoe Script's wider.
+    [InlineData("Trebuchet MS", 56, "_µ(")]
+    [InlineData("Segoe Script", 40, "bqn")]
+    // Glyphs that always fitted.
+    [InlineData("Arial", 40, "HgjÉ_W")]
+    [SupportedOSPlatform("windows")]
+    public void InitializeFont_KeepsAllOfAGlyphGdiPlusDraws(string fontName, float fontSize, string text)
+    {
+        var (font, _, _) = InitializeFont(fontName, fontSize, text);
+        Dictionary<int, CCBMFontConfiguration.CCBMFontDef> glyphs = FontDefs(font);
+
+        var mismatches = new List<string>();
+        foreach (char c in text)
+        {
+            var drawn = GdiPlusInk(fontName, fontSize * CCMacros.CCContentScaleFactor(), c);
+            CCBMFontConfiguration.CCBMFontDef glyph = glyphs[c];
+            var kept = (Left: glyph.xOffset, Top: glyph.yOffset,
+                Width: (int)glyph.rect.Size.Width, Height: (int)glyph.rect.Size.Height);
+            if (kept != drawn)
+            {
+                mismatches.Add($"U+{(int)c:X4}: CCLabel kept {kept}, GDI+ draws {drawn}");
+            }
+        }
+        Assert.True(mismatches.Count == 0, string.Join(Environment.NewLine, mismatches));
+    }
+
+    // Where GDI+ draws a glyph's pixels, from where it's asked to draw the glyph, with the settings
+    // CCLabel uses and room on every side, so none are cut off.
+    [SupportedOSPlatform("windows")]
+    private static unsafe (int Left, int Top, int Width, int Height) GdiPlusInk(string fontName, float fontSize, char glyph)
+    {
+        using var font = new Font(fontName, fontSize);
+        int room = (int)Math.Ceiling(2 * font.GetHeight()) + 8;
+        using var bitmap = new Bitmap(4 * room, 3 * room, PixelFormat.Format32bppArgb);
+        using (var graphics = Graphics.FromImage(bitmap))
+        using (var brush = new SolidBrush(Color.White))
+        {
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            graphics.Clear(Color.Transparent);
+            graphics.DrawString(glyph.ToString(), font, brush, room, room);
+        }
+
+        BitmapData data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
+            ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+        try
+        {
+            int left = int.MaxValue, top = int.MaxValue, right = -1, bottom = -1;
+            for (int y = 0; y < bitmap.Height; y++)
+            {
+                var row = (int*)((byte*)data.Scan0 + y * data.Stride);
+                for (int x = 0; x < bitmap.Width; x++)
+                {
+                    if (row[x] != 0)
+                    {
+                        left = Math.Min(left, x);
+                        right = Math.Max(right, x);
+                        top = Math.Min(top, y);
+                        bottom = Math.Max(bottom, y);
+                    }
+                }
+            }
+            Assert.True(right >= 0, $"GDI+ draws nothing for U+{(int)glyph:X4} in {fontName}.");
+            Assert.True(left > 0 && top > 0 && right < bitmap.Width - 1 && bottom < bitmap.Height - 1,
+                $"U+{(int)glyph:X4} in {fontName} reaches the edge of the room given it.");
+            return (left - room, top - room, right - left + 1, bottom - top + 1);
+        }
+        finally
+        {
+            bitmap.UnlockBits(data);
         }
     }
 

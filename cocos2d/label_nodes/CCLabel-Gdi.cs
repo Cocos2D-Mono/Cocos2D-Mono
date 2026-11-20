@@ -175,6 +175,7 @@ public partial class CCLabel
         return _currentFont.GetHeight();
     }
 
+    // The bitmap GetBitmapData draws a glyph into, which CCLabel searches for the glyph's pixels.
     private CCSize GetMeasureString(string text)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
@@ -183,9 +184,42 @@ public partial class CCLabel
             return GetMeasureStringSkia(text);
         }
 
+        var room = GetGlyphRoom(text);
+        return new CCSize(room.Size.Width, room.Size.Height);
+    }
+
+    // How far GDI+ can draw past a glyph's outline. It hints what it draws, which at small sizes can
+    // move an accent a few pixels from where the outline puts it.
+    private const float GdiHintingRoom = 8;
+
+    // Where GetBitmapData draws a glyph, and the size of the bitmap it draws it in. GDI+ lays a glyph
+    // out in a box from the top of its line, and from a sixth of an em left of the glyph to as far
+    // right of its advance. Its ink can reach past that box: above the font's ascent, as the acute
+    // on Ǻ does, or left or right of it, as a combining accent can. So the bitmap takes in the glyph's
+    // outline as well, with room around it for hinting. Where that reaches past the box's left or
+    // top, the glyph is drawn as much further right or down, which CCLabel takes back off its offsets.
+    private (int Left, int Top, SizeF Size) GetGlyphRoom(string text)
+    {
         Debug.Assert(_graphics != null && _currentFont != null, "CreateFont sets the font and creates the bitmap first");
-        var size = _graphics.MeasureString(text, _currentFont);
-        return new CCSize(size.Width, size.Height);
+        SizeF box = _graphics.MeasureString(text, _currentFont);
+
+        // GDI+ lays out a path as it lays out what it draws, so the outline is where the glyph's
+        // ink goes, give or take what hinting moves.
+        using var outline = new GraphicsPath();
+        outline.AddString(text, _currentFont.FontFamily, (int)_currentFont.Style,
+            _currentFont.SizeInPoints * _graphics.DpiY / 72, PointF.Empty, StringFormat.GenericDefault);
+        if (outline.PointCount == 0)
+        {
+            // Nothing to draw, like a space.
+            return (0, 0, box);
+        }
+
+        RectangleF ink = outline.GetBounds();
+        int left = (int)Math.Ceiling(Math.Max(0, GdiHintingRoom - ink.Left));
+        int top = (int)Math.Ceiling(Math.Max(0, GdiHintingRoom - ink.Top));
+        return (left, top, new SizeF(
+            left + Math.Max(box.Width, ink.Right + GdiHintingRoom),
+            top + Math.Max(box.Height, ink.Bottom + GdiHintingRoom)));
     }
 
     private void CreateBitmap(int width, int height)
@@ -245,18 +279,21 @@ public partial class CCLabel
 
         FreeBitmapData();
 
-        var size = GetMeasureString(s);
+        var room = GetGlyphRoom(s);
 
-        var w = (int)(Math.Ceiling(size.Width += 2));
-        var h = (int)(Math.Ceiling(size.Height += 2));
+        var w = (int)Math.Ceiling(room.Size.Width + 2);
+        var h = (int)Math.Ceiling(room.Size.Height + 2);
 
         CreateBitmap(w, h);
         Debug.Assert(_graphics != null && _bitmap != null && _brush != null && _currentFont != null,
             "CreateFont sets the font, and CreateBitmap creates the bitmap");
 
+        // Moved by whole pixels, GDI+ draws a glyph's pixels the same.
         _graphics.Clear(System.Drawing.Color.Transparent);
-        _graphics.DrawString(s, _currentFont, _brush, 0, 0);
+        _graphics.DrawString(s, _currentFont, _brush, room.Left, room.Top);
         _graphics.Flush();
+        _glyphShiftX = room.Left;
+        _glyphShiftY = room.Top;
 
         _bitmapData = _bitmap.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
 

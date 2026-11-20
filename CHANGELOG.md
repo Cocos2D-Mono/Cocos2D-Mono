@@ -121,6 +121,12 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   - Each glyph takes two more pixels of the atlas each way, so the atlas holds fewer glyphs
     before it fills up and starts again. To make it bigger, call
     `CCLabel.SetTTFAtlasTextureSize` before the first label.
+- `CCLabel` draws all of each glyph with DesktopGL on Windows. It looked for a glyph's pixels
+  only in the box that GDI+ lays the glyph out in, and GDI+ draws some glyphs past that box.
+  - Anything above the top of the line was cut off, such as the acute on Ǻ. In small text,
+    GDI+ draws some fonts' accents there too, such as Courier New's and Gabriola's.
+  - Combining accents lost their left or right edge, or all of themselves: in Verdana, the
+    combining acute and grave accents drew nothing.
 - `CCTask.RunOnScheduler`, and the completion callback that `CCTask.RunAsync` takes, no longer
   race the game thread when they're used from another thread, as they're meant to be. Each
   scheduled a timer from the calling thread, while the game thread's update walked the same

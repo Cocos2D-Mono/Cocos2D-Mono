@@ -341,21 +341,26 @@ public partial class CCLabel : CCLabelBMFont
                     }
                 }
 
-                var region = AllocateRegion(w, h);
+                // The atlas samples linearly, so a glyph drawn between pixels takes in the texels
+                // just outside its rect. Packed edge to edge, those were the next glyph's, and
+                // showed as a faint line along the edge. So each glyph gets a transparent texel all
+                // around it.
+                var region = AllocateRegion(w + 2 * GlyphGap, h + 2 * GlyphGap);
 
                 if (region.x >= 0)
                 {
+                    region = new ivec4() { x = region.x + GlyphGap, y = region.y + GlyphGap, width = w, height = h };
+
                     SetRegionData(region, data, w);
 
                     var info = GetKerningInfo(chars[i]);
-                    var regionX = region.x + 0.015f;
-                    var regionWidth = region.width;
-#if ANDROID
-                    regionX = region.x + 0.55f;
-#endif
+                    float regionX = region.x;
+                    float regionWidth = region.width;
 
 #if IOS
-                    regionX = region.x + 0.33f;
+                    // iOS still trims the rect, as every platform once shifted it to hide the line
+                    // the gap now prevents. Taking that out needs checking on a device.
+                    regionX += 0.33f;
                     regionWidth -= 1;
 #endif
 
@@ -440,6 +445,9 @@ public partial class CCLabel : CCLabelBMFont
         public int width;
         public int height;
     }
+
+    // The transparent texels InitializeFont leaves on each side of a glyph in the atlas.
+    private const int GlyphGap = 1;
 
     private static CCRawList<ivec3> _nodes = new CCRawList<ivec3>();
     private static int _used;

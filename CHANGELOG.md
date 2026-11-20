@@ -110,6 +110,17 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   glyph before it. After some glyphs that pixel wasn't transparent: in Arial, after an "l". Now
   a glyph with no pixels takes no room in the atlas and draws nothing, as a space in a `.fnt`
   file does.
+- `CCLabel` no longer draws a faint line along the edge of some glyphs. The label atlas held its
+  glyphs edge to edge, and its texture is filtered linearly, so a glyph drawn between pixels, as
+  any glyph of odd width is, took in the edge of the glyph beside it. Now each glyph has a
+  transparent pixel all around it.
+  - Glyphs used to be shifted to hide that line: by under a fiftieth of a pixel on Windows,
+    Linux and macOS, and by over half a pixel on Android, which cut off about half of each
+    glyph's first column. They aren't shifted now. iOS, Mac Catalyst and tvOS still trim each
+    glyph by a pixel, until that's checked on a device.
+  - Each glyph takes two more pixels of the atlas each way, so the atlas holds fewer glyphs
+    before it fills up and starts again. To make it bigger, call
+    `CCLabel.SetTTFAtlasTextureSize` before the first label.
 - `CCTask.RunOnScheduler`, and the completion callback that `CCTask.RunAsync` takes, no longer
   race the game thread when they're used from another thread, as they're meant to be. Each
   scheduled a timer from the calling thread, while the game thread's update walked the same

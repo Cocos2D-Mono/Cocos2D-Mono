@@ -56,6 +56,41 @@ public class CCLabelTests
         Assert.True(glyphs[before].rect.Size.Width > 0);
     }
 
+    // Regression tests from C2D-369. CCLabel packed its glyphs into the atlas edge to edge, and
+    // the atlas samples linearly. A glyph drawn between pixels, as CCLabelBMFont draws any glyph
+    // of odd width, takes in the texels just outside its rect, so it showed a faint line from
+    // the glyph next to it. Linear sampling reads at most half a texel past the rect, so a ring
+    // of transparent texels around each glyph is all it needs.
+    [Theory]
+    [InlineData("lI|█")]
+    // More glyphs than fit in one row of the atlas, so some sit below others.
+    [InlineData("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&")]
+    public void InitializeFont_LeavesATransparentTexelAroundEachGlyph(string text)
+    {
+        var (font, atlas, atlasWidth) = InitializeFont("Arial", 40, text);
+        Dictionary<int, CCBMFontConfiguration.CCBMFontDef> glyphs = FontDefs(font);
+
+        foreach (char c in text.Distinct())
+        {
+            CCRect rect = glyphs[c].rect;
+            int left = (int)Math.Floor(rect.Origin.X);
+            int top = (int)rect.Origin.Y;
+            int right = left + (int)Math.Round(rect.Size.Width);
+            int bottom = top + (int)rect.Size.Height;
+
+            for (int y = top - 1; y <= bottom; y++)
+            {
+                for (int x = left - 1; x <= right; x++)
+                {
+                    bool inGlyph = x >= left && x < right && y >= top && y < bottom;
+                    int texel = atlas[y * atlasWidth + x];
+                    Assert.True(inGlyph || texel == 0,
+                        $"'{c}' at ({left}, {top}), {right - left}x{bottom - top}, has 0x{texel:X8} beside it, at ({x}, {y}).");
+                }
+            }
+        }
+    }
+
     // Runs CCLabel.InitializeFont on a new atlas, as a label does when it's given a font, and
     // returns the font it made and the atlas. Every label shares the atlas, the allocator that
     // places glyphs in it and the font cache, so they're all put back afterwards. On Windows this

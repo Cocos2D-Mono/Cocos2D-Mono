@@ -180,6 +180,10 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     for any other shapes threw `InvalidCastException` when it updated. The constructor now makes
     the contact that `b2Contact.Create` would, with its fixtures in the same order, and throws
     `ArgumentException` for two edges or chains.
+- `CCAnimationCache.AddAnimationsWithFile` and `AddAnimationsWithDictionary` load animation
+  plists in the original format, version 1. Those have no `properties` dictionary, and the cache
+  read animations only from a plist that had one, so it added none of theirs and logged nothing.
+  Now a plist without properties is read as version 1, as in cocos2d-x.
 
 ### Documentation
 

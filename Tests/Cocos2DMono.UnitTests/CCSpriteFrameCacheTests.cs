@@ -239,6 +239,34 @@ public class CCSpriteFrameCacheTests
         Assert.Contains("'spriteframe'", ex.Message);
     }
 
+    // Regression test from C2D-327. AddAnimationsWithDictionary read the animations only inside
+    // its check for a properties dictionary. Animation plists in the original format, version 1,
+    // have no properties, so their animations were never added, and nothing was logged. cocos2d-x
+    // reads a plist without properties as version 1.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)] // With properties that give the format as 1, which always worked.
+    public void AnimationCache_FromTheOriginalFormat_AddsTheAnimation(bool withProperties)
+    {
+        var frame = new CCSpriteFrame(new CCTexture2D(), new CCRect(0, 0, 1, 1));
+        CCSpriteFrameCache.SharedSpriteFrameCache.AddSpriteFrame(frame, "c2d327-frame.png");
+        try
+        {
+            CCAnimationCache.SharedAnimationCache.AddAnimationsWithDictionary(
+                Version1AnimationsPlist("c2d327-walk", 0.25f, "c2d327-frame.png", withProperties));
+
+            CCAnimation? animation = CCAnimationCache.SharedAnimationCache.AnimationByName("c2d327-walk");
+            Assert.NotNull(animation);
+            Assert.Same(frame, Assert.Single(animation.Frames).SpriteFrame);
+            Assert.Equal(0.25f, animation.DelayPerUnit);
+        }
+        finally
+        {
+            CCAnimationCache.SharedAnimationCache.RemoveAnimationByName("c2d327-walk");
+            CCSpriteFrameCache.SharedSpriteFrameCache.RemoveSpriteFrameByName("c2d327-frame.png");
+        }
+    }
+
     // RemoveUnusedSpriteFrames kept the last frame its loop visited, whether anything used it or
     // not: the loop's enumerator was still on the stack when it collected (C2D-358).
 
@@ -332,6 +360,30 @@ public class CCSpriteFrameCacheTests
         var plist = new PlistDictionary();
         plist.Add("animations", animations);
         plist.Add("properties", properties);
+        return plist;
+    }
+
+    // An animations plist in the original format, version 1, with one animation: a list of frame
+    // names and a delay. With properties, they give the format as 1; without, there are none, as
+    // in cocos2d's own files.
+    private static PlistDictionary Version1AnimationsPlist(string name, float delay, string frameName, bool withProperties)
+    {
+        var frames = new PlistArray();
+        frames.Add(new PlistString(frameName));
+        var animation = new PlistDictionary();
+        animation.Add("frames", frames);
+        animation.Add("delay", new PlistReal(delay));
+        var animations = new PlistDictionary();
+        animations.Add(name, animation);
+
+        var plist = new PlistDictionary();
+        plist.Add("animations", animations);
+        if (withProperties)
+        {
+            var properties = new PlistDictionary();
+            properties.Add("format", new PlistInteger(1));
+            plist.Add("properties", properties);
+        }
         return plist;
     }
 }

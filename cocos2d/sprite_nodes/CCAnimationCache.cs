@@ -76,10 +76,12 @@ public class CCAnimationCache
             return;
         }
 
+        // A plist in the original format, version 1, has no properties, as in cocos2d-x.
+        int version = 1;
         PlistDictionary? properties = dictionary["properties"].AsDictionary;
         if (properties != null)
         {
-            int version = properties["format"].AsInt;
+            version = properties["format"].AsInt;
             PlistArray spritesheets = properties["spritesheets"].AsArray ?? new PlistArray();
 
             foreach (PlistObjectBase pObj in spritesheets)
@@ -88,21 +90,21 @@ public class CCAnimationCache
                     ?? throw new InvalidDataException("A sprite sheet in the animation properties isn't a string.");
                 CCSpriteFrameCache.SharedSpriteFrameCache.AddSpriteFramesWithFile(name);
             }
+        }
 
-            switch (version)
-            {
-                case 1:
-                    ParseVersion1(animations);
-                    break;
+        switch (version)
+        {
+            case 1:
+                ParseVersion1(animations);
+                break;
 
-                case 2:
-                    ParseVersion2(animations);
-                    break;
+            case 2:
+                ParseVersion2(animations);
+                break;
 
-                default:
-                    Debug.Assert(false, "Invalid animation format");
-                    break;
-            }
+            default:
+                Debug.Assert(false, "Invalid animation format");
+                break;
         }
     }
 

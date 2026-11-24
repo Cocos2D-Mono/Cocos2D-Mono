@@ -127,6 +127,17 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     GDI+ draws some fonts' accents there too, such as Courier New's and Gabriola's.
   - Combining accents lost their left or right edge, or all of themselves: in Verdana, the
     combining acute and grave accents drew nothing.
+- `CCLabel` draws all of each glyph with WindowsDX too. It looked for a glyph's pixels only in
+  the box that DirectWrite lays the glyph out in, which is as wide as the glyph's advance and
+  as tall as its line, with 2 pixels to spare each way. DirectWrite draws some glyphs past
+  that box.
+  - Glyphs that reach past their advance lost an edge, in many fonts. At 56 points, Times New
+    Roman's f lost 7 pixels of its hook, and Segoe UI's j lost 6 pixels of its tail.
+  - Combining accents don't advance, so they lost most or all of themselves. In Arial, Times
+    New Roman and Segoe UI, the combining acute and grave accents drew nothing, or a single
+    pixel.
+  - In small text, DirectWrite hints some accents above the top of the line, and they lost
+    their top, as over Arial's capitals at 8 points.
 - `CCTask.RunOnScheduler`, and the completion callback that `CCTask.RunAsync` takes, no longer
   race the game thread when they're used from another thread, as they're meant to be. Each
   scheduled a timer from the calling thread, while the game thread's update walked the same

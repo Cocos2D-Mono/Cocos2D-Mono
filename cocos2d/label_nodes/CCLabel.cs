@@ -37,7 +37,7 @@ public partial class CCLabel : CCLabelBMFont
     // How far right and down GetBitmapData moved the glyph it just drew, to keep ink that reaches
     // back past where the glyph starts, or above the top of its line, inside the bitmap.
     // InitializeFont takes it off the glyph's offsets, which can then be negative, as a .fnt
-    // file's can. Only the Skia and GDI+ backends move glyphs.
+    // file's can. The Android and Apple backends don't move glyphs.
     private static int _glyphShiftX;
     private static int _glyphShiftY;
 

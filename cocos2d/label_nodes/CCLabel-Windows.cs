@@ -176,7 +176,9 @@ public partial class CCLabel
         }
         fontName = _currentFont.FontFamily.FamilyNames.GetString(0); 
         textFormat = new TextFormat(FactoryDWrite, fontName, _currentDIP);
-        
+        // GetBitmapData centres each glyph in its box, and GetGlyphRoom measures it as it's drawn.
+        textFormat.TextAlignment = TextAlignment.Center;
+
         GetKerningInfo(charset);
 
         return _currentFont.ToString();
@@ -270,13 +272,52 @@ public partial class CCLabel
         return _currentDIP * (float)(_currentFont.Metrics.Ascent + _currentFont.Metrics.Descent + _currentFont.Metrics.LineGap) / _currentFont.Metrics.DesignUnitsPerEm;
     }
 
+    // The bitmap GetBitmapData draws a glyph into, less the 2 pixels InitializeFont adds back when
+    // it searches the bitmap for the glyph's pixels.
     private CCSize GetMeasureString(string text)
     {
+        var room = GetGlyphRoom(text);
+        return new CCSize(room.Width - 2, room.Height - 2);
+    }
 
-        var textLayout = new TextLayout(FactoryDWrite, text, textFormat, 2048, 2048);
-        var tlMetrics = textLayout.Metrics;
+    // How far past the ink its layout reports DirectWrite can draw a glyph. It hints what it draws,
+    // which in some fonts moves an accent several pixels: Cascadia Code's grave accent ends 6.5
+    // pixels lower at 36 points.
+    private const float DirectWriteRoom = 8;
 
-        return new CCSize(tlMetrics.Width, tlMetrics.Height);
+    // Where GetBitmapData draws a glyph, and the size of the bitmap it draws it in. DirectWrite lays
+    // a glyph out centred in a box 2 pixels wider than its advance and 2 taller than its line, from
+    // the top of the line. Its ink can reach past that box: a combining accent has no advance, and
+    // sits left of where it starts, and hinting can move an accent above the line. So the bitmap
+    // takes in all of the glyph's ink, as the layout reports it, with room around it. Where that
+    // reaches past the box's left or top, the box is moved as much right or down, which CCLabel
+    // takes back off the glyph's offsets.
+    private (int Left, int Top, int BoxWidth, int BoxHeight, int Width, int Height) GetGlyphRoom(string text)
+    {
+        Debug.Assert(FactoryDWrite != null && textFormat != null, "CreateFont creates the text format first");
+
+        float width, height;
+        using (var measure = new TextLayout(FactoryDWrite, text, textFormat, 2048, 2048))
+        {
+            width = measure.Metrics.Width;
+            height = measure.Metrics.Height;
+        }
+        int boxWidth = (int)Math.Ceiling(width + 2);
+        int boxHeight = (int)Math.Ceiling(height + 2);
+
+        // How far the glyph's ink reaches past each side of its box: negative where it stays inside.
+        OverhangMetrics ink;
+        using (var layout = new TextLayout(FactoryDWrite, text, textFormat, boxWidth, boxHeight))
+        {
+            ink = layout.OverhangMetrics;
+        }
+
+        int left = Room(ink.Left);
+        int top = Room(ink.Top);
+        return (left, top, boxWidth, boxHeight,
+            left + boxWidth + Room(ink.Right), top + boxHeight + Room(ink.Bottom));
+
+        static int Room(float overhang) => (int)Math.Ceiling(Math.Max(0, overhang + DirectWriteRoom));
     }
 
     private void CreateBitmap(int width, int height)
@@ -348,12 +389,9 @@ public partial class CCLabel
 
         FreeBitmapData();
 
-        var size = GetMeasureString(s);
+        var room = GetGlyphRoom(s);
 
-        var w = (int)(Math.Ceiling(size.Width += 2));
-        var h = (int)(Math.Ceiling(size.Height += 2));
-
-        CreateBitmap(w, h);
+        CreateBitmap(room.Width, room.Height);
         Debug.Assert(_renderTarget != null && _bitmap != null && textFormat != null,
             "CreateFont creates the text format, and CreateBitmap the render target");
 
@@ -361,11 +399,14 @@ public partial class CCLabel
 
         _renderTarget.Clear(TransparentColor);
         _renderTarget.AntialiasMode = AntialiasMode.Aliased;
-        textFormat.TextAlignment = TextAlignment.Center;
-        // RawRectangleF takes left, top, right and bottom, so from the origin they're w and h.
-        _renderTarget.DrawText(s, textFormat, new RawRectangleF(0, 0, w, h), _brush);
+        // RawRectangleF takes left, top, right and bottom. Moved by whole pixels, DirectWrite draws
+        // a glyph's pixels the same.
+        _renderTarget.DrawText(s, textFormat,
+            new RawRectangleF(room.Left, room.Top, room.Left + room.BoxWidth, room.Top + room.BoxHeight), _brush);
 
         _renderTarget.EndDraw();
+        _glyphShiftX = room.Left;
+        _glyphShiftY = room.Top;
 
         //SaveToFile(@"C:\Xamarin\Cocos2D-XNAGraphics\" + s + ".png");
 

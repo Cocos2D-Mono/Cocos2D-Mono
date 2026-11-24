@@ -116,8 +116,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   transparent pixel all around it.
   - Glyphs used to be shifted to hide that line: by under a fiftieth of a pixel on Windows,
     Linux and macOS, and by over half a pixel on Android, which cut off about half of each
-    glyph's first column. They aren't shifted now. iOS, Mac Catalyst and tvOS still trim each
-    glyph by a pixel, until that's checked on a device.
+    glyph's first column. On iOS, Mac Catalyst and tvOS, each glyph was shifted by a third of a
+    pixel and trimmed by a pixel, which cut off a third of its first column and two thirds of
+    its last. Glyphs aren't shifted or trimmed on any platform now.
   - Each glyph takes two more pixels of the atlas each way, so the atlas holds fewer glyphs
     before it fills up and starts again. To make it bigger, call
     `CCLabel.SetTTFAtlasTextureSize` before the first label.

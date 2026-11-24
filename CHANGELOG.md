@@ -121,7 +121,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
     up to half a pixel. Glyphs aren't shifted or trimmed on any platform now.
   - Each glyph takes two more pixels of the atlas each way, so the atlas holds fewer glyphs
     before it fills up and starts again. To make it bigger, call
-    `CCLabel.SetTTFAtlasTextureSize` before the first label.
+    `CCLabel.SetTTFAtlasTextureSize` before the first label, up to 2048 pixels each way on iOS,
+    Mac Catalyst and tvOS.
 - `CCLabel` draws all of each glyph with DesktopGL on Windows. It looked for a glyph's pixels
   only in the box that GDI+ lays the glyph out in, and GDI+ draws some glyphs past that box.
   - Anything above the top of the line was cut off, such as the acute on Ǻ. In small text,
@@ -207,6 +208,9 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   only.
 - The roadmap says how often releases ship: once a month, early in the month, with urgent
   fixes in between.
+- `CCLabel.SetTTFAtlasTextureSize` and `InitializeTTFAtlas` are documented. On iOS, Mac
+  Catalyst and tvOS, an atlas should be 2048 pixels or less each way, because those platforms'
+  GPUs draw some glyphs a pixel off in a bigger one.
 
 ### Changed (internal)
 

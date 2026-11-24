@@ -103,6 +103,19 @@ public partial class CCLabel : CCLabelBMFont
         }
     }
 
+    /// <summary>
+    /// Sets the size, in pixels, of the atlas that every <see cref="CCLabel"/> draws its glyphs
+    /// into. The atlas takes the size the next time it's made: for the first label, when it fills
+    /// up and starts again, and after <see cref="CCLabelBMFont.PurgeCachedData"/>. Until a size is
+    /// set, the label that makes the atlas picks one from its font size: 1024 × 1024, 2048 × 1024
+    /// for a size of 80 or more, or 2048 × 2048 for 105 or more. The call does nothing unless both
+    /// sizes are positive.
+    /// </summary>
+    /// <remarks>
+    /// On iOS, Mac Catalyst and tvOS, keep both sizes to 2048 or less. Those platforms' GPUs carry
+    /// texture coordinates as 16-bit floats, which can't place a glyph to the pixel past 2048, so
+    /// some glyphs would be drawn a pixel off.
+    /// </remarks>
     public static void SetTTFAtlasTextureSize(float width, float height)
     {
         if (width > 0 && height > 0)
@@ -111,6 +124,15 @@ public partial class CCLabel : CCLabelBMFont
         }
     }
 
+    /// <summary>
+    /// Makes a new, empty atlas of this size, in pixels, for the glyphs of every
+    /// <see cref="CCLabel"/>, and disposes the old atlas's texture. To choose the size of every
+    /// atlas the labels make, call <see cref="SetTTFAtlasTextureSize"/> instead.
+    /// </summary>
+    /// <remarks>
+    /// On iOS, Mac Catalyst and tvOS, keep both sizes to 2048 or less, as for
+    /// <see cref="SetTTFAtlasTextureSize"/>.
+    /// </remarks>
     [MemberNotNull(nameof(m_pTexture), nameof(m_pData))]
     public static void InitializeTTFAtlas(int width, int height)
     {

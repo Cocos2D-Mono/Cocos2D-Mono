@@ -103,6 +103,21 @@ public partial class CCLabel : CCLabelBMFont
         }
     }
 
+    /// <summary>
+    /// Sets the size, in pixels, of the atlas that every <see cref="CCLabel"/> draws its glyphs
+    /// into. The atlas takes the size the next time it's made: for the first label, when it fills
+    /// up and starts again, and after <see cref="CCLabelBMFont.PurgeCachedData"/>. Until a size is
+    /// set, the label that makes the atlas picks one from its font size: 1024 × 1024, 2048 × 1024
+    /// for a size of 80 or more, or 2048 × 2048 for 105 or more. The call does nothing unless both
+    /// sizes are positive.
+    /// </summary>
+    /// <remarks>
+    /// On iOS, Mac Catalyst and tvOS, make both sizes powers of two no bigger than 2048, such as
+    /// 1024 or 2048. Those platforms' GPUs carry texture coordinates as 16-bit floats, which place
+    /// every glyph exactly only at those sizes. Past 2048, some glyphs are drawn a pixel off. At a
+    /// size that isn't a power of two, glyphs can be drawn a fraction of a pixel off, which blurs
+    /// them.
+    /// </remarks>
     public static void SetTTFAtlasTextureSize(float width, float height)
     {
         if (width > 0 && height > 0)
@@ -111,6 +126,23 @@ public partial class CCLabel : CCLabelBMFont
         }
     }
 
+    /// <summary>
+    /// Replaces the atlas that every <see cref="CCLabel"/> draws its glyphs into with a new, empty
+    /// one of this size, in pixels, and disposes the old atlas's texture. To choose the size of
+    /// every atlas the labels make, call <see cref="SetTTFAtlasTextureSize"/> instead.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// It doesn't clear the glyphs that labels have already placed. Their places now point into the
+    /// new, empty atlas, so labels made before the call draw blank or wrong text. And while no
+    /// label font is cached, as before the first label, the next label replaces this atlas with
+    /// one of its own.
+    /// </para>
+    /// <para>
+    /// On iOS, Mac Catalyst and tvOS, make both sizes powers of two no bigger than 2048, as for
+    /// <see cref="SetTTFAtlasTextureSize"/>.
+    /// </para>
+    /// </remarks>
     [MemberNotNull(nameof(m_pTexture), nameof(m_pData))]
     public static void InitializeTTFAtlas(int width, int height)
     {

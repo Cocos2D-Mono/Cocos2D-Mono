@@ -197,6 +197,13 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   plists in the original format, version 1. Those have no `properties` dictionary, and the cache
   read animations only from a plist that had one, so it added none of theirs and logged nothing.
   Now a plist without properties is read as version 1, as in cocos2d-x.
+- `CCFocusManager.FocusNextItem` and `FocusPreviousItem` move the focus to the nearest item
+  that can receive focus. `FocusNextItem` went to the last such item in the list instead of the
+  next one. `FocusPreviousItem` went to the previous item even when it couldn't receive focus,
+  as a hidden menu item can't. Going round from one end of the list to the other, or starting
+  with no item focused, also took the first or last item whether it could receive focus or not.
+  Now neither method moves the focus to an item that can't receive it. When no other item can
+  receive focus, the focus stays where it is.
 
 ### Documentation
 

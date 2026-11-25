@@ -61,106 +61,70 @@ public class CCFocusManager
     }
 
     /// <summary>
-    /// Scroll to the next item in the focus list.
+    /// Moves the focus to the next item that can receive focus, going round to the first item
+    /// after the last. With no item focused, the first item that can receive focus gets it. When
+    /// no other item can receive focus, the focus stays where it is, unless the focused item was
+    /// removed: then it loses the focus, and no item has it.
     /// </summary>
     public void FocusNextItem()
     {
-        LinkedListNode<ICCFocusable>? first = _FocusList.First;
-        if (_Current == null && first != null)
+        MoveFocus(forward: true);
+    }
+
+    /// <summary>
+    /// Moves the focus to the previous item that can receive focus, going round to the last item
+    /// before the first. With no item focused, the last item that can receive focus gets it. When
+    /// no other item can receive focus, the focus stays where it is, unless the focused item was
+    /// removed: then it loses the focus, and no item has it.
+    /// </summary>
+    public void FocusPreviousItem()
+    {
+        MoveFocus(forward: false);
+    }
+
+    private void MoveFocus(bool forward)
+    {
+        // A focused item that was removed is no longer in the list, so the search starts from the
+        // end of the list instead, as it does when no item has the focus.
+        LinkedListNode<ICCFocusable>? focused = _Current != null && _Current.List == _FocusList ? _Current : null;
+        LinkedListNode<ICCFocusable>? item = FindItemToFocus(focused, forward);
+        if (item == null && focused != null)
         {
-            _Current = first;
-            _Current.Value.HasFocus = true;
-            if (OnFocusChanged != null)
-            {
-                OnFocusChanged(null, _Current.Value);
-            }
+            // No item can receive focus, the focused one included. It keeps the focus anyway,
+            // because OnFocusChanged has no way to say that no item has it.
+            return;
         }
-        else if (_Current != null)
+        ICCFocusable? lostItem = _Current?.Value;
+        _Current = item;
+        if (lostItem != null)
         {
-            ICCFocusable lostItem = _Current.Value;
-            // Search for the next node.
-            LinkedListNode<ICCFocusable>? nextItem = null;
-            for (LinkedListNode<ICCFocusable>? p = _Current.Next; p != null; p = p.Next)
-            {
-                if (p.Value.CanReceiveFocus)
-                {
-                    nextItem = p;
-                }
-            }
-            if (nextItem != null)
-            {
-                _Current = nextItem;
-            }
-            else
-            {
-                // No item gets focus when the focused item was removed and was the last one.
-                _Current = first;
-            }
             lostItem.HasFocus = false;
-            if (_Current != null)
-            {
-                _Current.Value.HasFocus = true;
-                if (OnFocusChanged != null)
-                {
-                    OnFocusChanged(lostItem, _Current.Value);
-                }
-            }
         }
-        else
+        if (item != null)
         {
-            _Current = null;
+            item.Value.HasFocus = true;
+            OnFocusChanged?.Invoke(lostItem, item.Value);
         }
     }
 
     /// <summary>
-    /// Scroll to the previous item in the focus list.
+    /// Returns the nearest item after the focused one, or before it, that can receive focus. The
+    /// search goes round to the other end of the list, and the focused item itself comes last, so
+    /// it keeps the focus when no other item can take it. Returns null when no item can receive
+    /// focus.
     /// </summary>
-    public void FocusPreviousItem()
+    private LinkedListNode<ICCFocusable>? FindItemToFocus(LinkedListNode<ICCFocusable>? focused, bool forward)
     {
-        LinkedListNode<ICCFocusable>? last = _FocusList.Last;
-        if (ItemWithFocus == null && last != null)
+        LinkedListNode<ICCFocusable>? node = focused;
+        for (int i = 0; i < _FocusList.Count; i++)
         {
-            _Current = last;
-            _Current.Value.HasFocus = true;
-            if (OnFocusChanged != null)
+            node = forward ? (node?.Next ?? _FocusList.First) : (node?.Previous ?? _FocusList.Last);
+            if (node != null && node.Value.CanReceiveFocus)
             {
-                OnFocusChanged(null, _Current.Value);
+                return node;
             }
         }
-        else if (_Current != null)
-        {
-            ICCFocusable lostItem = _Current.Value;
-            LinkedListNode<ICCFocusable>? nextItem = null;
-            for (LinkedListNode<ICCFocusable>? p = _Current.Previous; p != null; p = p.Previous)
-            {
-                if (p.Value.CanReceiveFocus)
-                {
-                    nextItem = p;
-                }
-            }
-            if (_Current.Previous != null)
-            {
-                _Current = _Current.Previous;
-            }
-            else
-            {
-                // No item gets focus when the focused item was removed and was the last one.
-                _Current = last;
-            }
-            lostItem.HasFocus = false;
-            if (_Current != null)
-            {
-                _Current.Value.HasFocus = true;
-                if (OnFocusChanged != null)
-                {
-                    OnFocusChanged(lostItem, _Current.Value);
-                }
-            }
-        }
-        else
-        {
-            _Current = null;
-        }
+        return null;
     }
 
     /// <summary>

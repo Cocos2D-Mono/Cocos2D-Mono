@@ -354,20 +354,13 @@ public partial class CCLabel : CCLabelBMFont
                     SetRegionData(region, data, w);
 
                     var info = GetKerningInfo(chars[i]);
-                    float regionX = region.x;
-                    float regionWidth = region.width;
 
-#if IOS
-                    // iOS still trims the rect, as every platform once shifted it to hide the line
-                    // the gap now prevents. Taking that out needs checking on a device.
-                    regionX += 0.33f;
-                    regionWidth -= 1;
-#endif
-
+                    // The rect is exactly the glyph's pixels. Every platform used to shift or trim
+                    // it to hide the line that the gap now prevents, which cut into the glyph.
                     var fontDef = new CCBMFontConfiguration.CCBMFontDef()
                     {
                         charID = chars[i],
-                        rect = new CCRect(regionX, region.y, regionWidth, region.height),
+                        rect = new CCRect(region.x, region.y, region.width, region.height),
                         xOffset = minX - _glyphShiftX,
                         yOffset = minY - _glyphShiftY,
                         xKern = (int)Math.Ceiling(info.A + info.B + info.C),

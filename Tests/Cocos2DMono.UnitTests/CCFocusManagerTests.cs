@@ -200,16 +200,48 @@ public class CCFocusManagerTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void Moving_WhenNoItemCanReceiveFocus_LeavesNoFocus(bool next)
+    public void Moving_WhenNoItemCanReceiveFocus_LeavesTheFocusWhereItIs(bool next)
     {
-        // The focused item has stopped being able to receive focus, and so has the other one. The
-        // focus went to whichever item came next, or back to the same one.
-        var a = new Focusable { HasFocus = true, CanReceiveFocus = false };
-        var b = new Focusable { CanReceiveFocus = false };
-        CCFocusManager manager = NewManager(a, b);
+        // The focused item has stopped being able to receive focus, and so have the others. The
+        // focus went to the first item or the previous one, which couldn't receive it either.
+        // It stays put instead, because OnFocusChanged can't report that no item has it.
+        var a = new Focusable { CanReceiveFocus = false };
+        var b = new Focusable { HasFocus = true, CanReceiveFocus = false };
+        var c = new Focusable { CanReceiveFocus = false };
+        CCFocusManager manager = NewManager(a, b, c);
         int changes = 0;
         manager.OnFocusChanged += (prev, current) => changes++;
 
+        Move(manager, next);
+
+        Assert.Same(b, manager.ItemWithFocus);
+        Assert.True(b.HasFocus);
+        Assert.False(a.HasFocus);
+        Assert.False(c.HasFocus);
+        Assert.Equal(0, changes);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Moving_FromARemovedItem_WhenNoItemCanReceiveFocus_LeavesNoFocus(bool next)
+    {
+        // The removed item loses the focus, as when it was the only item. The focus went to the
+        // first or last item, which couldn't receive it.
+        var a = new Focusable { CanReceiveFocus = false };
+        var b = new Focusable { HasFocus = true };
+        CCFocusManager manager = NewManager(a, b);
+        manager.Remove(b);
+
+        Move(manager, next);
+
+        Assert.Null(manager.ItemWithFocus);
+        Assert.False(a.HasFocus);
+        Assert.False(b.HasFocus);
+    }
+
+    private static void Move(CCFocusManager manager, bool next)
+    {
         if (next)
         {
             manager.FocusNextItem();
@@ -218,10 +250,5 @@ public class CCFocusManagerTests
         {
             manager.FocusPreviousItem();
         }
-
-        Assert.Null(manager.ItemWithFocus);
-        Assert.False(a.HasFocus);
-        Assert.False(b.HasFocus);
-        Assert.Equal(0, changes);
     }
 }

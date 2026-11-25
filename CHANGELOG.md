@@ -202,8 +202,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   next one. `FocusPreviousItem` went to the previous item even when it couldn't receive focus,
   as a hidden menu item can't. Going round from one end of the list to the other, or starting
   with no item focused, also took the first or last item whether it could receive focus or not.
-  Now neither method gives the focus to an item that can't receive it, and when no item can, no
-  item has the focus afterwards.
+  Now neither method moves the focus to an item that can't receive it. When no other item can
+  receive focus, the focus stays where it is.
 
 ### Documentation
 

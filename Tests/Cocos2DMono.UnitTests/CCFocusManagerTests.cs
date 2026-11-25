@@ -410,22 +410,45 @@ public class CCFocusManagerTests
         Assert.Same(items[0], manager.ItemWithFocus);
     }
 
-    [Fact]
-    public void ADPadButtonDown_WhenTheManagerIsEnabledAgain_IsANewPress()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ADPadButtonDown_WhenTheManagerIsEnabledAgain_IsANewPress(bool updateWhileDisabled)
     {
-        // The hold doesn't carry over from before the manager was disabled.
+        // The hold doesn't carry over from before the manager was disabled, even when it's
+        // enabled again before the pad's next update.
         Focusable[] items = Items(4, focused: 0);
         CCFocusManager manager = NewEnabledManager(items);
         double delay = CCFocusManager.MenuScrollDelay;
 
         UpdateDPad(manager, 0, DPadButtons.Right);
         manager.Enabled = false;
-        UpdateDPad(manager, delay / 4, DPadButtons.None);
-        UpdateDPad(manager, delay / 2, DPadButtons.Right);
+        if (updateWhileDisabled)
+        {
+            UpdateDPad(manager, delay / 4, DPadButtons.None);
+            UpdateDPad(manager, delay / 2, DPadButtons.Right);
+        }
         manager.Enabled = true;
         UpdateDPad(manager, delay * 3 / 4, DPadButtons.Right);
 
         Assert.Same(items[2], manager.ItemWithFocus);
+    }
+
+    [Fact]
+    public void SettingEnabled_WhenItIsAlreadyTrue_KeepsTheHold()
+    {
+        // A game may set Enabled on every frame. That mustn't make a held button a new press.
+        Focusable[] items = Items(4, focused: 0);
+        CCFocusManager manager = NewEnabledManager(items);
+        double delay = CCFocusManager.MenuScrollDelay;
+
+        for (int update = 0; update < 4; update++)
+        {
+            manager.Enabled = true;
+            UpdateDPad(manager, delay * update / 4, DPadButtons.Right);
+        }
+
+        Assert.Same(items[1], manager.ItemWithFocus);
     }
 
     [Flags]

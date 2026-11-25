@@ -58,9 +58,24 @@ public class CCFocusManager
     /// </summary>
     public bool Enabled
     {
-        get;
-        set;
+        get
+        {
+            return _enabled;
+        }
+        set
+        {
+            if (!value)
+            {
+                // A button that's down when the manager is enabled again counts as a new press,
+                // even if its pad sends no update in between. Setting true doesn't clear the
+                // holds, because a game may set it on every frame.
+                Array.Clear(_dPadHolds);
+            }
+            _enabled = value;
+        }
     }
+
+    private bool _enabled;
 
     /// <summary>
     /// Moves the focus to the next item that can receive focus, going round to the first item
@@ -186,13 +201,11 @@ public class CCFocusManager
     /// </summary>
     private void UpdateDPad(CCGamePadButtonStatus leftButton, CCGamePadButtonStatus upButton, CCGamePadButtonStatus rightButton, CCGamePadButtonStatus downButton, Microsoft.Xna.Framework.PlayerIndex player, TimeSpan time)
     {
-        ref DPadHold hold = ref _dPadHolds[(int)player];
         if (!Enabled)
         {
-            // A button that's down when the manager is enabled again counts as a new press.
-            hold.Direction = 0;
             return;
         }
+        ref DPadHold hold = ref _dPadHolds[(int)player];
         bool previous = leftButton == CCGamePadButtonStatus.Pressed || upButton == CCGamePadButtonStatus.Pressed;
         bool next = rightButton == CCGamePadButtonStatus.Pressed || downButton == CCGamePadButtonStatus.Pressed;
         // Buttons for both directions at once, such as up and right on a diagonal, don't say

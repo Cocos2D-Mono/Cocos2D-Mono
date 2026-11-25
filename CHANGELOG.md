@@ -204,6 +204,15 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   with no item focused, also took the first or last item whether it could receive focus or not.
   Now neither method moves the focus to an item that can't receive it. When no other item can
   receive focus, the focus stays where it is.
+- With `CCFocusManager.Instance.Enabled` set, a game pad's d-pad moves the focus. On a standard
+  game pad it never did: the manager took any released d-pad button for the end of a press, and
+  some are always released. On a pad that reports fewer d-pad buttons, the focus moved only
+  after a button had been held for `MenuScrollDelay`, and then on every frame. Now a press moves
+  the focus at once, left or up to the previous item and right or down to the next. Holding the
+  button moves it again every `MenuScrollDelay` milliseconds, by the game's time rather than the
+  wall clock. `MenuScrollDelay` is now 250 by default instead of 50, so that a tap moves the
+  focus only once. Each game pad has a hold of its own, and buttons for both directions at
+  once, such as up and right, don't move the focus.
 
 ### Documentation
 

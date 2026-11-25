@@ -52,7 +52,9 @@ public class CCFocusManager
     }
 
     /// <summary>
-    /// When false, the focus will not traverse on the keyboard or dpad events.
+    /// When true, the d-pad on each game pad moves the focus: left and up to the previous item,
+    /// and right and down to the next. A press moves it once, and holding the button moves it
+    /// again every <see cref="MenuScrollDelay"/> milliseconds. False by default.
     /// </summary>
     public bool Enabled
     {
@@ -140,13 +142,23 @@ public class CCFocusManager
     }
 
 
-    private long _timeOfLastFocus = 0L;
-    private bool _scrollingPrevious = false;
-    private bool _scrollingNext = false;
     /// <summary>
-    /// Scrolling focus delay used to slow down automatic focus changes when the dpad is held.
+    /// While a d-pad button is held, the time in milliseconds from one move of the focus to the
+    /// next. The press itself moves the focus at once. 250 by default.
     /// </summary>
-    public static float MenuScrollDelay = 50f;
+    public static float MenuScrollDelay = 250f;
+
+    // The d-pad hold of each player's game pad, indexed by PlayerIndex.
+    private readonly DPadHold[] _dPadHolds = new DPadHold[4];
+
+    private struct DPadHold
+    {
+        // The direction the d-pad was held in at the pad's last update: -1 for the previous
+        // item, 1 for the next, and 0 for neither.
+        public int Direction;
+        // The game time when this hold last moved the focus.
+        public TimeSpan TimeOfLastMove;
+    }
 
     #region Singleton
 
@@ -162,47 +174,50 @@ public class CCFocusManager
 
     private void SharedApplication_GamePadDPadUpdate(CCGamePadButtonStatus leftButton, CCGamePadButtonStatus upButton, CCGamePadButtonStatus rightButton, CCGamePadButtonStatus downButton, Microsoft.Xna.Framework.PlayerIndex player)
     {
+        // CCApplication raises this from its Update, after it keeps that frame's game time. The
+        // game's time is steadier than the wall clock, which can be set back.
+        TimeSpan time = CCApplication.SharedApplication?.GameTime?.TotalGameTime ?? TimeSpan.Zero;
+        UpdateDPad(leftButton, upButton, rightButton, downButton, player, time);
+    }
+
+    /// <summary>
+    /// Moves the focus for one update of a player's d-pad, at the given game time. CCApplication
+    /// reports every button that the pad has on each update, as pressed or released.
+    /// </summary>
+    private void UpdateDPad(CCGamePadButtonStatus leftButton, CCGamePadButtonStatus upButton, CCGamePadButtonStatus rightButton, CCGamePadButtonStatus downButton, Microsoft.Xna.Framework.PlayerIndex player, TimeSpan time)
+    {
+        ref DPadHold hold = ref _dPadHolds[(int)player];
         if (!Enabled)
+        {
+            // A button that's down when the manager is enabled again counts as a new press.
+            hold.Direction = 0;
+            return;
+        }
+        bool previous = leftButton == CCGamePadButtonStatus.Pressed || upButton == CCGamePadButtonStatus.Pressed;
+        bool next = rightButton == CCGamePadButtonStatus.Pressed || downButton == CCGamePadButtonStatus.Pressed;
+        // Buttons for both directions at once, such as up and right on a diagonal, don't say
+        // which way to go, so the focus doesn't move.
+        int direction = previous == next ? 0 : (next ? 1 : -1);
+        if (direction == 0)
+        {
+            hold.Direction = 0;
+            return;
+        }
+        // A new press moves the focus at once. A button held since the last update moves it again
+        // once MenuScrollDelay has passed since its last move.
+        if (direction == hold.Direction && (time - hold.TimeOfLastMove).TotalMilliseconds < MenuScrollDelay)
         {
             return;
         }
-        if (leftButton == CCGamePadButtonStatus.Released || upButton == CCGamePadButtonStatus.Released || rightButton == CCGamePadButtonStatus.Released || downButton == CCGamePadButtonStatus.Released)
+        hold.Direction = direction;
+        hold.TimeOfLastMove = time;
+        if (direction > 0)
         {
-            _scrollingPrevious = false;
-            _timeOfLastFocus = 0L;
+            FocusNextItem();
         }
-        // Left and right d-pad shuffle through the menus
-        else if (leftButton == CCGamePadButtonStatus.Pressed || upButton == CCGamePadButtonStatus.Pressed)
+        else
         {
-            if (_scrollingPrevious)
-            {
-                TimeSpan ts = new TimeSpan(DateTime.Now.Ticks - _timeOfLastFocus);
-                if (ts.TotalMilliseconds > MenuScrollDelay)
-                {
-                    FocusPreviousItem();
-                }
-            }
-            else
-            {
-                _scrollingPrevious = true;
-                _timeOfLastFocus = DateTime.Now.Ticks;
-            }
-        }
-        else if (rightButton == CCGamePadButtonStatus.Pressed || downButton == CCGamePadButtonStatus.Pressed)
-        {
-            if (_scrollingNext)
-            {
-                TimeSpan ts = new TimeSpan(DateTime.Now.Ticks - _timeOfLastFocus);
-                if (ts.TotalMilliseconds > MenuScrollDelay)
-                {
-                    FocusNextItem();
-                }
-            }
-            else
-            {
-                _scrollingNext = true;
-                _timeOfLastFocus = DateTime.Now.Ticks;
-            }
+            FocusPreviousItem();
         }
     }
 

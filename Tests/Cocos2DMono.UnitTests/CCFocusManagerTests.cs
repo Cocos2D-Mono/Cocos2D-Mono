@@ -1,11 +1,14 @@
 using System;
+using System.Reflection;
 using Cocos2D;
+using Microsoft.Xna.Framework;
 using Xunit;
 
 namespace Cocos2DMono.UnitTests;
 
-// Regression tests for the nullable conversion of the runtime classes (C2D-303), and for the item
-// that FocusNextItem and FocusPreviousItem move the focus to (C2D-330).
+// Regression tests for the nullable conversion of the runtime classes (C2D-303), for the item that
+// FocusNextItem and FocusPreviousItem move the focus to (C2D-330), and for the d-pad moving the
+// focus (C2D-388).
 public class CCFocusManagerTests
 {
     private sealed class Focusable : ICCFocusable
@@ -250,5 +253,232 @@ public class CCFocusManagerTests
         {
             manager.FocusPreviousItem();
         }
+    }
+
+    [Fact]
+    public void TheDPadEvent_MovesTheFocus()
+    {
+        // CCApplication reports every d-pad button that a standard pad has, so some are always
+        // released. The handler took any released button for the end of a press, so the focus
+        // never moved.
+        var a = new Focusable { HasFocus = true };
+        var b = new Focusable();
+        CCFocusManager manager = NewEnabledManager(a, b);
+        MethodInfo handler = typeof(CCFocusManager).GetMethod("SharedApplication_GamePadDPadUpdate", BindingFlags.Instance | BindingFlags.NonPublic)!;
+
+        handler.Invoke(manager, new object[]
+        {
+            CCGamePadButtonStatus.Released, CCGamePadButtonStatus.Released,
+            CCGamePadButtonStatus.Pressed, CCGamePadButtonStatus.Released, PlayerIndex.One,
+        });
+
+        Assert.Same(b, manager.ItemWithFocus);
+    }
+
+    [Theory]
+    [InlineData(DPadButtons.Left, 0)]
+    [InlineData(DPadButtons.Up, 0)]
+    [InlineData(DPadButtons.Right, 2)]
+    [InlineData(DPadButtons.Down, 2)]
+    public void TappingADPadButton_MovesTheFocusOnce(DPadButtons button, int expected)
+    {
+        Focusable[] items = Items(3, focused: 1);
+        CCFocusManager manager = NewEnabledManager(items);
+        int changes = 0;
+        manager.OnFocusChanged += (prev, current) => changes++;
+        double delay = CCFocusManager.MenuScrollDelay;
+
+        UpdateDPad(manager, 0, button);
+        UpdateDPad(manager, delay / 2, DPadButtons.None);
+        UpdateDPad(manager, delay * 3, DPadButtons.None);
+
+        Assert.Same(items[expected], manager.ItemWithFocus);
+        Assert.Equal(1, changes);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void HoldingADPadButton_MovesTheFocusAtOnce_ThenOnceEveryMenuScrollDelay(bool onlyRight)
+    {
+        // A pad with only a right button got past the handler's reset. Then the focus moved only
+        // after the button had been held for MenuScrollDelay, and after that on every update.
+        Focusable[] items = Items(5, focused: 0);
+        CCFocusManager manager = NewEnabledManager(items);
+        double delay = CCFocusManager.MenuScrollDelay;
+
+        UpdateDPad(manager, 0, DPadButtons.Right, onlyRight: onlyRight);
+        Assert.Same(items[1], manager.ItemWithFocus);
+
+        UpdateDPad(manager, delay / 2, DPadButtons.Right, onlyRight: onlyRight);
+        UpdateDPad(manager, delay - 1, DPadButtons.Right, onlyRight: onlyRight);
+        Assert.Same(items[1], manager.ItemWithFocus);
+
+        UpdateDPad(manager, delay, DPadButtons.Right, onlyRight: onlyRight);
+        Assert.Same(items[2], manager.ItemWithFocus);
+
+        UpdateDPad(manager, delay * 1.5, DPadButtons.Right, onlyRight: onlyRight);
+        Assert.Same(items[2], manager.ItemWithFocus);
+
+        UpdateDPad(manager, delay * 2, DPadButtons.Right, onlyRight: onlyRight);
+        Assert.Same(items[3], manager.ItemWithFocus);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PressingADPadButtonAgain_MovesTheFocusAtOnce(bool onlyRight)
+    {
+        // A new press doesn't wait for MenuScrollDelay. On a pad with only a right button,
+        // releasing it didn't end its hold, so the next press waited.
+        Focusable[] items = Items(4, focused: 0);
+        CCFocusManager manager = NewEnabledManager(items);
+        double delay = CCFocusManager.MenuScrollDelay;
+
+        UpdateDPad(manager, 0, DPadButtons.Right, onlyRight: onlyRight);
+        UpdateDPad(manager, delay / 4, DPadButtons.None, onlyRight: onlyRight);
+        UpdateDPad(manager, delay / 2, DPadButtons.Right, onlyRight: onlyRight);
+
+        Assert.Same(items[2], manager.ItemWithFocus);
+    }
+
+    [Fact]
+    public void RollingFromRightToDown_KeepsTheSameHold()
+    {
+        // Right and down both move the focus to the next item, so going from one to the other
+        // isn't a new press.
+        Focusable[] items = Items(4, focused: 0);
+        CCFocusManager manager = NewEnabledManager(items);
+        double delay = CCFocusManager.MenuScrollDelay;
+
+        UpdateDPad(manager, 0, DPadButtons.Right);
+        UpdateDPad(manager, delay / 4, DPadButtons.Right | DPadButtons.Down);
+        UpdateDPad(manager, delay / 2, DPadButtons.Down);
+        Assert.Same(items[1], manager.ItemWithFocus);
+
+        UpdateDPad(manager, delay, DPadButtons.Down);
+        Assert.Same(items[2], manager.ItemWithFocus);
+    }
+
+    [Fact]
+    public void DPadButtonsForBothDirections_DoNotMoveTheFocus()
+    {
+        // A diagonal such as up and right doesn't say which way to go.
+        Focusable[] items = Items(3, focused: 1);
+        CCFocusManager manager = NewEnabledManager(items);
+        double delay = CCFocusManager.MenuScrollDelay;
+
+        UpdateDPad(manager, 0, DPadButtons.Up | DPadButtons.Right);
+        UpdateDPad(manager, delay * 2, DPadButtons.Up | DPadButtons.Right);
+        Assert.Same(items[1], manager.ItemWithFocus);
+
+        // Letting go of up leaves a press of right.
+        UpdateDPad(manager, delay * 2.5, DPadButtons.Right);
+        Assert.Same(items[2], manager.ItemWithFocus);
+    }
+
+    [Fact]
+    public void EachPlayersDPad_HasAHoldOfItsOwn()
+    {
+        // CCApplication reports every connected pad on each update. Player two's pad, with nothing
+        // pressed, mustn't end player one's hold, and a press on it moves the focus at once.
+        Focusable[] items = Items(4, focused: 0);
+        CCFocusManager manager = NewEnabledManager(items);
+        double delay = CCFocusManager.MenuScrollDelay;
+
+        for (int update = 0; update < 4; update++)
+        {
+            double time = delay * update / 4;
+            UpdateDPad(manager, time, DPadButtons.Right, PlayerIndex.One);
+            UpdateDPad(manager, time, DPadButtons.None, PlayerIndex.Two);
+        }
+        Assert.Same(items[1], manager.ItemWithFocus);
+
+        UpdateDPad(manager, delay * 0.9, DPadButtons.Right, PlayerIndex.Two);
+        Assert.Same(items[2], manager.ItemWithFocus);
+    }
+
+    [Fact]
+    public void WhenNotEnabled_TheDPadDoesNotMoveTheFocus()
+    {
+        Focusable[] items = Items(3, focused: 0);
+        CCFocusManager manager = NewManager(items);
+
+        UpdateDPad(manager, 0, DPadButtons.Right);
+        UpdateDPad(manager, CCFocusManager.MenuScrollDelay * 2, DPadButtons.Right);
+
+        Assert.Same(items[0], manager.ItemWithFocus);
+    }
+
+    [Fact]
+    public void ADPadButtonDown_WhenTheManagerIsEnabledAgain_IsANewPress()
+    {
+        // The hold doesn't carry over from before the manager was disabled.
+        Focusable[] items = Items(4, focused: 0);
+        CCFocusManager manager = NewEnabledManager(items);
+        double delay = CCFocusManager.MenuScrollDelay;
+
+        UpdateDPad(manager, 0, DPadButtons.Right);
+        manager.Enabled = false;
+        UpdateDPad(manager, delay / 4, DPadButtons.None);
+        UpdateDPad(manager, delay / 2, DPadButtons.Right);
+        manager.Enabled = true;
+        UpdateDPad(manager, delay * 3 / 4, DPadButtons.Right);
+
+        Assert.Same(items[2], manager.ItemWithFocus);
+    }
+
+    [Flags]
+    public enum DPadButtons
+    {
+        None = 0,
+        Left = 1,
+        Up = 2,
+        Right = 4,
+        Down = 8,
+    }
+
+    // The d-pad tests drive the manager's private d-pad update, which CCApplication's event
+    // reaches with the frame's game time, so that each test can set the time itself.
+    private static readonly MethodInfo UpdateDPadMethod =
+        typeof(CCFocusManager).GetMethod("UpdateDPad", BindingFlags.Instance | BindingFlags.NonPublic)!;
+
+    // Sends one update of a player's d-pad at the given game time. On a standard pad, a button
+    // that isn't pressed is Released. A pad with only a right button reports the other three as
+    // NotApplicable.
+    private static void UpdateDPad(CCFocusManager manager, double milliseconds, DPadButtons pressed,
+        PlayerIndex player = PlayerIndex.One, bool onlyRight = false)
+    {
+        CCGamePadButtonStatus Status(DPadButtons button)
+        {
+            if ((pressed & button) != 0)
+            {
+                return CCGamePadButtonStatus.Pressed;
+            }
+            return onlyRight && button != DPadButtons.Right ? CCGamePadButtonStatus.NotApplicable : CCGamePadButtonStatus.Released;
+        }
+
+        UpdateDPadMethod.Invoke(manager, new object[]
+        {
+            Status(DPadButtons.Left), Status(DPadButtons.Up), Status(DPadButtons.Right), Status(DPadButtons.Down),
+            player, TimeSpan.FromMilliseconds(milliseconds),
+        });
+    }
+
+    private static CCFocusManager NewEnabledManager(params Focusable[] items)
+    {
+        CCFocusManager manager = NewManager(items);
+        manager.Enabled = true;
+        return manager;
+    }
+
+    private static Focusable[] Items(int count, int focused)
+    {
+        var items = new Focusable[count];
+        for (int i = 0; i < count; i++)
+        {
+            items[i] = new Focusable { HasFocus = i == focused };
+        }
+        return items;
     }
 }

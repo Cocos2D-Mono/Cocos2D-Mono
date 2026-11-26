@@ -238,6 +238,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   PNG and JPEG copies build the same asset.
 - WindowsDX labels pass Direct2D the colour and rectangle types from SharpDX itself, so the
   engine no longer needs `SharpDX.Mathematics`, which MonoGame 3.8.6.1 doesn't bring in.
+- CI uses releases of its GitHub Actions that run on Node.js 24, because GitHub has deprecated
+  Node.js 20. CI still builds with the runner image's .NET SDK.
 
 ## 2.9.1 - 2026-11-04
 

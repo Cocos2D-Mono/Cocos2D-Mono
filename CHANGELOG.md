@@ -213,6 +213,11 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   wall clock. `MenuScrollDelay` is now 250 by default instead of 50, so that a tap moves the
   focus only once. Each game pad has a hold of its own, and buttons for both directions at
   once, such as up and right, don't move the focus.
+- On DesktopGL, Backspace or Delete in an empty `CCTextFieldTTF` no longer throws
+  `ArgumentOutOfRangeException`. The field reads the keyboard itself there, and it threw on
+  every frame the key was held. The scheduler caught each exception, so only a game that handles
+  `CCScheduler.OnUnhandledException` saw them. Now the key deletes nothing, and holding it does
+  nothing more, as with any key.
 
 ### Documentation
 

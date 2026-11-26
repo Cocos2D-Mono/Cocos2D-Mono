@@ -286,7 +286,13 @@ public class CCTextFieldTTF : CCLabelTTF, ICCTargetedTouchDelegate
             {
                 if (p == Keys.Back || p == Keys.Delete)
                 {
-                    Text = Text.Substring(0, Text.Length - 1);
+                    // An empty field has nothing to delete. The key still counts as taken, as
+                    // any key does, so in later frames the field takes no key until every key
+                    // is released.
+                    if (Text.Length > 0)
+                    {
+                        Text = Text.Substring(0, Text.Length - 1);
+                    }
                     canEdit = false;
                     return;
                 }

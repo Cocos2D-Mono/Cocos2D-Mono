@@ -22,8 +22,10 @@ jobs:
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           global-json-file: global.json
-      # setup-dotnet installs the newest SDK that global.json's rollForward allows,
-      # which can be newer than the one global.json names, so log the SDK that builds.
+          # Keep the runner image's SDK when global.json allows it. By default,
+          # setup-dotnet downloads the newest SDK, which may have shipped that day.
+          check-latest: false
+      # global.json names only the oldest SDK it allows, so log the SDK that builds.
       - name: Show the .NET SDK version
         run: dotnet --version
       - name: Test

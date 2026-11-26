@@ -49,9 +49,12 @@ jobs:
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           global-json-file: global.json
+          # Keep the runner image's SDK when global.json allows it. By default,
+          # setup-dotnet downloads the newest SDK, so a release could build with
+          # one that shipped that day.
+          check-latest: false
 
-      # setup-dotnet installs the newest SDK that global.json's rollForward allows,
-      # which can be newer than the one global.json names, so log the SDK that builds.
+      # global.json names only the oldest SDK it allows, so log the SDK that builds.
       - name: Show the .NET SDK version
         run: dotnet --version
 
@@ -125,6 +128,8 @@ jobs:
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           global-json-file: global.json
+          # The runner image's SDK, as in the pack job.
+          check-latest: false
 
       # Into artifacts/, where the check's nuget.config takes Cocos2D-Mono and its Box2D
       # package from, and nowhere else.

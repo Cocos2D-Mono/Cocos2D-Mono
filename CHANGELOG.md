@@ -238,6 +238,11 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
   PNG and JPEG copies build the same asset.
 - WindowsDX labels pass Direct2D the colour and rectangle types from SharpDX itself, so the
   engine no longer needs `SharpDX.Mathematics`, which MonoGame 3.8.6.1 doesn't bring in.
+- CI uses releases of its GitHub Actions that run on Node.js 24, because GitHub has deprecated
+  Node.js 20. With the newer `actions/setup-dotnet`, CI installs the newest .NET 10 SDK that
+  `global.json` allows, rather than the 10.0.303 it names. CI already built with the runners'
+  newer SDK, which it now gets on the SDK's release day rather than when GitHub updates the
+  runners.
 
 ## 2.9.1 - 2026-11-04
 

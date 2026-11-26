@@ -44,7 +44,7 @@ public class CCTextFieldTTFTests : System.IDisposable
         Frame(field, key);       // held
         Assert.Equal("", field.Text);
 
-        // As after any key, the field takes the next one only once the keys are released.
+        // As after any key, the field takes no key in a later frame until every key is released.
         Frame(field, key, Keys.A);
         Assert.Equal("", field.Text);
         Frame(field);

@@ -216,8 +216,8 @@ The project follows [Semantic Versioning](https://semver.org/) where practical.
 - On DesktopGL, Backspace or Delete in an empty `CCTextFieldTTF` no longer throws
   `ArgumentOutOfRangeException`. The field reads the keyboard itself there, and it threw on
   every frame the key was held. The scheduler caught each exception, so only a game that handles
-  `CCScheduler.OnUnhandledException` saw them. Now the key deletes nothing, and the field takes
-  the next key once the keys are released, as it does after any key.
+  `CCScheduler.OnUnhandledException` saw them. Now the key deletes nothing, and holding it does
+  nothing more, as with any key.
 
 ### Documentation
 
